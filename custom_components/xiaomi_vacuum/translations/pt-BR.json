@@ -1,0 +1,84 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Configurar Xiaomi Vacuum",
+                "description": "Informe o IP local do dispositivo e o token MIoT. O token pode ser extraído do banco do app Mi Home (veja o README).",
+                "data": {
+                    "host": "Endereço IP",
+                    "token": "Token MIoT (32 caracteres hexadecimais)",
+                    "name": "Nome (opcional, ex.: 'Aspirador')"
+                }
+            }
+        },
+        "error": {
+            "connection": "Não foi possível conectar ao aspirador. Verifique IP, token e se está na mesma rede.",
+            "unknown": "Ocorreu um erro desconhecido."
+        },
+        "abort": {
+            "already_configured": "Este aspirador já está configurado."
+        }
+    },
+    "entity": {
+        "vacuum": {
+            "xiaomi_vacuum": {
+                "state_attributes": {
+                    "fan_speed": {
+                        "state": {
+                            "silent": "Mínimo",
+                            "basic": "Baixo",
+                            "strong": "Forte",
+                            "full_speed": "Máximo"
+                        }
+                    }
+                }
+            }
+        },
+        "button": {
+            "dust_arrest": {
+                "name": "Coletar pó"
+            }
+        },
+        "select": {
+            "sweep_mop_type": {
+                "name": "Modo",
+                "state": {
+                    "sweep": "Aspirar",
+                    "mop": "Esfregar",
+                    "sweep_mop": "Aspirar e esfregar",
+                    "sweep_before_mopping": "Aspirar antes de esfregar"
+                }
+            },
+            "clean_times": {
+                "name": "Repetições de limpeza",
+                "state": {
+                    "one_time": "Uma vez",
+                    "two_times": "Duas vezes"
+                }
+            },
+            "mop_water_level": {
+                "name": "Nível de água do mop",
+                "state": {
+                    "level_1": "Nível 1",
+                    "level_2": "Nível 2",
+                    "level_3": "Nível 3"
+                }
+            },
+            "sweep_route": {
+                "name": "Rota de limpeza",
+                "state": {
+                    "quick": "Rápido",
+                    "daily": "Padrão",
+                    "careful": "Profundo"
+                }
+            },
+            "obstacle_avoidance_strategy": {
+                "name": "Desvio de obstáculos",
+                "state": {
+                    "less_collisions": "Menos colisões",
+                    "high_coverage": "Maior cobertura"
+                }
+            }
+        }
+    }
+}

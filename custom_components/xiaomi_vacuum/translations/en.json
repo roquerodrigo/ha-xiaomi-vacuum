@@ -1,0 +1,84 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Set up Xiaomi Vacuum",
+                "description": "Enter the device's local IP and MIoT token. The token can be extracted from the Mi Home app database (see README).",
+                "data": {
+                    "host": "IP address",
+                    "token": "MIoT token (32 hex chars)",
+                    "name": "Name (optional, e.g. 'Vacuum')"
+                }
+            }
+        },
+        "error": {
+            "connection": "Unable to reach the vacuum. Check IP, token and that it's on the same network.",
+            "unknown": "Unknown error occurred."
+        },
+        "abort": {
+            "already_configured": "This vacuum is already configured."
+        }
+    },
+    "entity": {
+        "vacuum": {
+            "xiaomi_vacuum": {
+                "state_attributes": {
+                    "fan_speed": {
+                        "state": {
+                            "silent": "Minimum",
+                            "basic": "Low",
+                            "strong": "Strong",
+                            "full_speed": "Maximum"
+                        }
+                    }
+                }
+            }
+        },
+        "button": {
+            "dust_arrest": {
+                "name": "Collect dust"
+            }
+        },
+        "select": {
+            "sweep_mop_type": {
+                "name": "Mode",
+                "state": {
+                    "sweep": "Sweep",
+                    "mop": "Mop",
+                    "sweep_mop": "Sweep and mop",
+                    "sweep_before_mopping": "Sweep before mopping"
+                }
+            },
+            "clean_times": {
+                "name": "Clean times",
+                "state": {
+                    "one_time": "Once",
+                    "two_times": "Twice"
+                }
+            },
+            "mop_water_level": {
+                "name": "Mop water level",
+                "state": {
+                    "level_1": "Level 1",
+                    "level_2": "Level 2",
+                    "level_3": "Level 3"
+                }
+            },
+            "sweep_route": {
+                "name": "Sweep route",
+                "state": {
+                    "quick": "Quick",
+                    "daily": "Standard",
+                    "careful": "Deep"
+                }
+            },
+            "obstacle_avoidance_strategy": {
+                "name": "Obstacle avoidance",
+                "state": {
+                    "less_collisions": "Less collisions",
+                    "high_coverage": "High coverage"
+                }
+            }
+        }
+    }
+}
