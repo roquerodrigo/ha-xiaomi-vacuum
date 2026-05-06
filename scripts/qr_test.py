@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Standalone QR-login tester for the Xiaomi cloud connector.
+# ruff: noqa: T201, S108, SLF001, D103
+"""
+Standalone QR-login tester for the Xiaomi cloud connector.
 
 Run: ./scripts/qr_test.py [country]
   country: cn de i2 ru sg us tw  (default: us)
@@ -11,7 +13,6 @@ session tokens so you can paste them into HA if needed.
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 from pathlib import Path

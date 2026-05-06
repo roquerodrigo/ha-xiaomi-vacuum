@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import asyncio
 import base64
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 from homeassistant import config_entries
@@ -20,6 +19,9 @@ from .cloud import (
     XiaomiCloudError,
     XiaomiDeviceInfo,
 )
+
+if TYPE_CHECKING:
+    import asyncio
 from .const import (
     CONF_CLOUD_COUNTRY,
     CONF_CLOUD_SERVICE_TOKEN,
@@ -65,7 +67,7 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self,
         user_input: dict | None = None,  # noqa: ARG002
     ) -> config_entries.ConfigFlowResult:
-        """Show the QR + run a single long-poll in background until the user scans it."""
+        """Show QR + run a single long-poll in background until the user scans it."""
         if self._qr_task is None:
             await self._refresh_qr()
             self._qr_task = self.hass.async_create_task(

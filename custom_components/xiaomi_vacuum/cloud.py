@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 import aiohttp
 import requests
 from Crypto.Cipher import ARC4
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import LOGGER
 
@@ -369,9 +370,11 @@ class XiaomiCloud:
             raise XiaomiCloudAuthError(msg)
         self._logged_in = True
 
-    async def _async_poll_qr_login(self, long_polling_url: str, timeout: int) -> bool:
-        from homeassistant.helpers.aiohttp_client import async_get_clientsession
-
+    async def _async_poll_qr_login(  # noqa: PLR0911
+        self,
+        long_polling_url: str,
+        timeout: int,  # noqa: ASYNC109
+    ) -> bool:
         session = async_get_clientsession(self._hass)
         read_timeout = aiohttp.ClientTimeout(total=max(timeout + 15, 30))
         try:

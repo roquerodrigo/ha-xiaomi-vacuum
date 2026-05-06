@@ -44,11 +44,11 @@ def _aio_resp(status=200, text="", token_cookie=None):
 
 
 def _patch_aiohttp(*responses):
-    """Patch async_get_clientsession to return a session whose .get yields `responses` in order."""
+    """Patch async_get_clientsession to a session whose .get yields `responses`."""
     session = MagicMock()
     session.get = MagicMock(side_effect=list(responses))
     return patch(
-        "homeassistant.helpers.aiohttp_client.async_get_clientsession",
+        "custom_components.xiaomi_vacuum.cloud.async_get_clientsession",
         return_value=session,
     )
 
@@ -140,7 +140,7 @@ def test_find_device_returns_match():
         device_id="d",
         name="x",
         model="m",
-        token="abc",
+        token="abc",  # noqa: S106
         country="cn",
     )
     with patch.object(c, "_iter_devices", return_value=iter([target])):
@@ -217,7 +217,7 @@ async def test_async_qr_start(hass):
 async def test_async_poll_qr_login_success(hass):
     cloud = XiaomiCloud(hass, "us")
     body = '&&&START&&&{"ssecurity":"S","userId":42,"location":"https://loc"}'
-    with _patch_aiohttp(_aio_resp(text=body), _aio_resp(token_cookie="TOK")):
+    with _patch_aiohttp(_aio_resp(text=body), _aio_resp(token_cookie="TOK")):  # noqa: S106
         assert await cloud._async_poll_qr_login("https://lp", 1) is True
     assert cloud._connector._ssecurity == "S"
     assert cloud._connector._user_id == "42"
@@ -249,7 +249,7 @@ async def test_async_poll_qr_login_returns_false_on_timeout(hass):
     session = MagicMock()
     session.get = MagicMock(side_effect=TimeoutError())
     with patch(
-        "homeassistant.helpers.aiohttp_client.async_get_clientsession",
+        "custom_components.xiaomi_vacuum.cloud.async_get_clientsession",
         return_value=session,
     ):
         assert await cloud._async_poll_qr_login("https://lp", 1) is False
