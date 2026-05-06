@@ -125,24 +125,61 @@ async def setup_integration(hass, mock_miot_device, enable_custom_integrations):
 
 
 @pytest.fixture
-def mock_api_client() -> Generator:
-    """Mock XiaomiVacuumApiClient (for tests that bypass setup_integration)."""
-    with patch("custom_components.xiaomi_vacuum.XiaomiVacuumApiClient") as cls:
+def mock_cloud() -> Generator:
+    """Mock XiaomiCloud (covers both `from_session` and `__init__` paths)."""
+    with patch("custom_components.xiaomi_vacuum.XiaomiCloud") as cls:
         instance = cls.return_value
-        info = MagicMock()
-        info.model = "xiaomi.vacuum.d109gl"
-        info.mac_address = "AA:BB:CC:DD:EE:FF"
-        info.firmware_version = "1.0.0"
-        info.hardware_version = "rev1"
-        instance.async_get_info = AsyncMock(return_value=info)
-        instance.async_get_state = AsyncMock(return_value=dict(SAMPLE_STATE))
-        instance.async_start = AsyncMock()
-        instance.async_pause = AsyncMock()
-        instance.async_stop = AsyncMock()
-        instance.async_return_home = AsyncMock()
-        instance.async_locate = AsyncMock()
-        instance.async_set_fan_speed = AsyncMock()
-        instance.async_set_sweep_mop_type = AsyncMock()
-        instance.async_set_property = AsyncMock()
-        instance.async_clean_segments = AsyncMock()
+        cls.from_session = MagicMock(return_value=instance)
+        device = MagicMock(country="cn", model="xiaomi.vacuum.d109gl", device_id="d")
+        instance._device = device
+        instance.async_resolve_device = AsyncMock(return_value=device)
+        instance.async_get_map_bytes = AsyncMock(return_value=b"PNG_BYTES")
         yield instance
+
+
+@pytest.fixture
+async def setup_integration_with_cloud(
+    hass, mock_miot_device, mock_cloud, enable_custom_integrations
+):
+    """Set up the integration with cloud session tokens populated."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.xiaomi_vacuum.const import (
+        CONF_CLOUD_COUNTRY,
+        CONF_CLOUD_SERVICE_TOKEN,
+        CONF_CLOUD_SSECURITY,
+        CONF_CLOUD_USER_ID,
+        CONF_HOST,
+        CONF_NAME,
+        CONF_TOKEN,
+        DOMAIN,
+    )
+
+    with patch(
+        "custom_components.xiaomi_vacuum.map_coordinator.XiaomiMapDataParser"
+    ) as parser_cls:
+        parser = parser_cls.return_value
+        map_data = MagicMock()
+        image_obj = MagicMock()
+        image_obj.data.save = MagicMock()
+        map_data.image = image_obj
+        parser.parse = MagicMock(return_value=map_data)
+        parser.unpack_map = MagicMock(return_value="{}")
+
+        entry = MockConfigEntry(
+            domain=DOMAIN,
+            data={
+                CONF_HOST: "192.168.1.50",
+                CONF_TOKEN: "0" * 32,
+                CONF_NAME: "Aspirador",
+                CONF_CLOUD_COUNTRY: "cn",
+                CONF_CLOUD_SSECURITY: "ssecurity_value",
+                CONF_CLOUD_SERVICE_TOKEN: "service_token_value",
+                CONF_CLOUD_USER_ID: "user_id_value",
+            },
+            unique_id="AA:BB:CC:DD:EE:FF",
+        )
+        entry.add_to_hass(hass)
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+        yield entry

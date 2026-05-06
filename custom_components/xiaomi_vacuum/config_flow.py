@@ -1,8 +1,10 @@
-"""Config flow for Xiaomi Vacuum."""
+"""Config flow for Xiaomi Vacuum (cloud-discovery via QR login)."""
 
 from __future__ import annotations
 
-import os
+import asyncio
+import base64
+from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
@@ -12,73 +14,197 @@ from .api import (
     XiaomiVacuumApiClientCommunicationError,
     XiaomiVacuumApiClientError,
 )
+from .cloud import (
+    XiaomiCloud,
+    XiaomiCloudAuthError,
+    XiaomiCloudError,
+    XiaomiDeviceInfo,
+)
 from .const import (
+    CONF_CLOUD_COUNTRY,
+    CONF_CLOUD_SERVICE_TOKEN,
+    CONF_CLOUD_SSECURITY,
+    CONF_CLOUD_USER_ID,
     CONF_HOST,
     CONF_NAME,
     CONF_TOKEN,
     DOMAIN,
-    ENV_HOST,
-    ENV_NAME,
-    ENV_TOKEN,
     LOGGER,
 )
 
+_VACUUM_MODEL_PREFIX = "xiaomi.vacuum."
+_DEVICE_PICK = "device"
+_CLOUD_COUNTRY = "us"
+
 
 class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
-    """Config flow for Xiaomi Vacuum."""
+    """Cloud-first config flow: pick region → scan QR → pick vacuum → done."""
 
     VERSION = 1
 
+    def __init__(self) -> None:
+        """Initialize transient state for the multi-step flow."""
+        super().__init__()
+        self._user_input: dict[str, Any] = {}
+        self._cloud: XiaomiCloud | None = None
+        self._qr_image: bytes | None = None
+        self._qr_lp_url: str | None = None
+        self._qr_timeout: int = 300
+        self._qr_task: asyncio.Task | None = None
+        self._devices: list[XiaomiDeviceInfo] = []
+
     async def async_step_user(
+        self,
+        user_input: dict | None = None,  # noqa: ARG002
+    ) -> config_entries.ConfigFlowResult:
+        """Skip straight to the QR step; cloud region is hard-coded."""
+        self._user_input = {CONF_CLOUD_COUNTRY: _CLOUD_COUNTRY}
+        return await self.async_step_qr()
+
+    async def async_step_qr(
+        self,
+        user_input: dict | None = None,  # noqa: ARG002
+    ) -> config_entries.ConfigFlowResult:
+        """Show the QR + run a single long-poll in background until the user scans it."""
+        if self._qr_task is None:
+            await self._refresh_qr()
+            self._qr_task = self.hass.async_create_task(
+                self._cloud.async_qr_login(
+                    self._qr_lp_url, wait_seconds=self._qr_timeout
+                )
+            )
+
+        if not self._qr_task.done():
+            return self.async_show_progress(
+                step_id="qr",
+                progress_action="waiting_for_scan",
+                description_placeholders={"qr_image": self._qr_data_uri()},
+                progress_task=self._qr_task,
+            )
+
+        try:
+            self._qr_task.result()
+        except XiaomiCloudAuthError:
+            self._qr_task = None
+            return self.async_show_progress_done(next_step_id="qr_failed")
+        except XiaomiCloudError as exc:
+            LOGGER.warning("Cloud login failed: %s", exc)
+            self._qr_task = None
+            return self.async_show_progress_done(next_step_id="qr_failed")
+        return self.async_show_progress_done(next_step_id="discover")
+
+    async def async_step_qr_failed(
+        self, user_input: dict | None = None
+    ) -> config_entries.ConfigFlowResult:
+        """Show retry form after a QR timeout / scan failure."""
+        if user_input is not None:
+            return await self.async_step_qr()
+        return self.async_show_form(
+            step_id="qr_failed",
+            data_schema=vol.Schema({}),
+            errors={"base": "qr_not_scanned"},
+        )
+
+    async def async_step_discover(
         self,
         user_input: dict | None = None,
     ) -> config_entries.ConfigFlowResult:
-        """Handle the initial step."""
-        errors: dict[str, str] = {}
+        """List vacuums in the account; auto-pick if there's exactly one."""
+        if not self._devices:
+            try:
+                self._devices = await self._cloud.async_list_devices(
+                    model_prefix=_VACUUM_MODEL_PREFIX
+                )
+            except XiaomiCloudError as exc:
+                LOGGER.warning("Failed to list devices: %s", exc)
+                return self.async_abort(reason="cloud_list_failed")
+            if not self._devices:
+                return self.async_abort(reason="no_vacuum_found")
+
+        if len(self._devices) == 1:
+            return await self._finalize(self._devices[0])
 
         if user_input is not None:
-            client = XiaomiVacuumApiClient(
-                hass=self.hass,
-                host=user_input[CONF_HOST],
-                token=user_input[CONF_TOKEN],
+            chosen = next(
+                (d for d in self._devices if d.device_id == user_input[_DEVICE_PICK]),
+                None,
             )
-            try:
-                info = await client.async_get_info()
-            except XiaomiVacuumApiClientCommunicationError as exception:
-                LOGGER.error(exception)
-                errors["base"] = "connection"
-            except XiaomiVacuumApiClientError as exception:
-                LOGGER.exception(exception)
-                errors["base"] = "unknown"
-            else:
-                unique_id = getattr(info, "mac_address", None) or user_input[CONF_HOST]
-                await self.async_set_unique_id(unique_id)
-                self._abort_if_unique_id_configured()
-                name = (
-                    user_input.get(CONF_NAME)
-                    or getattr(info, "model", None)
-                    or "Xiaomi Vacuum"
-                )
-                user_input[CONF_NAME] = name
-                return self.async_create_entry(title=name, data=user_input)
+            if chosen is not None:
+                return await self._finalize(chosen)
 
-        schema = vol.Schema(
+        options = {
+            d.device_id: f"{d.name} ({d.model}) — {d.local_ip or '?'}"
+            for d in self._devices
+        }
+        return self.async_show_form(
+            step_id="discover",
+            data_schema=vol.Schema({vol.Required(_DEVICE_PICK): vol.In(options)}),
+        )
+
+    async def _finalize(
+        self, device: XiaomiDeviceInfo
+    ) -> config_entries.ConfigFlowResult:
+        """Validate the local connection (using cloud-supplied IP) and create entry."""
+        await self.async_set_unique_id(device.mac or device.device_id)
+        self._abort_if_unique_id_configured()
+
+        if not device.local_ip:
+            return self.async_abort(reason="no_local_ip")
+
+        client = XiaomiVacuumApiClient(
+            hass=self.hass, host=device.local_ip, token=device.token
+        )
+        try:
+            info = await client.async_get_info()
+        except XiaomiVacuumApiClientCommunicationError as exc:
+            LOGGER.error("Cannot reach %s: %s", device.local_ip, exc)
+            return self.async_abort(reason="local_unreachable")
+        except XiaomiVacuumApiClientError as exc:
+            LOGGER.exception("Local probe failed: %s", exc)
+            return self.async_abort(reason="local_probe_failed")
+
+        mac = getattr(info, "mac_address", None) or device.mac
+        if mac and mac != self.unique_id:
+            await self.async_set_unique_id(mac, raise_on_progress=False)
+            self._abort_if_unique_id_configured()
+
+        self._user_input.update(
             {
-                vol.Required(
-                    CONF_HOST,
-                    default=(user_input or {}).get(CONF_HOST)
-                    or os.environ.get(ENV_HOST, ""),
-                ): str,
-                vol.Required(
-                    CONF_TOKEN,
-                    default=(user_input or {}).get(CONF_TOKEN)
-                    or os.environ.get(ENV_TOKEN, ""),
-                ): str,
-                vol.Optional(
-                    CONF_NAME,
-                    default=(user_input or {}).get(CONF_NAME)
-                    or os.environ.get(ENV_NAME, ""),
-                ): str,
+                CONF_HOST: device.local_ip,
+                CONF_TOKEN: device.token,
+                CONF_NAME: device.name,
             }
         )
-        return self.async_show_form(step_id="user", data_schema=schema, errors=errors)
+        return self._create_entry()
+
+    async def _refresh_qr(self) -> None:
+        """Get a new QR image + long-polling URL."""
+        if self._cloud is None:
+            self._cloud = XiaomiCloud(
+                self.hass, country=self._user_input[CONF_CLOUD_COUNTRY]
+            )
+        try:
+            qr, lp, timeout = await self._cloud.async_qr_start()
+        except XiaomiCloudError as exc:
+            LOGGER.warning("Failed to start QR login: %s", exc)
+            return
+        self._qr_image = qr
+        self._qr_lp_url = lp
+        self._qr_timeout = timeout
+
+    def _qr_data_uri(self) -> str:
+        if not self._qr_image:
+            return ""
+        return f"data:image/png;base64,{base64.b64encode(self._qr_image).decode()}"
+
+    def _create_entry(self) -> config_entries.ConfigFlowResult:
+        if self._cloud is not None:
+            tokens = self._cloud.session_tokens()
+            if tokens["ssecurity"] and tokens["service_token"] and tokens["user_id"]:
+                self._user_input[CONF_CLOUD_SSECURITY] = tokens["ssecurity"]
+                self._user_input[CONF_CLOUD_SERVICE_TOKEN] = tokens["service_token"]
+                self._user_input[CONF_CLOUD_USER_ID] = tokens["user_id"]
+        return self.async_create_entry(
+            title=self._user_input[CONF_NAME],
+            data=self._user_input,
+        )

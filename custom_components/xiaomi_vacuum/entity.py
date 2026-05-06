@@ -11,14 +11,13 @@ from homeassistant.helpers.device_registry import (
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import ATTRIBUTION, CONF_NAME, DOMAIN, MODEL
+from .const import CONF_NAME, DOMAIN, MODEL
 from .coordinator import XiaomiVacuumDataUpdateCoordinator
 
 
 class XiaomiVacuumEntity(CoordinatorEntity[XiaomiVacuumDataUpdateCoordinator]):
     """Base entity for Xiaomi Vacuum."""
 
-    _attr_attribution = ATTRIBUTION
     _attr_has_entity_name = True
 
     def __init__(self, coordinator: XiaomiVacuumDataUpdateCoordinator) -> None:

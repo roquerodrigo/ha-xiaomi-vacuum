@@ -1,22 +1,35 @@
 {
     "config": {
         "step": {
-            "user": {
-                "title": "Set up Xiaomi Vacuum",
-                "description": "Enter the device's local IP and MIoT token. The token can be extracted from the Mi Home app database (see README).",
+            "qr": {
+                "title": "Scan with the Mi Home app",
+                "description": "![QR]({qr_image})\n\nOpen the Mi Home app, tap the QR scanner (top-right corner), and scan the code. The dialog will advance automatically once you confirm on the phone."
+            },
+            "qr_failed": {
+                "title": "QR not scanned in time",
+                "description": "The QR code expired before you scanned it. Submit to generate a new one."
+            },
+            "discover": {
+                "title": "Pick your vacuum",
+                "description": "More than one vacuum was found in your account. Choose the one to add.",
                 "data": {
-                    "host": "IP address",
-                    "token": "MIoT token (32 hex chars)",
-                    "name": "Name (optional, e.g. 'Vacuum')"
+                    "device": "Vacuum"
                 }
             }
         },
+        "progress": {
+            "waiting_for_scan": "![QR]({qr_image})\n\nOpen the Mi Home app, tap the QR scanner (top-right corner), and scan the code. The dialog will advance automatically once you confirm on the phone."
+        },
         "error": {
-            "connection": "Unable to reach the vacuum. Check IP, token and that it's on the same network.",
-            "unknown": "Unknown error occurred."
+            "qr_not_scanned": "QR was not scanned in time. A new code is shown — try again."
         },
         "abort": {
-            "already_configured": "This vacuum is already configured."
+            "already_configured": "This vacuum is already configured.",
+            "no_vacuum_found": "No vacuum was found in this Xiaomi account. Make sure it's paired in the Mi Home app and try again.",
+            "cloud_list_failed": "Could not list devices in your Xiaomi account. Try again later.",
+            "no_local_ip": "Xiaomi cloud did not return a local IP for this vacuum. Make sure it's online and connected to the same Wi-Fi as Home Assistant.",
+            "local_unreachable": "The vacuum was found in the cloud but Home Assistant cannot reach it on the LAN. Check it's on the same network and online.",
+            "local_probe_failed": "Local probe failed unexpectedly. See logs."
         }
     },
     "entity": {
@@ -37,6 +50,11 @@
         "button": {
             "dust_arrest": {
                 "name": "Collect dust"
+            }
+        },
+        "image": {
+            "map": {
+                "name": "Map"
             }
         },
         "select": {

@@ -4,14 +4,6 @@ set -e
 
 cd "$(dirname "$0")/.."
 
-# Load XIAOMI_VACUUM_HOST / XIAOMI_VACUUM_TOKEN from .env if present
-if [[ -f "${PWD}/.env" ]]; then
-    set -a
-    # shellcheck disable=SC1091
-    source "${PWD}/.env"
-    set +a
-fi
-
 # Create config dir if not present
 if [[ ! -d "${PWD}/config" ]]; then
     mkdir -p "${PWD}/config"

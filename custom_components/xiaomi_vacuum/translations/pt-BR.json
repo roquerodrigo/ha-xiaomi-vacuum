@@ -1,22 +1,35 @@
 {
     "config": {
         "step": {
-            "user": {
-                "title": "Configurar Xiaomi Vacuum",
-                "description": "Informe o IP local do dispositivo e o token MIoT. O token pode ser extraído do banco do app Mi Home (veja o README).",
+            "qr": {
+                "title": "Escaneie com o app Mi Home",
+                "description": "![QR]({qr_image})\n\nAbra o app Mi Home, toque no leitor de QR (canto superior direito) e escaneie o código. A janela avança sozinha quando você confirmar no celular."
+            },
+            "qr_failed": {
+                "title": "QR não escaneado a tempo",
+                "description": "O código QR expirou antes de ser escaneado. Clique em Enviar para gerar um novo."
+            },
+            "discover": {
+                "title": "Escolha seu aspirador",
+                "description": "Mais de um aspirador foi encontrado na sua conta. Escolha qual adicionar.",
                 "data": {
-                    "host": "Endereço IP",
-                    "token": "Token MIoT (32 caracteres hexadecimais)",
-                    "name": "Nome (opcional, ex.: 'Aspirador')"
+                    "device": "Aspirador"
                 }
             }
         },
+        "progress": {
+            "waiting_for_scan": "![QR]({qr_image})\n\nAbra o app Mi Home, toque no leitor de QR (canto superior direito) e escaneie o código. A janela avança sozinha quando você confirmar no celular."
+        },
         "error": {
-            "connection": "Não foi possível conectar ao aspirador. Verifique IP, token e se está na mesma rede.",
-            "unknown": "Ocorreu um erro desconhecido."
+            "qr_not_scanned": "QR não foi escaneado a tempo. Um novo código foi gerado — tente de novo."
         },
         "abort": {
-            "already_configured": "Este aspirador já está configurado."
+            "already_configured": "Este aspirador já está configurado.",
+            "no_vacuum_found": "Nenhum aspirador foi encontrado nesta conta Xiaomi. Verifique se ele está pareado no app Mi Home e tente de novo.",
+            "cloud_list_failed": "Não foi possível listar os dispositivos da sua conta Xiaomi. Tente novamente mais tarde.",
+            "no_local_ip": "O Xiaomi cloud não retornou um IP local pra esse aspirador. Verifique se ele está online e na mesma rede Wi-Fi do Home Assistant.",
+            "local_unreachable": "O aspirador foi encontrado na conta, mas o Home Assistant não consegue alcançá-lo na rede local. Verifique se está na mesma rede e online.",
+            "local_probe_failed": "Falha inesperada na sondagem local. Veja os logs."
         }
     },
     "entity": {
@@ -37,6 +50,11 @@
         "button": {
             "dust_arrest": {
                 "name": "Coletar pó"
+            }
+        },
+        "image": {
+            "map": {
+                "name": "Mapa"
             }
         },
         "select": {

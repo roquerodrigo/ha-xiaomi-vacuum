@@ -9,16 +9,16 @@ from homeassistant.components.vacuum import VacuumActivity
 LOGGER: Logger = getLogger(__package__)
 
 DOMAIN = "xiaomi_vacuum"
-ATTRIBUTION = ""
 MODEL = "xiaomi.vacuum.d109gl"
 
 CONF_HOST = "host"
 CONF_TOKEN = "token"  # noqa: S105
 CONF_NAME = "name"
+CONF_CLOUD_COUNTRY = "cloud_country"
+CONF_CLOUD_SSECURITY = "cloud_ssecurity"
+CONF_CLOUD_SERVICE_TOKEN = "cloud_service_token"  # noqa: S105
+CONF_CLOUD_USER_ID = "cloud_user_id"
 
-ENV_HOST = "XIAOMI_VACUUM_HOST"
-ENV_TOKEN = "XIAOMI_VACUUM_TOKEN"  # noqa: S105
-ENV_NAME = "XIAOMI_VACUUM_NAME"
 
 PROPERTY_MAPPING: dict[str, dict[str, int]] = {
     "status": {"siid": 2, "piid": 2},
@@ -31,6 +31,7 @@ PROPERTY_MAPPING: dict[str, dict[str, int]] = {
     "mop_water_level": {"siid": 2, "piid": 10},
     "room_information": {"siid": 2, "piid": 16},
     "last_clean_time": {"siid": 2, "piid": 17},
+    "map_obj_name": {"siid": 10, "piid": 1},
     "sweep_route": {"siid": 2, "piid": 74},
     "obstacle_avoidance_strategy": {"siid": 2, "piid": 75},
     "battery_level": {"siid": 3, "piid": 1},

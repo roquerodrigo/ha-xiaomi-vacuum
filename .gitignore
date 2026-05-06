@@ -20,3 +20,7 @@ config/*
 # Local secrets
 .env
 /CONFIGURABLE_OPTIONS.md
+
+# Claude Code session state
+.claude/
+

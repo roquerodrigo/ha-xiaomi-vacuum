@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
     from .api import XiaomiVacuumApiClient
     from .coordinator import XiaomiVacuumDataUpdateCoordinator
+    from .map_coordinator import XiaomiVacuumMapCoordinator
 
 
 type XiaomiVacuumConfigEntry = ConfigEntry[XiaomiVacuumData]
@@ -24,3 +25,4 @@ class XiaomiVacuumData:
     coordinator: XiaomiVacuumDataUpdateCoordinator
     integration: Integration
     info: Any
+    map_coordinator: XiaomiVacuumMapCoordinator | None = None
