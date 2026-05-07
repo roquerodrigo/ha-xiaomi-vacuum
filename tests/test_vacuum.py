@@ -24,11 +24,6 @@ async def test_vacuum_activity_docked(hass, setup_integration):
     assert state.state == "docked"
 
 
-async def test_vacuum_battery_level(hass, setup_integration):
-    state = hass.states.get("vacuum.aspirador")
-    assert state.attributes["battery_level"] == 99
-
-
 async def test_vacuum_fan_speed(hass, setup_integration):
     state = hass.states.get("vacuum.aspirador")
     # fan_speed:2 -> "basic"
