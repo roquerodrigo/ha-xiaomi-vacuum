@@ -22,6 +22,7 @@ from .cloud import (
 
 if TYPE_CHECKING:
     import asyncio
+
 from .const import (
     CONF_CLOUD_COUNTRY,
     CONF_CLOUD_SERVICE_TOKEN,
@@ -52,12 +53,12 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._qr_image: bytes | None = None
         self._qr_lp_url: str | None = None
         self._qr_timeout: int = 300
-        self._qr_task: asyncio.Task | None = None
+        self._qr_task: asyncio.Task[None] | None = None
         self._devices: list[XiaomiDeviceInfo] = []
 
     async def async_step_user(
         self,
-        user_input: dict | None = None,  # noqa: ARG002
+        user_input: dict[str, Any] | None = None,  # noqa: ARG002
     ) -> config_entries.ConfigFlowResult:
         """Skip straight to the QR step; cloud region is hard-coded."""
         self._user_input = {CONF_CLOUD_COUNTRY: _CLOUD_COUNTRY}
@@ -65,11 +66,13 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_qr(
         self,
-        user_input: dict | None = None,  # noqa: ARG002
+        user_input: dict[str, Any] | None = None,  # noqa: ARG002
     ) -> config_entries.ConfigFlowResult:
         """Show QR + run a single long-poll in background until the user scans it."""
         if self._qr_task is None:
             await self._refresh_qr()
+            if self._cloud is None or self._qr_lp_url is None:
+                return self.async_show_progress_done(next_step_id="qr_failed")
             self._qr_task = self.hass.async_create_task(
                 self._cloud.async_qr_login(
                     self._qr_lp_url, wait_seconds=self._qr_timeout
@@ -96,7 +99,7 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_progress_done(next_step_id="discover")
 
     async def async_step_qr_failed(
-        self, user_input: dict | None = None
+        self, user_input: dict[str, Any] | None = None
     ) -> config_entries.ConfigFlowResult:
         """Show retry form after a QR timeout / scan failure."""
         if user_input is not None:
@@ -109,10 +112,12 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_discover(
         self,
-        user_input: dict | None = None,
+        user_input: dict[str, Any] | None = None,
     ) -> config_entries.ConfigFlowResult:
         """List vacuums in the account; auto-pick if there's exactly one."""
         if not self._devices:
+            if self._cloud is None:
+                return self.async_abort(reason="cloud_list_failed")
             try:
                 self._devices = await self._cloud.async_list_devices(
                     model_prefix=_VACUUM_MODEL_PREFIX

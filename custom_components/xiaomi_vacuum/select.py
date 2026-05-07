@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.helpers.entity import EntityCategory
@@ -96,8 +96,6 @@ class XiaomiVacuumSelect(XiaomiVacuumEntity, SelectEntity):
     """Generic MIoT-backed select."""
 
     _attr_entity_category = EntityCategory.CONFIG
-    # _attr_options is set per-instance in __init__
-    _attr_options: ClassVar[list[str]] = []
 
     def __init__(
         self,
