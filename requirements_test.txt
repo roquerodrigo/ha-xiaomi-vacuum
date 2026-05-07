@@ -6,6 +6,6 @@ pytest-homeassistant-custom-component==0.13.329
 # Runtime dependencies declared in manifest.json — HA installs them at runtime,
 # but pytest-homeassistant-custom-component does not, so the test suite needs
 # them to import the integration.
-pycryptodome>=3.20
+pycryptodome>=3.23.0
 python-miio>=0.5.12,<0.7
 vacuum-map-parser-xiaomi>=0.1.4
