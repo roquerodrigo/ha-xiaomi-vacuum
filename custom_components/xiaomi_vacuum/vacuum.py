@@ -165,7 +165,7 @@ def _parse_segments(raw: Any) -> list[Segment]:
         return []
     try:
         data = json.loads(raw) if isinstance(raw, str) else raw
-    except ValueError, TypeError:
+    except (ValueError, TypeError):  # fmt: skip
         LOGGER.warning("Could not JSON-parse room_information: %r", raw)
         return []
 

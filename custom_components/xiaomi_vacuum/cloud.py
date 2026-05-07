@@ -247,6 +247,9 @@ class _XiaomiCloudConnector:
         return json.loads(decoded)
 
     def _signed_nonce(self, nonce: str) -> str:
+        if self._ssecurity is None:
+            msg = "ssecurity not set; login required before signing requests"
+            raise XiaomiCloudError(msg)
         h = hashlib.sha256(base64.b64decode(self._ssecurity) + base64.b64decode(nonce))
         return base64.b64encode(h.digest()).decode("utf-8")
 
@@ -273,6 +276,9 @@ class _XiaomiCloudConnector:
         nonce: str,
         params: dict[str, str],
     ) -> dict[str, str]:
+        if self._ssecurity is None:
+            msg = "ssecurity not set; login required before encrypting requests"
+            raise XiaomiCloudError(msg)
         params["rc4_hash__"] = self._enc_signature(url, method, signed_nonce, params)
         for k, v in params.items():
             params[k] = self._encrypt_rc4(signed_nonce, v)

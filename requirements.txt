@@ -1,6 +1,7 @@
 colorlog==6.10.1
-homeassistant==2026.4.4
+homeassistant==2026.5.0
 mypy==1.18.2
 pip>=26.1
 pre-commit==4.6.0
 ruff==0.15.12
+types-requests==2.33.0.20260503
