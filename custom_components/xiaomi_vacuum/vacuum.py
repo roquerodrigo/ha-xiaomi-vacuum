@@ -37,7 +37,6 @@ SUPPORTED_FEATURES = (
     | VacuumEntityFeature.RETURN_HOME
     | VacuumEntityFeature.LOCATE
     | VacuumEntityFeature.FAN_SPEED
-    | VacuumEntityFeature.BATTERY
     | VacuumEntityFeature.STATE
     | VacuumEntityFeature.CLEAN_AREA
 )
@@ -76,12 +75,6 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         if status is None:
             return None
         return STATUS_TO_ACTIVITY.get(int(status))
-
-    @property
-    def battery_level(self) -> int | None:
-        """Return battery level 0-100."""
-        level = self.coordinator.data.get("battery_level")
-        return int(level) if level is not None else None
 
     @property
     def fan_speed(self) -> str | None:
