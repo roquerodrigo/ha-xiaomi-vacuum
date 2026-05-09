@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.1.1...v1.1.2) (2026-05-09)
+
+
+### Dependencies
+
+* bump types-requests ([bb03315](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/bb033152255c8bdcfcb53b22a8f2e43931207336))
+
 ## [1.1.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.1.0...v1.1.1) (2026-05-07)
 
 
