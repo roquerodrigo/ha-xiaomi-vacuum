@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.2.0...v1.2.1) (2026-05-22)
+
+
+### Dependencies
+
+* **deps:** bump the python-production group across 1 directory with 2 updates ([023f2ee](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/023f2ee0d68c1f6536c499c5195e3033e18b88fb))
+
 ## [1.2.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.1.1...v1.2.0) (2026-05-17)
 
 
