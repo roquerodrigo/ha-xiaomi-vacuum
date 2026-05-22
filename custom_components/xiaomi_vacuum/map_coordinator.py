@@ -162,7 +162,11 @@ class XiaomiVacuumMapCoordinator(DataUpdateCoordinator[bytes | None]):
             map_data = await self.hass.async_add_executor_job(
                 self._parse_blob, raw, device.model, device.device_id
             )
-            if not map_data or not getattr(map_data, "image", None):
+            if (
+                map_data is None
+                or map_data.image is None
+                or map_data.image.data is None
+            ):
                 LOGGER.debug("Parser returned no image for obj=%s", obj_name)
                 return self.data
             buf = io.BytesIO()

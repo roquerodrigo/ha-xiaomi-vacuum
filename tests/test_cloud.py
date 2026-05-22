@@ -110,7 +110,7 @@ def test_poll_qr_login_success_returns_true_and_sets_tokens():
     assert c.poll_qr_login("https://lp", timeout=10) is True
     assert c._ssecurity == "S"
     assert c._user_id == "42"
-    assert c._service_token == "TOK"  # noqa: S105
+    assert c._service_token == "TOK"
 
 
 def test_poll_qr_login_returns_false_when_service_token_missing():
@@ -140,7 +140,7 @@ def test_find_device_returns_match():
         device_id="d",
         name="x",
         model="m",
-        token="abc",  # noqa: S106
+        token="abc",
         country="cn",
     )
     with patch.object(c, "_iter_devices", return_value=iter([target])):
@@ -188,7 +188,7 @@ async def test_xiaomi_cloud_from_session_skips_login(hass):
     cloud = XiaomiCloud.from_session(hass, "us", "ssec", "tok", "uid")
     assert cloud._logged_in is True
     assert cloud._connector._ssecurity == "ssec"
-    assert cloud._connector._service_token == "tok"  # noqa: S105
+    assert cloud._connector._service_token == "tok"
     assert cloud._connector._user_id == "uid"
 
 
@@ -217,11 +217,11 @@ async def test_async_qr_start(hass):
 async def test_async_poll_qr_login_success(hass):
     cloud = XiaomiCloud(hass, "us")
     body = '&&&START&&&{"ssecurity":"S","userId":42,"location":"https://loc"}'
-    with _patch_aiohttp(_aio_resp(text=body), _aio_resp(token_cookie="TOK")):  # noqa: S106
+    with _patch_aiohttp(_aio_resp(text=body), _aio_resp(token_cookie="TOK")):
         assert await cloud._async_poll_qr_login("https://lp", 1) is True
     assert cloud._connector._ssecurity == "S"
     assert cloud._connector._user_id == "42"
-    assert cloud._connector._service_token == "TOK"  # noqa: S105
+    assert cloud._connector._service_token == "TOK"
 
 
 async def test_async_poll_qr_login_returns_false_on_non_200(hass):
