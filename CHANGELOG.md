@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.2.1...v1.2.2) (2026-05-25)
+
+
+### Documentation
+
+* add CI and HACS badges ([17d4a52](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/17d4a5225c76b75eb94ecaa21c3dc8020afbedc8))
+* add CI and HACS badges ([c53c3ab](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/c53c3abeefb7dd88c91d84465162236c8552cb63))
+
 ## [1.2.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.2.0...v1.2.1) (2026-05-22)
 
 
