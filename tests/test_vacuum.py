@@ -9,7 +9,7 @@ from custom_components.xiaomi_vacuum.const import (
     DOMAIN,
     STATUS_TO_ACTIVITY,
 )
-from custom_components.xiaomi_vacuum.vacuum import _parse_segments
+from custom_components.xiaomi_vacuum.vacuum.cleaner import _parse_segments
 
 
 @pytest.mark.parametrize(("status_code", "expected"), list(STATUS_TO_ACTIVITY.items()))

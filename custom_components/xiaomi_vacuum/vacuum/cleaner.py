@@ -1,4 +1,4 @@
-"""Vacuum platform for xiaomi_vacuum."""
+"""Xiaomi vacuum entity for xiaomi_vacuum."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ from homeassistant.components.vacuum import (
     VacuumEntityFeature,
 )
 
-from .const import (
+from ..const import (  # noqa: TID252
     CHARGING_STATE_SLUGS,
     DOMAIN,
     FAN_SPEED_NAMES,
@@ -21,14 +21,10 @@ from .const import (
     STATUS_SLUGS,
     STATUS_TO_ACTIVITY,
 )
-from .entity import XiaomiVacuumEntity
+from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 if TYPE_CHECKING:
-    from homeassistant.core import HomeAssistant
-    from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
-    from .coordinator import XiaomiVacuumDataUpdateCoordinator
-    from .data import XiaomiVacuumConfigEntry
+    from ..coordinator import XiaomiVacuumDataUpdateCoordinator  # noqa: TID252
 
 SUPPORTED_FEATURES = (
     VacuumEntityFeature.START
@@ -40,15 +36,6 @@ SUPPORTED_FEATURES = (
     | VacuumEntityFeature.STATE
     | VacuumEntityFeature.CLEAN_AREA
 )
-
-
-async def async_setup_entry(
-    hass: HomeAssistant,  # noqa: ARG001
-    entry: XiaomiVacuumConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
-    """Set up the vacuum entity."""
-    async_add_entities([XiaomiVacuum(coordinator=entry.runtime_data.coordinator)])
 
 
 class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):

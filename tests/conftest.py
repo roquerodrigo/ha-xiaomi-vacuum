@@ -59,7 +59,7 @@ def enable_custom_integrations(hass) -> None:
 @pytest.fixture
 def mock_miot_device() -> Generator:
     """Patch miio.MiotDevice everywhere it's imported."""
-    with patch("custom_components.xiaomi_vacuum.api.MiotDevice") as cls:
+    with patch("custom_components.xiaomi_vacuum.api.client.MiotDevice") as cls:
         instance = cls.return_value
         info = MagicMock()
         info.model = "xiaomi.vacuum.d109gl"

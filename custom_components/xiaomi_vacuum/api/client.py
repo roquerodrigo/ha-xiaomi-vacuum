@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from miio import DeviceException, MiotDevice
 
-from .const import (
+from ..const import (  # noqa: TID252
     ACTION_IDENTIFY,
     ACTION_PAUSE_SWEEPING,
     ACTION_RETURN_HOME,
@@ -20,17 +20,13 @@ from .const import (
     PROPERTY_MAPPING,
     SWEEP_MOP_TYPES,
 )
+from .errors import (
+    XiaomiVacuumApiClientCommunicationError,
+    XiaomiVacuumApiClientError,
+)
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
-
-
-class XiaomiVacuumApiClientError(Exception):
-    """General API error."""
-
-
-class XiaomiVacuumApiClientCommunicationError(XiaomiVacuumApiClientError):
-    """Communication error (offline, timeout, invalid token)."""
 
 
 class XiaomiVacuumApiClient:
