@@ -57,7 +57,10 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
 
     @property
     def activity(self) -> VacuumActivity | None:
-        """Return current activity (cleaning/docked/etc.)."""
+        """Return current activity; an active fault forces the ERROR state."""
+        fault = self.coordinator.data.get("fault")
+        if isinstance(fault, int) and fault != 0:
+            return VacuumActivity.ERROR
         status = self.coordinator.data.get("status")
         if status is None:
             return None

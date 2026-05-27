@@ -38,6 +38,15 @@ async def test_vacuum_extra_attributes(hass, setup_integration):
     assert extras["cleaning_area"] == 200
 
 
+async def test_vacuum_activity_error_when_fault_active(hass, setup_integration):
+    coord = setup_integration.runtime_data.coordinator
+    # status:2 would be DOCKED, but an active fault must force ERROR
+    coord.async_set_updated_data({**coord.data, "status": 2, "fault": 210009})
+    await hass.async_block_till_done()
+    state = hass.states.get("vacuum.aspirador")
+    assert state.state == "error"
+
+
 async def test_vacuum_unknown_activity_when_no_status(hass, setup_integration):
     state = hass.states.get("vacuum.aspirador")
     # current parsed state has status=2, force a new state without it

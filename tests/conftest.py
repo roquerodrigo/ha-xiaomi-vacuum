@@ -23,7 +23,7 @@ SAMPLE_ROOM_INFO = json.dumps(
 
 SAMPLE_STATE: dict[str, Any] = {
     "status": 2,
-    "fault": 0,
+    "fault_ids": '{"ts": 1700000000, "fault": [0]}',
     "sweep_mop_type": 1,
     "cleaning_area": 200,
     "cleaning_time": 120,

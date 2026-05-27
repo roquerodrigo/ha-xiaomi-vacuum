@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any
 
@@ -17,6 +18,25 @@ if TYPE_CHECKING:
     from .data import XiaomiVacuumConfigEntry
 
 UPDATE_INTERVAL = timedelta(seconds=30)
+
+
+def _live_fault_code(fault_ids_raw: str | None) -> int | None:
+    """
+    Return the current active fault code from the `Fault Ids` property.
+
+    `Fault Ids` (siid 2/piid 66) is the live fault state, shaped like
+    ``{"ts": ..., "fault": [<codes>]}`` where ``[0]`` means no active fault. The
+    `Device Fault` property (piid 3) is not used — it latches the last code and
+    never resets. Returns None when `Fault Ids` is missing or unparseable.
+    """
+    if not fault_ids_raw:
+        return None
+    try:
+        ids = json.loads(fault_ids_raw).get("fault") or []
+    except ValueError, TypeError, AttributeError:
+        return None
+    active = [code for code in ids if code]
+    return active[0] if active else 0
 
 
 class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -42,6 +62,7 @@ class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             data = await self.config_entry.runtime_data.client.async_get_state()
         except XiaomiVacuumApiClientError as exception:
             raise UpdateFailed(exception) from exception
+        data["fault"] = _live_fault_code(data.get("fault_ids"))
         await self._enrich_fault_text(data)
         return data
 

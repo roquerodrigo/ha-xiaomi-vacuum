@@ -22,7 +22,10 @@ CONF_CLOUD_USER_ID = "cloud_user_id"
 
 PROPERTY_MAPPING: dict[str, dict[str, int]] = {
     "status": {"siid": 2, "piid": 2},
-    "fault": {"siid": 2, "piid": 3},
+    # Live fault state. The Device Fault property (piid 3) is deliberately NOT read:
+    # it latches the last code and never resets. Fault Ids (piid 66) is the live
+    # {"fault": [codes]} list ([0] = none); the coordinator derives the fault from it.
+    "fault_ids": {"siid": 2, "piid": 66},
     "sweep_mop_type": {"siid": 2, "piid": 4},
     "cleaning_area": {"siid": 2, "piid": 6},
     "cleaning_time": {"siid": 2, "piid": 7},
