@@ -47,6 +47,14 @@
                 }
             }
         },
+        "sensor": {
+            "error": {
+                "name": "Erro"
+            },
+            "error_code": {
+                "name": "Código de erro"
+            }
+        },
         "button": {
             "dust_arrest": {
                 "name": "Coletar pó"

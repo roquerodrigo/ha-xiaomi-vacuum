@@ -47,6 +47,14 @@
                 }
             }
         },
+        "sensor": {
+            "error": {
+                "name": "Error"
+            },
+            "error_code": {
+                "name": "Error code"
+            }
+        },
         "button": {
             "dust_arrest": {
                 "name": "Collect dust"

@@ -143,3 +143,8 @@ CHARGING_STATE_SLUGS: dict[int, str] = {
     2: "not_charging",
     3: "not_chargeable",
 }
+
+# Fault codes (MIoT siid 2 / piid 3) are large device-specific numbers (e.g. 210009)
+# with no published code->text table anywhere in Xiaomi's ecosystem. The localized,
+# human-readable text is delivered by the Xiaomi cloud as a device message (see
+# cloud.XiaomiCloud.async_fault_text); the coordinator resolves it into "fault_text".

@@ -211,6 +211,46 @@ class _XiaomiCloudConnector:
             return None
         return response.content
 
+    def get_device_fault_texts(
+        self, country: str, did: str, limit: int = 50
+    ) -> dict[int, str]:
+        """
+        Map fault codes to their localized text from the device message feed.
+
+        The vacuum reports a fault as a numeric code on its `fault` property
+        (siid 2 / piid 3). Xiaomi's cloud emits a localized push message
+        (type 6) for each fault whose `params.body.value` carries that code and
+        whose `title` is the human-readable text in the account's language.
+        We read that feed and build `{code: title}`. `force_read` is kept false
+        so we never alter the user's unread state.
+        """
+        url = self._api_url(country) + "/v2/message/v2/list"
+        params = {
+            "data": json.dumps(
+                {
+                    "did": str(did),
+                    "type": 6,
+                    "timestamp": 0,
+                    "limit": limit,
+                    "force_read": False,
+                }
+            )
+        }
+        response = self._encrypted_call(url, params)
+        texts: dict[int, str] = {}
+        if not response or not (result := response.get("result")):
+            return texts
+        for message in result.get("messages") or []:
+            body = (message.get("params") or {}).get("body") or {}
+            value = body.get("value") or body.get("extra") or []
+            title = message.get("title")
+            if title and isinstance(value, list) and value:
+                try:
+                    texts.setdefault(int(value[0]), title)
+                except TypeError, ValueError:
+                    continue
+        return texts
+
     @staticmethod
     def _api_url(country: str) -> str:
         prefix = "" if country == "cn" else f"{country}."
@@ -330,6 +370,7 @@ class XiaomiCloud:
         self._connector = _XiaomiCloudConnector()
         self._device: XiaomiDeviceInfo | None = None
         self._logged_in = False
+        self._fault_texts: dict[int, str] = {}
 
     @classmethod
     def from_session(
@@ -456,6 +497,28 @@ class XiaomiCloud:
         if not url:
             return None
         return await self._run(self._connector.get_map_bytes, url)
+
+    async def async_fault_text(self, code: int) -> str | None:
+        """
+        Return the localized text for a fault `code`, or None if unknown.
+
+        Results are cached per code; the cloud message feed is only queried
+        when a code we have not seen before appears.
+        """
+        if not self._logged_in or not self._device or not code:
+            return None
+        if code not in self._fault_texts:
+            try:
+                texts = await self._run(
+                    self._connector.get_device_fault_texts,
+                    self._device.country,
+                    self._device.device_id,
+                )
+            except (requests.RequestException, XiaomiCloudError) as exc:
+                LOGGER.debug("Failed to fetch fault texts: %s", exc)
+                return None
+            self._fault_texts.update(texts)
+        return self._fault_texts.get(int(code))
 
     async def _run(self, func: Any, *args: Any) -> Any:
         return await self._hass.async_add_executor_job(partial(func, *args))

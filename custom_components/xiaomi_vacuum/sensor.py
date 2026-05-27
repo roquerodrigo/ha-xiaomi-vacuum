@@ -23,10 +23,17 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up sensor entities."""
-    async_add_entities([BatterySensor(coordinator=entry.runtime_data.coordinator)])
+    coordinator = entry.runtime_data.coordinator
+    async_add_entities(
+        [
+            XiaomiVacuumBatterySensor(coordinator=coordinator),
+            XiaomiVacuumErrorSensor(coordinator=coordinator),
+            XiaomiVacuumErrorCodeSensor(coordinator=coordinator),
+        ]
+    )
 
 
-class BatterySensor(XiaomiVacuumEntity, SensorEntity):
+class XiaomiVacuumBatterySensor(XiaomiVacuumEntity, SensorEntity):
     """Battery level sensor for the vacuum."""
 
     _attr_device_class = SensorDeviceClass.BATTERY
@@ -43,3 +50,59 @@ class BatterySensor(XiaomiVacuumEntity, SensorEntity):
         """Return battery level 0-100."""
         level = self.coordinator.data.get("battery_level")
         return int(level) if level is not None else None
+
+
+class XiaomiVacuumErrorSensor(XiaomiVacuumEntity, SensorEntity):
+    """
+    Device fault sensor (MIoT siid 2 / piid 3).
+
+    The device reports a numeric fault code. There is no static code->text
+    table for this model anywhere in Xiaomi's ecosystem; the human-readable,
+    already-localized text is delivered by the cloud as a device message and
+    resolved by the coordinator into ``fault_text``. Shows ``OK`` when there is
+    no fault, the localized text when available, or ``Error <code>`` otherwise.
+    The raw code is always exposed as the ``fault_code`` attribute.
+    """
+
+    _attr_translation_key = "error"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: XiaomiVacuumDataUpdateCoordinator) -> None:
+        """Initialize."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_error"
+
+    @property
+    def native_value(self) -> str | None:
+        """Return localized fault text, ``OK`` when healthy, or ``Error <code>``."""
+        data = self.coordinator.data
+        fault = data.get("fault")
+        if fault is None:
+            return None
+        if int(fault) == 0:
+            return "OK"
+        return data.get("fault_text") or f"Error {int(fault)}"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, int | None]:
+        """Keep the raw numeric fault code available."""
+        fault = self.coordinator.data.get("fault")
+        return {"fault_code": int(fault) if fault is not None else None}
+
+
+class XiaomiVacuumErrorCodeSensor(XiaomiVacuumEntity, SensorEntity):
+    """Raw device fault code (MIoT siid 2 / piid 3); 0 means no error."""
+
+    _attr_translation_key = "error_code"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+
+    def __init__(self, coordinator: XiaomiVacuumDataUpdateCoordinator) -> None:
+        """Initialize."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_error_code"
+
+    @property
+    def native_value(self) -> int | None:
+        """Return the numeric fault code (0 = no error)."""
+        fault = self.coordinator.data.get("fault")
+        return int(fault) if fault is not None else None

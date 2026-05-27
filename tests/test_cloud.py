@@ -154,6 +154,34 @@ def test_find_device_returns_none_when_no_match():
         assert c.find_device("nope", "cn") is None
 
 
+def test_get_device_fault_texts_maps_code_to_title():
+    c = _XiaomiCloudConnector()
+    response = {
+        "result": {
+            "messages": [
+                {
+                    "title": "Não foi possível voltar à base para carregar.",
+                    "params": {"body": {"event": "2.3", "value": [210009]}},
+                },
+                # status notice without a code -> ignored
+                {
+                    "title": "Limpeza concluída",
+                    "params": {"body": {"event": "2.2", "value": []}},
+                },
+            ]
+        }
+    }
+    with patch.object(c, "_encrypted_call", return_value=response):
+        texts = c.get_device_fault_texts("us", "1154085352")
+    assert texts == {210009: "Não foi possível voltar à base para carregar."}
+
+
+def test_get_device_fault_texts_empty_on_no_result():
+    c = _XiaomiCloudConnector()
+    with patch.object(c, "_encrypted_call", return_value=None):
+        assert c.get_device_fault_texts("us", "did") == {}
+
+
 def test_get_map_url_pro_endpoint_succeeds_when_first_fails():
     c = _XiaomiCloudConnector()
     responses = [

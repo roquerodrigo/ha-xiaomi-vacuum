@@ -1,0 +1,12 @@
+{
+    "entity": {
+        "sensor": {
+            "error": {
+                "default": "mdi:alert-circle"
+            },
+            "error_code": {
+                "default": "mdi:numeric"
+            }
+        }
+    }
+}
