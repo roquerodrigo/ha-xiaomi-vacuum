@@ -23,7 +23,7 @@ SAMPLE_ROOM_INFO = json.dumps(
 
 SAMPLE_STATE: dict[str, Any] = {
     "status": 2,
-    "fault": 0,
+    "fault_ids": '{"ts": 1700000000, "fault": [0]}',
     "sweep_mop_type": 1,
     "cleaning_area": 200,
     "cleaning_time": 120,
@@ -36,6 +36,10 @@ SAMPLE_STATE: dict[str, Any] = {
     "obstacle_avoidance_strategy": 0,
     "battery_level": 99,
     "charging_state": 1,
+    "mop_life": 85,
+    "main_brush_life": 71,
+    "side_brush_life": 90,
+    "filter_life": 70,
 }
 
 
@@ -59,7 +63,7 @@ def enable_custom_integrations(hass) -> None:
 @pytest.fixture
 def mock_miot_device() -> Generator:
     """Patch miio.MiotDevice everywhere it's imported."""
-    with patch("custom_components.xiaomi_vacuum.api.MiotDevice") as cls:
+    with patch("custom_components.xiaomi_vacuum.api.client.MiotDevice") as cls:
         instance = cls.return_value
         info = MagicMock()
         info.model = "xiaomi.vacuum.d109gl"

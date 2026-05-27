@@ -1,4 +1,4 @@
-"""Xiaomi Cloud client — QR Code login + map fetch (no password/CAPTCHA/2FA)."""
+"""Sync Xiaomi cloud connector — QR Code login + signed MIoT calls."""
 
 from __future__ import annotations
 
@@ -8,44 +8,32 @@ import json
 import os
 import random
 import time
-from functools import partial
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, cast
 
-import aiohttp
 import requests
 from Crypto.Cipher import ARC4
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import LOGGER
+from ..const import LOGGER  # noqa: TID252
+from .device_info import XiaomiDeviceInfo
+from .errors import XiaomiCloudError
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from homeassistant.core import HomeAssistant
+    from ..data import JsonObject, JsonValue  # noqa: TID252
+    from .responses import (
+        DevicesResult,
+        FaultResult,
+        HomeEntry,
+        HomesResult,
+        MapUrlResult,
+        QrInit,
+        QrPoll,
+    )
 
 _HTTP_OK = int(HTTPStatus.OK)
 _QR_DEFAULT_LOCALE = "en_US"
-
-
-class XiaomiDeviceInfo(NamedTuple):
-    """A single device discovered in the Xiaomi cloud account."""
-
-    device_id: str
-    name: str
-    model: str
-    token: str
-    country: str
-    local_ip: str | None = None
-    mac: str | None = None
-
-
-class XiaomiCloudError(Exception):
-    """Generic cloud error."""
-
-
-class XiaomiCloudAuthError(XiaomiCloudError):
-    """Authentication failed (login expired, QR not scanned, etc.)."""
 
 
 class _XiaomiCloudConnector:
@@ -80,9 +68,9 @@ class _XiaomiCloudConnector:
             params=params,
             timeout=10,
         )
-        body = self._to_json(response.text)
+        body = cast("QrInit", self._to_json(response.text))
         qr_bytes = self._session.get(body["qr"], timeout=10).content
-        return qr_bytes, body["lp"], int(body.get("timeout", 60))
+        return qr_bytes, body["lp"], body.get("timeout", 60)
 
     def poll_qr_login(self, long_polling_url: str, timeout: int) -> bool:
         """
@@ -103,11 +91,12 @@ class _XiaomiCloudConnector:
                 "QR long-poll status %s: %s", response.status_code, response.text[:200]
             )
             return False
-        body = self._to_json(response.text)
-        if "ssecurity" not in body:
+        body = cast("QrPoll", self._to_json(response.text))
+        ssecurity = body.get("ssecurity")
+        if ssecurity is None:
             LOGGER.debug("QR long-poll returned without ssecurity: %s", body)
             return False
-        self._ssecurity = body["ssecurity"]
+        self._ssecurity = ssecurity
         self._user_id = str(body["userId"])
         location = body.get("location")
         if not location:
@@ -137,9 +126,11 @@ class _XiaomiCloudConnector:
 
     def _iter_devices(self, country: str) -> Iterator[XiaomiDeviceInfo]:
         for home in self._iter_homes(country):
-            yield from self._iter_home_devices(country, home["id"], home["uid"])
+            yield from self._iter_home_devices(
+                country, int(home["id"]), int(home["uid"])
+            )
 
-    def _iter_homes(self, country: str) -> Iterator[dict[str, Any]]:
+    def _iter_homes(self, country: str) -> Iterator[HomeEntry]:
         url = self._api_url(country) + "/v2/homeroom/gethome"
         params = {
             "data": json.dumps(
@@ -155,10 +146,9 @@ class _XiaomiCloudConnector:
         response = self._encrypted_call(url, params)
         if not response or "result" not in response:
             return
-        result = response["result"] or {}
-        for key in ("homelist", "share_home_list"):
-            for home in result.get(key) or []:
-                yield {"id": int(home["id"]), "uid": home["uid"]}
+        result = cast("HomesResult", response["result"] or {})
+        for homes in (result.get("homelist"), result.get("share_home_list")):
+            yield from homes or []
 
     def _iter_home_devices(
         self, country: str, home_id: int, owner_id: int
@@ -178,7 +168,7 @@ class _XiaomiCloudConnector:
         response = self._encrypted_call(url, params)
         if not response or not (result := response.get("result")):
             return
-        for device in result.get("device_info") or []:
+        for device in cast("DevicesResult", result).get("device_info") or []:
             yield XiaomiDeviceInfo(
                 device_id=device["did"],
                 name=device["name"],
@@ -200,8 +190,11 @@ class _XiaomiCloudConnector:
         ):
             url = self._api_url(country) + endpoint
             response = self._encrypted_call(url, params)
-            if response and (result := response.get("result")) and result.get("url"):
-                return result["url"]
+            if not response:
+                continue
+            result = cast("MapUrlResult", response.get("result") or {})
+            if url_value := result.get("url"):
+                return url_value
         return None
 
     def get_map_bytes(self, map_url: str) -> bytes | None:
@@ -209,14 +202,55 @@ class _XiaomiCloudConnector:
         response = self._session.get(map_url, timeout=10)
         if response.status_code != _HTTP_OK:
             return None
-        return response.content
+        return cast("bytes", response.content)
+
+    def get_device_fault_texts(
+        self, country: str, did: str, limit: int = 50
+    ) -> dict[int, str]:
+        """
+        Map fault codes to their localized text from the device message feed.
+
+        The vacuum reports a fault as a numeric code on its `fault` property
+        (siid 2 / piid 3). Xiaomi's cloud emits a localized push message
+        (type 6) for each fault whose `params.body.value` carries that code and
+        whose `title` is the human-readable text in the account's language.
+        We read that feed and build `{code: title}`. `force_read` is kept false
+        so we never alter the user's unread state.
+        """
+        url = self._api_url(country) + "/v2/message/v2/list"
+        params = {
+            "data": json.dumps(
+                {
+                    "did": str(did),
+                    "type": 6,
+                    "timestamp": 0,
+                    "limit": limit,
+                    "force_read": False,
+                }
+            )
+        }
+        response = self._encrypted_call(url, params)
+        texts: dict[int, str] = {}
+        if not response or not (result := response.get("result")):
+            return texts
+        for message in cast("FaultResult", result).get("messages") or []:
+            params_obj = message.get("params")
+            body = params_obj.get("body") if params_obj else None
+            value = (body.get("value") or body.get("extra")) if body else None
+            title = message.get("title")
+            if title and value:
+                try:
+                    texts.setdefault(int(value[0]), title)
+                except ValueError, TypeError:
+                    continue
+        return texts
 
     @staticmethod
     def _api_url(country: str) -> str:
         prefix = "" if country == "cn" else f"{country}."
         return f"https://{prefix}api.io.mi.com/app"
 
-    def _encrypted_call(self, url: str, params: dict[str, str]) -> Any:
+    def _encrypted_call(self, url: str, params: dict[str, str]) -> JsonObject | None:
         headers = {
             "Accept-Encoding": "identity",
             "User-Agent": self._agent,
@@ -244,7 +278,7 @@ class _XiaomiCloudConnector:
         if response.status_code != _HTTP_OK:
             return None
         decoded = self._decrypt_rc4(self._signed_nonce(fields["_nonce"]), response.text)
-        return json.loads(decoded)
+        return cast("JsonObject", json.loads(decoded))
 
     def _signed_nonce(self, nonce: str) -> str:
         if self._ssecurity is None:
@@ -316,146 +350,5 @@ class _XiaomiCloudConnector:
         return r.encrypt(base64.b64decode(payload))
 
     @staticmethod
-    def _to_json(text: str) -> Any:
-        return json.loads(text.replace("&&&START&&&", ""))
-
-
-class XiaomiCloud:
-    """Async-friendly wrapper around _XiaomiCloudConnector (executor-backed)."""
-
-    def __init__(self, hass: HomeAssistant, country: str) -> None:
-        """Initialize the cloud client (no network calls until login)."""
-        self._hass = hass
-        self._country = country
-        self._connector = _XiaomiCloudConnector()
-        self._device: XiaomiDeviceInfo | None = None
-        self._logged_in = False
-
-    @classmethod
-    def from_session(
-        cls,
-        hass: HomeAssistant,
-        country: str,
-        ssecurity: str,
-        service_token: str,
-        user_id: str,
-    ) -> XiaomiCloud:
-        """Build a logged-in client from previously saved session tokens."""
-        instance = cls(hass, country)
-        instance._connector._ssecurity = ssecurity  # noqa: SLF001
-        instance._connector._service_token = service_token  # noqa: SLF001
-        instance._connector._user_id = user_id  # noqa: SLF001
-        instance._logged_in = True
-        return instance
-
-    def session_tokens(self) -> dict[str, str | None]:
-        """Expose the active session tokens for persistence in the config entry."""
-        return {
-            "ssecurity": self._connector._ssecurity,  # noqa: SLF001
-            "service_token": self._connector._service_token,  # noqa: SLF001
-            "user_id": self._connector._user_id,  # noqa: SLF001
-        }
-
-    async def async_qr_start(self) -> tuple[bytes, str, int]:
-        """Start the QR login flow; returns (png_bytes, long_polling_url, timeout_s)."""
-        return await self._run(self._connector.start_qr_login)
-
-    async def async_qr_login(
-        self, long_polling_url: str, wait_seconds: int = 300
-    ) -> None:
-        """
-        Wait for the user to scan the QR; sets session tokens on success.
-
-        Uses native aiohttp for the long-poll so the task can be cancelled
-        cleanly on HA shutdown — a sync request in an executor thread blocks
-        the interpreter's exit until the 5-minute timeout fires.
-        """
-        ok = await self._async_poll_qr_login(long_polling_url, wait_seconds)
-        if not ok:
-            msg = "QR code not scanned in time (or login failed)"
-            raise XiaomiCloudAuthError(msg)
-        self._logged_in = True
-
-    async def _async_poll_qr_login(  # noqa: PLR0911
-        self,
-        long_polling_url: str,
-        timeout: int,  # noqa: ASYNC109
-    ) -> bool:
-        session = async_get_clientsession(self._hass)
-        read_timeout = aiohttp.ClientTimeout(total=max(timeout + 15, 30))
-        try:
-            async with session.get(
-                long_polling_url, timeout=read_timeout, allow_redirects=False
-            ) as resp:
-                if resp.status != _HTTP_OK:
-                    LOGGER.debug("QR long-poll status %s", resp.status)
-                    return False
-                text = await resp.text()
-        except (TimeoutError, aiohttp.ClientError) as exc:
-            LOGGER.debug("QR long-poll failed: %s", exc)
-            return False
-
-        body = json.loads(text.replace("&&&START&&&", ""))
-        if "ssecurity" not in body:
-            LOGGER.debug("QR long-poll returned without ssecurity: %s", body)
-            return False
-        connector = self._connector
-        connector._ssecurity = body["ssecurity"]  # noqa: SLF001
-        connector._user_id = str(body["userId"])  # noqa: SLF001
-        location = body.get("location")
-        if not location:
-            return False
-
-        try:
-            async with session.get(
-                location, timeout=aiohttp.ClientTimeout(total=10)
-            ) as resp:
-                if resp.status != _HTTP_OK:
-                    return False
-                token_cookie = resp.cookies.get("serviceToken")
-        except (TimeoutError, aiohttp.ClientError) as exc:
-            LOGGER.debug("Service-token fetch failed: %s", exc)
-            return False
-        if not token_cookie:
-            return False
-        connector._service_token = token_cookie.value  # noqa: SLF001
-        return True
-
-    async def async_resolve_device(self, token: str) -> XiaomiDeviceInfo:
-        """Find the vacuum in the cloud account and cache it on this client."""
-        device = await self._run(self._connector.find_device, token, self._country)
-        if device is None:
-            msg = f"Device with token {token[:6]}… not found in cloud"
-            raise XiaomiCloudError(msg)
-        self._device = device
-        LOGGER.debug(
-            "Cloud-resolved device: model=%s did=%s",
-            device.model,
-            device.device_id,
-        )
-        return device
-
-    async def async_list_devices(
-        self, model_prefix: str = ""
-    ) -> list[XiaomiDeviceInfo]:
-        """Enumerate every device in the account whose model starts with prefix."""
-        devices = await self._run(
-            lambda: list(self._connector._iter_devices(self._country))  # noqa: SLF001
-        )
-        if not model_prefix:
-            return devices
-        return [d for d in devices if d.model.startswith(model_prefix)]
-
-    async def async_get_map_bytes(self, map_obj_name: str) -> bytes | None:
-        """Resolve map_obj_name → URL → binary blob."""
-        if not self._logged_in or not self._device:
-            return None
-        url = await self._run(
-            self._connector.get_map_url, self._device.country, map_obj_name
-        )
-        if not url:
-            return None
-        return await self._run(self._connector.get_map_bytes, url)
-
-    async def _run(self, func: Any, *args: Any) -> Any:
-        return await self._hass.async_add_executor_job(partial(func, *args))
+    def _to_json(text: str) -> JsonValue:
+        return cast("JsonValue", json.loads(text.replace("&&&START&&&", "")))

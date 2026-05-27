@@ -1,4 +1,4 @@
-"""Image platform serving the rendered vacuum map (cloud-backed)."""
+"""Map image entity for xiaomi_vacuum (cloud-backed)."""
 
 from __future__ import annotations
 
@@ -7,35 +7,13 @@ from typing import TYPE_CHECKING
 
 from homeassistant.components.image import ImageEntity
 
-from .entity import XiaomiVacuumEntity
+from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
-    from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-    from .coordinator import XiaomiVacuumDataUpdateCoordinator
-    from .data import XiaomiVacuumConfigEntry
-    from .map_coordinator import XiaomiVacuumMapCoordinator
-
-
-async def async_setup_entry(
-    hass: HomeAssistant,
-    entry: XiaomiVacuumConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
-    """Set up the map image entity (only when the cloud coordinator is configured)."""
-    map_coord = entry.runtime_data.map_coordinator
-    if map_coord is None:
-        return
-    async_add_entities(
-        [
-            XiaomiVacuumMap(
-                hass,
-                state_coordinator=entry.runtime_data.coordinator,
-                map_coordinator=map_coord,
-            )
-        ]
-    )
+    from ..coordinator import XiaomiVacuumDataUpdateCoordinator  # noqa: TID252
+    from ..map_coordinator import XiaomiVacuumMapCoordinator  # noqa: TID252
 
 
 class XiaomiVacuumMap(XiaomiVacuumEntity, ImageEntity):

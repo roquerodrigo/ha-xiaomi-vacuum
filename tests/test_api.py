@@ -32,7 +32,7 @@ def test_communication_error_is_api_error():
 
 
 def test_init_passes_mapping_to_miot_device(hass, mock_miot_device):
-    with patch("custom_components.xiaomi_vacuum.api.MiotDevice") as cls:
+    with patch("custom_components.xiaomi_vacuum.api.client.MiotDevice") as cls:
         XiaomiVacuumApiClient(hass=hass, host="1.2.3.4", token="t" * 32)
         cls.assert_called_once_with(
             ip="1.2.3.4", token="t" * 32, mapping=PROPERTY_MAPPING

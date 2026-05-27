@@ -47,6 +47,26 @@
                 }
             }
         },
+        "sensor": {
+            "error": {
+                "name": "Error"
+            },
+            "error_code": {
+                "name": "Error code"
+            },
+            "mop_life": {
+                "name": "Mop life"
+            },
+            "side_brush_life": {
+                "name": "Side brush life"
+            },
+            "filter_life": {
+                "name": "Filter life"
+            },
+            "main_brush_life": {
+                "name": "Main brush life"
+            }
+        },
         "button": {
             "dust_arrest": {
                 "name": "Collect dust"

@@ -22,7 +22,10 @@ CONF_CLOUD_USER_ID = "cloud_user_id"
 
 PROPERTY_MAPPING: dict[str, dict[str, int]] = {
     "status": {"siid": 2, "piid": 2},
-    "fault": {"siid": 2, "piid": 3},
+    # Live fault state. The Device Fault property (piid 3) is deliberately NOT read:
+    # it latches the last code and never resets. Fault Ids (piid 66) is the live
+    # {"fault": [codes]} list ([0] = none); the coordinator derives the fault from it.
+    "fault_ids": {"siid": 2, "piid": 66},
     "sweep_mop_type": {"siid": 2, "piid": 4},
     "cleaning_area": {"siid": 2, "piid": 6},
     "cleaning_time": {"siid": 2, "piid": 7},
@@ -36,6 +39,11 @@ PROPERTY_MAPPING: dict[str, dict[str, int]] = {
     "obstacle_avoidance_strategy": {"siid": 2, "piid": 75},
     "battery_level": {"siid": 3, "piid": 1},
     "charging_state": {"siid": 3, "piid": 2},
+    # Consumable remaining-life percentages (match the Mi Home app's list).
+    "mop_life": {"siid": 9, "piid": 1},
+    "main_brush_life": {"siid": 12, "piid": 1},
+    "side_brush_life": {"siid": 13, "piid": 1},
+    "filter_life": {"siid": 14, "piid": 1},
 }
 
 ACTION_START_SWEEP = {"siid": 2, "aiid": 1}
@@ -46,10 +54,28 @@ ACTION_START_ROOM_SWEEP = {"siid": 2, "aiid": 16, "in_piid": 15}
 ACTION_START_DUST_ARREST = {"siid": 2, "aiid": 18}
 ACTION_IDENTIFY = {"siid": 6, "aiid": 1}
 
+# Whitelist for the vacuum.send_command service: command name -> MIoT action.
+# Exposes useful d109gl actions not covered by the standard vacuum controls.
+SEND_COMMANDS: dict[str, dict[str, int]] = {
+    "start_only_sweep": {"siid": 2, "aiid": 4},
+    "start_mop": {"siid": 2, "aiid": 5},
+    "start_sweep_mop": {"siid": 2, "aiid": 6},
+    "continue_sweep": {"siid": 2, "aiid": 8},
+    "start_mop_wash": {"siid": 2, "aiid": 19},
+    "stop_mop_wash": {"siid": 2, "aiid": 31},
+    "start_dry": {"siid": 2, "aiid": 20},
+    "stop_dry": {"siid": 2, "aiid": 32},
+}
+
+# The ERROR activity is NOT produced from status: an active fault drives it (see
+# XiaomiVacuum.activity), keeping the vacuum state consistent with the error sensor
+# and the app. Break/interrupt statuses (3 BreakCharging, 19 GoChargeBreak,
+# 20 WashBreak) and the bare "Error" status (15) occur with no active fault during
+# normal cycles, so they map to their nearest non-error activity instead.
 STATUS_TO_ACTIVITY: dict[int, VacuumActivity] = {
     1: VacuumActivity.IDLE,
     2: VacuumActivity.DOCKED,
-    3: VacuumActivity.ERROR,
+    3: VacuumActivity.DOCKED,
     4: VacuumActivity.CLEANING,
     5: VacuumActivity.PAUSED,
     6: VacuumActivity.RETURNING,
@@ -61,12 +87,12 @@ STATUS_TO_ACTIVITY: dict[int, VacuumActivity] = {
     12: VacuumActivity.DOCKED,
     13: VacuumActivity.RETURNING,
     14: VacuumActivity.DOCKED,
-    15: VacuumActivity.ERROR,
+    15: VacuumActivity.IDLE,
     16: VacuumActivity.CLEANING,
     17: VacuumActivity.CLEANING,
     18: VacuumActivity.PAUSED,
-    19: VacuumActivity.ERROR,
-    20: VacuumActivity.ERROR,
+    19: VacuumActivity.PAUSED,
+    20: VacuumActivity.PAUSED,
     21: VacuumActivity.RETURNING,
 }
 
@@ -143,3 +169,8 @@ CHARGING_STATE_SLUGS: dict[int, str] = {
     2: "not_charging",
     3: "not_chargeable",
 }
+
+# Fault codes (MIoT siid 2 / piid 3) are large device-specific numbers (e.g. 210009)
+# with no published code->text table anywhere in Xiaomi's ecosystem. The localized,
+# human-readable text is delivered by the Xiaomi cloud as a device message (see
+# cloud.XiaomiCloud.async_fault_text); the coordinator resolves it into "fault_text".

@@ -1,0 +1,24 @@
+{
+    "entity": {
+        "sensor": {
+            "error": {
+                "default": "mdi:alert-circle"
+            },
+            "error_code": {
+                "default": "mdi:numeric"
+            },
+            "mop_life": {
+                "default": "mdi:water-percent"
+            },
+            "side_brush_life": {
+                "default": "mdi:broom"
+            },
+            "filter_life": {
+                "default": "mdi:air-filter"
+            },
+            "main_brush_life": {
+                "default": "mdi:broom"
+            }
+        }
+    }
+}

@@ -73,6 +73,7 @@ async def async_setup_entry(
                 "Cloud session invalid; reconfigure to refresh: %s", exception
             )
         else:
+            coordinator.cloud = cloud
             map_coordinator = XiaomiVacuumMapCoordinator(
                 hass, cloud=cloud, state_coordinator=coordinator
             )

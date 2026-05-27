@@ -9,7 +9,7 @@ from custom_components.xiaomi_vacuum.const import (
     DOMAIN,
     STATUS_TO_ACTIVITY,
 )
-from custom_components.xiaomi_vacuum.vacuum import _parse_segments
+from custom_components.xiaomi_vacuum.vacuum.cleaner import _parse_segments
 
 
 @pytest.mark.parametrize(("status_code", "expected"), list(STATUS_TO_ACTIVITY.items()))
@@ -36,6 +36,24 @@ async def test_vacuum_extra_attributes(hass, setup_integration):
     assert extras["status"] == "charging"
     assert extras["charging_state"] == "charging"
     assert extras["cleaning_area"] == 200
+
+
+async def test_vacuum_activity_error_when_fault_active(hass, setup_integration):
+    coord = setup_integration.runtime_data.coordinator
+    # status:2 would be DOCKED, but an active fault must force ERROR
+    coord.async_set_updated_data({**coord.data, "status": 2, "fault": 210009})
+    await hass.async_block_till_done()
+    state = hass.states.get("vacuum.aspirador")
+    assert state.state == "error"
+
+
+async def test_vacuum_break_status_without_fault_is_not_error(hass, setup_integration):
+    coord = setup_integration.runtime_data.coordinator
+    # status 19 (GoChargeBreak) with no active fault must NOT show error
+    coord.async_set_updated_data({**coord.data, "status": 19, "fault": 0})
+    await hass.async_block_till_done()
+    state = hass.states.get("vacuum.aspirador")
+    assert state.state == "paused"
 
 
 async def test_vacuum_unknown_activity_when_no_status(hass, setup_integration):
@@ -73,6 +91,32 @@ async def test_vacuum_pause_calls_api(hass, setup_integration, mock_miot_device)
         "vacuum", "pause", {"entity_id": "vacuum.aspirador"}, blocking=True
     )
     assert mock_miot_device.call_action_by.called
+
+
+async def test_vacuum_send_command_invokes_action(
+    hass, setup_integration, mock_miot_device
+):
+    mock_miot_device.call_action_by.reset_mock()
+    await hass.services.async_call(
+        "vacuum",
+        "send_command",
+        {"entity_id": "vacuum.aspirador", "command": "start_mop"},
+        blocking=True,
+    )
+    # start_mop -> siid 2, aiid 5
+    mock_miot_device.call_action_by.assert_any_call(2, 5)
+
+
+async def test_vacuum_send_command_unknown_raises(hass, setup_integration):
+    from homeassistant.exceptions import ServiceValidationError
+
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            "vacuum",
+            "send_command",
+            {"entity_id": "vacuum.aspirador", "command": "does_not_exist"},
+            blocking=True,
+        )
 
 
 async def test_vacuum_return_to_base(hass, setup_integration, mock_miot_device):

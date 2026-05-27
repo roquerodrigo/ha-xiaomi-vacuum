@@ -1,4 +1,4 @@
-"""Sensor platform for xiaomi_vacuum."""
+"""Battery level sensor for xiaomi_vacuum."""
 
 from __future__ import annotations
 
@@ -7,26 +7,13 @@ from typing import TYPE_CHECKING
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.const import PERCENTAGE, EntityCategory
 
-from .entity import XiaomiVacuumEntity
+from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 if TYPE_CHECKING:
-    from homeassistant.core import HomeAssistant
-    from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
-    from .coordinator import XiaomiVacuumDataUpdateCoordinator
-    from .data import XiaomiVacuumConfigEntry
+    from ..coordinator import XiaomiVacuumDataUpdateCoordinator  # noqa: TID252
 
 
-async def async_setup_entry(
-    hass: HomeAssistant,  # noqa: ARG001
-    entry: XiaomiVacuumConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
-    """Set up sensor entities."""
-    async_add_entities([BatterySensor(coordinator=entry.runtime_data.coordinator)])
-
-
-class BatterySensor(XiaomiVacuumEntity, SensorEntity):
+class XiaomiVacuumBatterySensor(XiaomiVacuumEntity, SensorEntity):
     """Battery level sensor for the vacuum."""
 
     _attr_device_class = SensorDeviceClass.BATTERY

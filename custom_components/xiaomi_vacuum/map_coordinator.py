@@ -7,7 +7,7 @@ import contextlib
 import io
 import json
 from datetime import timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from vacuum_map_parser_base.config.color import ColorsPalette, SupportedColor
@@ -142,7 +142,7 @@ class XiaomiVacuumMapCoordinator(DataUpdateCoordinator[bytes | None]):
         )
 
     async def _async_update_data(self) -> bytes | None:
-        raw_field = (self._state_coordinator.data or {}).get("map_obj_name")
+        raw_field = self._state_coordinator.data.get("map_obj_name")
         obj_name = self._extract_obj_name(raw_field)
         if not obj_name:
             LOGGER.debug("No map obj_name available; skipping map update")
@@ -188,7 +188,7 @@ class XiaomiVacuumMapCoordinator(DataUpdateCoordinator[bytes | None]):
         decoded = self._parser.unpack_map(
             raw.hex(), model=model_key, device_id=str(device_id)
         )
-        return self._parser.parse(decoded)
+        return cast("MapData", self._parser.parse(decoded))
 
     @staticmethod
     def _extract_obj_name(raw_field: str | None) -> str | None:

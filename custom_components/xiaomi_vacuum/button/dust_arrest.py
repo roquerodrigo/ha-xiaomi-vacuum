@@ -1,4 +1,4 @@
-"""Button platform for xiaomi_vacuum."""
+"""Dust-arrest button entity for xiaomi_vacuum."""
 
 from __future__ import annotations
 
@@ -6,26 +6,13 @@ from typing import TYPE_CHECKING
 
 from homeassistant.components.button import ButtonEntity
 
-from .entity import XiaomiVacuumEntity
+from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 if TYPE_CHECKING:
-    from homeassistant.core import HomeAssistant
-    from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
-    from .coordinator import XiaomiVacuumDataUpdateCoordinator
-    from .data import XiaomiVacuumConfigEntry
+    from ..coordinator import XiaomiVacuumDataUpdateCoordinator  # noqa: TID252
 
 
-async def async_setup_entry(
-    hass: HomeAssistant,  # noqa: ARG001
-    entry: XiaomiVacuumConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
-    """Set up button entities."""
-    async_add_entities([DustArrestButton(coordinator=entry.runtime_data.coordinator)])
-
-
-class DustArrestButton(XiaomiVacuumEntity, ButtonEntity):
+class XiaomiVacuumDustArrestButton(XiaomiVacuumEntity, ButtonEntity):
     """Triggers the dock to empty the vacuum's dust bin."""
 
     _attr_translation_key = "dust_arrest"
