@@ -21,6 +21,9 @@ config/*
 .env
 /CONFIGURABLE_OPTIONS.md
 
+# Local working data (specs, extracted files) — not committed
+resources/
+
 # Claude Code session state
 .claude/
 
