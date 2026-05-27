@@ -18,6 +18,7 @@ from ..const import (  # noqa: TID252
     DOMAIN,
     FAN_SPEED_NAMES,
     FAN_SPEEDS,
+    IDLE_STATUSES,
     LOGGER,
     SEND_COMMANDS,
     STATUS_SLUGS,
@@ -113,10 +114,24 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         return {DOMAIN: attrs}
 
     async def async_start(self) -> None:
-        """Start cleaning."""
-        await self._client.async_start()
+        """
+        Begin a fresh clean when parked/idle; otherwise resume the current job.
+
+        Resuming everywhere else (Continue Sweep) is a no-op when there is nothing
+        to resume, so a robot that finished but failed to dock is never restarted
+        from scratch. Automations that should only ever resume can call the
+        ``continue_sweep`` send_command directly.
+        """
+        if self._idle_at_dock():
+            await self._client.async_start()
+        else:
+            await self._client.async_continue()
         self._patch_state(status=4)
         self._schedule_refresh()
+
+    def _idle_at_dock(self) -> bool:
+        """Whether the robot is parked/idle, so start begins a fresh clean."""
+        return self.coordinator.data.get("status") in IDLE_STATUSES
 
     async def async_pause(self) -> None:
         """Pause cleaning."""
