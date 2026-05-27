@@ -93,6 +93,32 @@ async def test_vacuum_pause_calls_api(hass, setup_integration, mock_miot_device)
     assert mock_miot_device.call_action_by.called
 
 
+async def test_vacuum_send_command_invokes_action(
+    hass, setup_integration, mock_miot_device
+):
+    mock_miot_device.call_action_by.reset_mock()
+    await hass.services.async_call(
+        "vacuum",
+        "send_command",
+        {"entity_id": "vacuum.aspirador", "command": "start_mop"},
+        blocking=True,
+    )
+    # start_mop -> siid 2, aiid 5
+    mock_miot_device.call_action_by.assert_any_call(2, 5)
+
+
+async def test_vacuum_send_command_unknown_raises(hass, setup_integration):
+    from homeassistant.exceptions import ServiceValidationError
+
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            "vacuum",
+            "send_command",
+            {"entity_id": "vacuum.aspirador", "command": "does_not_exist"},
+            blocking=True,
+        )
+
+
 async def test_vacuum_return_to_base(hass, setup_integration, mock_miot_device):
     mock_miot_device.call_action_by.reset_mock()
     await hass.services.async_call(

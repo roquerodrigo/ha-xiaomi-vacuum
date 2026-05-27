@@ -11,6 +11,7 @@ from homeassistant.components.vacuum import (
     VacuumActivity,
     VacuumEntityFeature,
 )
+from homeassistant.exceptions import ServiceValidationError
 
 from ..const import (  # noqa: TID252
     CHARGING_STATE_SLUGS,
@@ -18,6 +19,7 @@ from ..const import (  # noqa: TID252
     FAN_SPEED_NAMES,
     FAN_SPEEDS,
     LOGGER,
+    SEND_COMMANDS,
     STATUS_SLUGS,
     STATUS_TO_ACTIVITY,
 )
@@ -52,6 +54,7 @@ SUPPORTED_FEATURES = (
     | VacuumEntityFeature.FAN_SPEED
     | VacuumEntityFeature.STATE
     | VacuumEntityFeature.CLEAN_AREA
+    | VacuumEntityFeature.SEND_COMMAND
 )
 
 
@@ -136,6 +139,21 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
     async def async_locate(self, **kwargs: object) -> None:  # noqa: ARG002
         """Beep + light on the device."""
         await self._client.async_locate()
+
+    async def async_send_command(
+        self,
+        command: str,
+        params: dict[str, object] | list[object] | None = None,  # noqa: ARG002
+        **kwargs: object,  # noqa: ARG002
+    ) -> None:
+        """Invoke a whitelisted MIoT action by name (see SEND_COMMANDS)."""
+        action = SEND_COMMANDS.get(command)
+        if action is None:
+            valid = ", ".join(SEND_COMMANDS)
+            msg = f"Unknown command '{command}'. Valid commands: {valid}"
+            raise ServiceValidationError(msg)
+        await self._client.async_call_action(action["siid"], action["aiid"])
+        self._schedule_refresh()
 
     async def async_set_fan_speed(self, fan_speed: str, **kwargs: object) -> None:  # noqa: ARG002
         """Set fan speed by label."""

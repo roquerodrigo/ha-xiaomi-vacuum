@@ -49,6 +49,19 @@ ACTION_START_ROOM_SWEEP = {"siid": 2, "aiid": 16, "in_piid": 15}
 ACTION_START_DUST_ARREST = {"siid": 2, "aiid": 18}
 ACTION_IDENTIFY = {"siid": 6, "aiid": 1}
 
+# Whitelist for the vacuum.send_command service: command name -> MIoT action.
+# Exposes useful d109gl actions not covered by the standard vacuum controls.
+SEND_COMMANDS: dict[str, dict[str, int]] = {
+    "start_only_sweep": {"siid": 2, "aiid": 4},
+    "start_mop": {"siid": 2, "aiid": 5},
+    "start_sweep_mop": {"siid": 2, "aiid": 6},
+    "continue_sweep": {"siid": 2, "aiid": 8},
+    "start_mop_wash": {"siid": 2, "aiid": 19},
+    "stop_mop_wash": {"siid": 2, "aiid": 31},
+    "start_dry": {"siid": 2, "aiid": 20},
+    "stop_dry": {"siid": 2, "aiid": 32},
+}
+
 # The ERROR activity is NOT produced from status: an active fault drives it (see
 # XiaomiVacuum.activity), keeping the vacuum state consistent with the error sensor
 # and the app. Break/interrupt statuses (3 BreakCharging, 19 GoChargeBreak,

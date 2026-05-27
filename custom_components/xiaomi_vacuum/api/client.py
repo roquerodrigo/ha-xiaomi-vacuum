@@ -114,6 +114,10 @@ class XiaomiVacuumApiClient:
             ACTION_IDENTIFY["aiid"],
         )
 
+    async def async_call_action(self, siid: int, aiid: int) -> None:
+        """Invoke an arbitrary MIoT action (backs the send_command service)."""
+        await self._run(self._device.call_action_by, siid, aiid)
+
     async def async_start_dust_arrest(self) -> None:
         """Trigger dock to empty the vacuum's dust bin."""
         await self._run(
