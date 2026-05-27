@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import base64
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import voluptuous as vol
 from homeassistant import config_entries
@@ -22,6 +22,8 @@ from .cloud import (
 
 if TYPE_CHECKING:
     import asyncio
+
+    from homeassistant.helpers.typing import ConfigType
 
 from .const import (
     CONF_CLOUD_COUNTRY,
@@ -48,7 +50,7 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize transient state for the multi-step flow."""
         super().__init__()
-        self._user_input: dict[str, Any] = {}
+        self._user_input: ConfigType = {}
         self._cloud: XiaomiCloud | None = None
         self._qr_image: bytes | None = None
         self._qr_lp_url: str | None = None
@@ -58,7 +60,7 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self,
-        user_input: dict[str, Any] | None = None,  # noqa: ARG002
+        user_input: ConfigType | None = None,  # noqa: ARG002
     ) -> config_entries.ConfigFlowResult:
         """Skip straight to the QR step; cloud region is hard-coded."""
         self._user_input = {CONF_CLOUD_COUNTRY: _CLOUD_COUNTRY}
@@ -66,7 +68,7 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_qr(
         self,
-        user_input: dict[str, Any] | None = None,  # noqa: ARG002
+        user_input: ConfigType | None = None,  # noqa: ARG002
     ) -> config_entries.ConfigFlowResult:
         """Show QR + run a single long-poll in background until the user scans it."""
         if self._qr_task is None:
@@ -99,7 +101,7 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_progress_done(next_step_id="discover")
 
     async def async_step_qr_failed(
-        self, user_input: dict[str, Any] | None = None
+        self, user_input: ConfigType | None = None
     ) -> config_entries.ConfigFlowResult:
         """Show retry form after a QR timeout / scan failure."""
         if user_input is not None:
@@ -112,7 +114,7 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_discover(
         self,
-        user_input: dict[str, Any] | None = None,
+        user_input: ConfigType | None = None,
     ) -> config_entries.ConfigFlowResult:
         """List vacuums in the account; auto-pick if there's exactly one."""
         if not self._devices:

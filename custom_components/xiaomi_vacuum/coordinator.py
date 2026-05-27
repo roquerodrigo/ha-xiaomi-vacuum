@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import json
 from datetime import timedelta
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import XiaomiVacuumApiClientError
 from .const import DOMAIN, LOGGER
+from .data import VacuumState
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -39,7 +40,7 @@ def _live_fault_code(fault_ids_raw: str | None) -> int | None:
     return active[0] if active else 0
 
 
-class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[VacuumState]):
     """Coordinator polling the vacuum's MIoT properties."""
 
     config_entry: XiaomiVacuumConfigEntry
@@ -56,7 +57,7 @@ class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         # we enrich a non-zero fault code with its localized text.
         self.cloud: XiaomiCloud | None = None
 
-    async def _async_update_data(self) -> dict[str, Any]:
+    async def _async_update_data(self) -> VacuumState:
         """Fetch all mapped properties from the device."""
         try:
             data = await self.config_entry.runtime_data.client.async_get_state()
@@ -66,7 +67,7 @@ class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         await self._enrich_fault_text(data)
         return data
 
-    async def _enrich_fault_text(self, data: dict[str, Any]) -> None:
+    async def _enrich_fault_text(self, data: VacuumState) -> None:
         """Add the localized fault text for a non-zero fault code, if available."""
         fault = data.get("fault")
         if self.cloud is None or not isinstance(fault, int) or fault == 0:

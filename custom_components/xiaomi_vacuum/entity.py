@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any
+from typing import TYPE_CHECKING, cast
 
 from homeassistant.helpers.device_registry import (
     CONNECTION_NETWORK_MAC,
@@ -13,6 +13,9 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CONF_NAME, DOMAIN, MODEL
 from .coordinator import XiaomiVacuumDataUpdateCoordinator
+
+if TYPE_CHECKING:
+    from .data import VacuumState
 
 
 class XiaomiVacuumEntity(CoordinatorEntity[XiaomiVacuumDataUpdateCoordinator]):
@@ -39,11 +42,11 @@ class XiaomiVacuumEntity(CoordinatorEntity[XiaomiVacuumDataUpdateCoordinator]):
             hw_version=getattr(info, "hardware_version", None),
         )
 
-    def _patch_state(self, **patch: Any) -> None:
+    def _patch_state(self, **patch: int | str | None) -> None:
         """Optimistic state patch so the UI reflects a command instantly."""
-        data = dict(self.coordinator.data or {})
+        data = dict(self.coordinator.data)
         data.update(patch)
-        self.coordinator.async_set_updated_data(data)
+        self.coordinator.async_set_updated_data(cast("VacuumState", data))
 
     def _schedule_refresh(self, delay: float = 5.0) -> None:
         """Background refresh after delay; device takes ~1-2s to reflect commands."""

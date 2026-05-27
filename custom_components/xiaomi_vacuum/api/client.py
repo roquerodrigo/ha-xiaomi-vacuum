@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import partial
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, cast
 
 from miio import DeviceException, MiotDevice
 
@@ -26,7 +26,11 @@ from .errors import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from homeassistant.core import HomeAssistant
+
+    from ..data import DeviceInfoLike, VacuumState  # noqa: TID252
 
 
 class XiaomiVacuumApiClient:
@@ -37,7 +41,9 @@ class XiaomiVacuumApiClient:
         self._hass = hass
         self._device = MiotDevice(ip=host, token=token, mapping=PROPERTY_MAPPING)
 
-    async def _run(self, func: Any, *args: Any, **kwargs: Any) -> Any:
+    async def _run[T, **P](
+        self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs
+    ) -> T:
         """Run a sync python-miio call in the executor, normalizing errors."""
         try:
             return await self._hass.async_add_executor_job(
@@ -50,11 +56,11 @@ class XiaomiVacuumApiClient:
             msg = f"Unexpected error: {exception}"
             raise XiaomiVacuumApiClientError(msg) from exception
 
-    async def async_get_info(self) -> Any:
+    async def async_get_info(self) -> DeviceInfoLike:
         """Handshake — returns python-miio DeviceInfo (model, mac, fw)."""
-        return await self._run(self._device.info)
+        return cast("DeviceInfoLike", await self._run(self._device.info))
 
-    async def async_get_state(self) -> dict[str, Any]:
+    async def async_get_state(self) -> VacuumState:
         """Read all mapped properties (indexed by siid+piid; d109gl reuses did)."""
         rows = await self._run(self._device.get_properties_for_mapping)
         LOGGER.debug("Raw MIoT rows: %s", rows)
@@ -66,7 +72,7 @@ class XiaomiVacuumApiClient:
             for name, p in PROPERTY_MAPPING.items()
         }
         LOGGER.debug("Parsed state: %s", parsed)
-        return parsed
+        return cast("VacuumState", parsed)
 
     async def async_start(self) -> None:
         """Start sweeping."""

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from functools import partial
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import aiohttp
 import requests
@@ -15,6 +15,8 @@ from .connector import _HTTP_OK, _XiaomiCloudConnector
 from .errors import XiaomiCloudAuthError, XiaomiCloudError
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from homeassistant.core import HomeAssistant
 
     from .device_info import XiaomiDeviceInfo
@@ -180,5 +182,7 @@ class XiaomiCloud:
             self._fault_texts.update(texts)
         return self._fault_texts.get(int(code))
 
-    async def _run(self, func: Any, *args: Any) -> Any:
-        return await self._hass.async_add_executor_job(partial(func, *args))
+    async def _run[T, **P](
+        self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs
+    ) -> T:
+        return await self._hass.async_add_executor_job(partial(func, *args, **kwargs))

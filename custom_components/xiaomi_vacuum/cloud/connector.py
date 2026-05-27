@@ -9,7 +9,7 @@ import os
 import random
 import time
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, cast
 
 import requests
 from Crypto.Cipher import ARC4
@@ -20,6 +20,17 @@ from .errors import XiaomiCloudError
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+    from ..data import JsonObject, JsonValue  # noqa: TID252
+    from .responses import (
+        DevicesResult,
+        FaultResult,
+        HomeEntry,
+        HomesResult,
+        MapUrlResult,
+        QrInit,
+        QrPoll,
+    )
 
 _HTTP_OK = int(HTTPStatus.OK)
 _QR_DEFAULT_LOCALE = "en_US"
@@ -57,9 +68,9 @@ class _XiaomiCloudConnector:
             params=params,
             timeout=10,
         )
-        body = self._to_json(response.text)
+        body = cast("QrInit", self._to_json(response.text))
         qr_bytes = self._session.get(body["qr"], timeout=10).content
-        return qr_bytes, body["lp"], int(body.get("timeout", 60))
+        return qr_bytes, body["lp"], body.get("timeout", 60)
 
     def poll_qr_login(self, long_polling_url: str, timeout: int) -> bool:
         """
@@ -80,11 +91,12 @@ class _XiaomiCloudConnector:
                 "QR long-poll status %s: %s", response.status_code, response.text[:200]
             )
             return False
-        body = self._to_json(response.text)
-        if "ssecurity" not in body:
+        body = cast("QrPoll", self._to_json(response.text))
+        ssecurity = body.get("ssecurity")
+        if ssecurity is None:
             LOGGER.debug("QR long-poll returned without ssecurity: %s", body)
             return False
-        self._ssecurity = body["ssecurity"]
+        self._ssecurity = ssecurity
         self._user_id = str(body["userId"])
         location = body.get("location")
         if not location:
@@ -114,9 +126,11 @@ class _XiaomiCloudConnector:
 
     def _iter_devices(self, country: str) -> Iterator[XiaomiDeviceInfo]:
         for home in self._iter_homes(country):
-            yield from self._iter_home_devices(country, home["id"], home["uid"])
+            yield from self._iter_home_devices(
+                country, int(home["id"]), int(home["uid"])
+            )
 
-    def _iter_homes(self, country: str) -> Iterator[dict[str, Any]]:
+    def _iter_homes(self, country: str) -> Iterator[HomeEntry]:
         url = self._api_url(country) + "/v2/homeroom/gethome"
         params = {
             "data": json.dumps(
@@ -132,10 +146,9 @@ class _XiaomiCloudConnector:
         response = self._encrypted_call(url, params)
         if not response or "result" not in response:
             return
-        result = response["result"] or {}
-        for key in ("homelist", "share_home_list"):
-            for home in result.get(key) or []:
-                yield {"id": int(home["id"]), "uid": home["uid"]}
+        result = cast("HomesResult", response["result"] or {})
+        for homes in (result.get("homelist"), result.get("share_home_list")):
+            yield from homes or []
 
     def _iter_home_devices(
         self, country: str, home_id: int, owner_id: int
@@ -155,7 +168,7 @@ class _XiaomiCloudConnector:
         response = self._encrypted_call(url, params)
         if not response or not (result := response.get("result")):
             return
-        for device in result.get("device_info") or []:
+        for device in cast("DevicesResult", result).get("device_info") or []:
             yield XiaomiDeviceInfo(
                 device_id=device["did"],
                 name=device["name"],
@@ -177,8 +190,11 @@ class _XiaomiCloudConnector:
         ):
             url = self._api_url(country) + endpoint
             response = self._encrypted_call(url, params)
-            if response and (result := response.get("result")) and result.get("url"):
-                return result["url"]
+            if not response:
+                continue
+            result = cast("MapUrlResult", response.get("result") or {})
+            if url_value := result.get("url"):
+                return url_value
         return None
 
     def get_map_bytes(self, map_url: str) -> bytes | None:
@@ -186,7 +202,7 @@ class _XiaomiCloudConnector:
         response = self._session.get(map_url, timeout=10)
         if response.status_code != _HTTP_OK:
             return None
-        return response.content
+        return cast("bytes", response.content)
 
     def get_device_fault_texts(
         self, country: str, did: str, limit: int = 50
@@ -217,14 +233,15 @@ class _XiaomiCloudConnector:
         texts: dict[int, str] = {}
         if not response or not (result := response.get("result")):
             return texts
-        for message in result.get("messages") or []:
-            body = (message.get("params") or {}).get("body") or {}
-            value = body.get("value") or body.get("extra") or []
+        for message in cast("FaultResult", result).get("messages") or []:
+            params_obj = message.get("params")
+            body = params_obj.get("body") if params_obj else None
+            value = (body.get("value") or body.get("extra")) if body else None
             title = message.get("title")
-            if title and isinstance(value, list) and value:
+            if title and value:
                 try:
                     texts.setdefault(int(value[0]), title)
-                except TypeError, ValueError:
+                except ValueError, TypeError:
                     continue
         return texts
 
@@ -233,7 +250,7 @@ class _XiaomiCloudConnector:
         prefix = "" if country == "cn" else f"{country}."
         return f"https://{prefix}api.io.mi.com/app"
 
-    def _encrypted_call(self, url: str, params: dict[str, str]) -> Any:
+    def _encrypted_call(self, url: str, params: dict[str, str]) -> JsonObject | None:
         headers = {
             "Accept-Encoding": "identity",
             "User-Agent": self._agent,
@@ -261,7 +278,7 @@ class _XiaomiCloudConnector:
         if response.status_code != _HTTP_OK:
             return None
         decoded = self._decrypt_rc4(self._signed_nonce(fields["_nonce"]), response.text)
-        return json.loads(decoded)
+        return cast("JsonObject", json.loads(decoded))
 
     def _signed_nonce(self, nonce: str) -> str:
         if self._ssecurity is None:
@@ -333,5 +350,5 @@ class _XiaomiCloudConnector:
         return r.encrypt(base64.b64decode(payload))
 
     @staticmethod
-    def _to_json(text: str) -> Any:
-        return json.loads(text.replace("&&&START&&&", ""))
+    def _to_json(text: str) -> JsonValue:
+        return cast("JsonValue", json.loads(text.replace("&&&START&&&", "")))

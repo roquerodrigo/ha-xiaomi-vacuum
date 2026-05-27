@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.helpers.entity import EntityCategory
@@ -38,7 +38,11 @@ class _XiaomiVacuumSelect(XiaomiVacuumEntity, SelectEntity):
     def current_option(self) -> str | None:
         """Return the current option as a slug, or None when unknown."""
         value = self.coordinator.data.get(self._property_name)
-        return self._value_to_slug.get(int(value)) if value is not None else None
+        return (
+            self._value_to_slug.get(int(cast("int", value)))
+            if value is not None
+            else None
+        )
 
     async def async_select_option(self, option: str) -> None:
         """Set the option on the device, with optimistic update."""

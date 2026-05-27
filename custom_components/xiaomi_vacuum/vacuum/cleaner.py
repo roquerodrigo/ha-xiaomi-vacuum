@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, TypedDict
 
 from homeassistant.components.vacuum import (
     Segment,
@@ -24,7 +24,24 @@ from ..const import (  # noqa: TID252
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 if TYPE_CHECKING:
+    from ..api import XiaomiVacuumApiClient  # noqa: TID252
     from ..coordinator import XiaomiVacuumDataUpdateCoordinator  # noqa: TID252
+    from ..data import JsonValue  # noqa: TID252
+
+
+class _VacuumAttributes(TypedDict):
+    """Diagnostic attributes exposed under the integration's domain key."""
+
+    status_code: int | None
+    status: str | None
+    fault_code: int | None
+    cleaning_area: int | None
+    cleaning_time: int | None
+    last_clean_time: int | None
+    mop_water_level: int | None
+    charging_state: str | None
+    room_information_raw: str | None
+
 
 SUPPORTED_FEATURES = (
     VacuumEntityFeature.START
@@ -52,7 +69,8 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         self._attr_fan_speed_list = list(FAN_SPEEDS)
 
     @property
-    def _client(self) -> Any:
+    def _client(self) -> XiaomiVacuumApiClient:
+        """Return the local MIoT client backing this entity's commands."""
         return self.coordinator.config_entry.runtime_data.client
 
     @property
@@ -73,10 +91,10 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         return FAN_SPEED_NAMES.get(int(speed)) if speed is not None else None
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any]:
+    def extra_state_attributes(self) -> dict[str, _VacuumAttributes]:
         """Expose raw MIoT properties as diagnostic attributes."""
         data = self.coordinator.data
-        attrs: dict[str, Any] = {
+        attrs: _VacuumAttributes = {
             "status_code": data.get("status"),
             "status": STATUS_SLUGS.get(data.get("status") or -1),
             "fault_code": data.get("fault"),
@@ -103,23 +121,23 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         self._patch_state(status=5)
         self._schedule_refresh()
 
-    async def async_stop(self, **kwargs: Any) -> None:  # noqa: ARG002
+    async def async_stop(self, **kwargs: object) -> None:  # noqa: ARG002
         """Stop cleaning."""
         await self._client.async_stop()
         self._patch_state(status=1)
         self._schedule_refresh()
 
-    async def async_return_to_base(self, **kwargs: Any) -> None:  # noqa: ARG002
+    async def async_return_to_base(self, **kwargs: object) -> None:  # noqa: ARG002
         """Return to dock."""
         await self._client.async_return_home()
         self._patch_state(status=6)
         self._schedule_refresh()
 
-    async def async_locate(self, **kwargs: Any) -> None:  # noqa: ARG002
+    async def async_locate(self, **kwargs: object) -> None:  # noqa: ARG002
         """Beep + light on the device."""
         await self._client.async_locate()
 
-    async def async_set_fan_speed(self, fan_speed: str, **kwargs: Any) -> None:  # noqa: ARG002
+    async def async_set_fan_speed(self, fan_speed: str, **kwargs: object) -> None:  # noqa: ARG002
         """Set fan speed by label."""
         await self._client.async_set_fan_speed(fan_speed)
         if (code := FAN_SPEEDS.get(fan_speed)) is not None:
@@ -134,7 +152,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
     async def async_clean_segments(
         self,
         segment_ids: list[str],
-        **kwargs: Any,  # noqa: ARG002
+        **kwargs: object,  # noqa: ARG002
     ) -> None:
         """Clean specific segments by ID."""
         await self._client.async_clean_segments(segment_ids)
@@ -142,23 +160,24 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         self._schedule_refresh()
 
 
-def _parse_segments(raw: Any) -> list[Segment]:
+def _parse_segments(raw: str | None) -> list[Segment]:
     """Parse d109gl `room-information` (string) into Segment objects (JSON expected)."""
     if not raw:
         return []
     try:
-        data = json.loads(raw) if isinstance(raw, str) else raw
+        data: JsonValue = json.loads(raw)
     except (ValueError, TypeError):  # fmt: skip
         LOGGER.warning("Could not JSON-parse room_information: %r", raw)
         return []
 
-    rooms: list[dict[str, Any]] = []
+    rooms: list[dict[str, JsonValue]] = []
     if isinstance(data, list):
         rooms = [r for r in data if isinstance(r, dict)]
     elif isinstance(data, dict):
         for key in ("rooms", "list", "data"):
-            if isinstance(data.get(key), list):
-                rooms = [r for r in data[key] if isinstance(r, dict)]
+            value = data.get(key)
+            if isinstance(value, list):
+                rooms = [r for r in value if isinstance(r, dict)]
                 break
 
     segments: list[Segment] = []
