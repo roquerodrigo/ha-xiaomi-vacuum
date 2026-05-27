@@ -49,6 +49,19 @@ async def test_error_sensor_falls_back_to_code(hass, setup_integration):
     assert state.state == "Error 210009"
 
 
+async def test_consumable_life_sensors(hass, setup_integration):
+    for eid, expected in (
+        ("sensor.aspirador_mop_life", "85"),
+        ("sensor.aspirador_side_brush_life", "90"),
+        ("sensor.aspirador_filter_life", "70"),
+        ("sensor.aspirador_dust_bag_life", "60"),
+    ):
+        state = hass.states.get(eid)
+        assert state is not None, eid
+        assert state.state == expected
+        assert state.attributes["unit_of_measurement"] == PERCENTAGE
+
+
 async def test_error_code_sensor(hass, setup_integration):
     # healthy -> 0
     state = hass.states.get("sensor.aspirador_error_code")

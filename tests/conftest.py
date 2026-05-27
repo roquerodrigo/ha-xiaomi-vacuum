@@ -36,6 +36,10 @@ SAMPLE_STATE: dict[str, Any] = {
     "obstacle_avoidance_strategy": 0,
     "battery_level": 99,
     "charging_state": 1,
+    "mop_life": 85,
+    "side_brush_life": 90,
+    "filter_life": 70,
+    "dust_bag_life": 60,
 }
 
 

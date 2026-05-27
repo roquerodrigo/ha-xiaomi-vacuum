@@ -53,6 +53,18 @@
             },
             "error_code": {
                 "name": "Error code"
+            },
+            "mop_life": {
+                "name": "Mop life"
+            },
+            "side_brush_life": {
+                "name": "Side brush life"
+            },
+            "filter_life": {
+                "name": "Filter life"
+            },
+            "dust_bag_life": {
+                "name": "Dust bag life"
             }
         },
         "button": {

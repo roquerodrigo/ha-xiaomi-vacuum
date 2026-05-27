@@ -53,6 +53,18 @@
             },
             "error_code": {
                 "name": "Código de erro"
+            },
+            "mop_life": {
+                "name": "Vida do mop"
+            },
+            "side_brush_life": {
+                "name": "Vida da escova lateral"
+            },
+            "filter_life": {
+                "name": "Vida do filtro"
+            },
+            "dust_bag_life": {
+                "name": "Vida do saco de pó"
             }
         },
         "button": {
