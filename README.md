@@ -2,7 +2,12 @@
 
 [![CI](https://github.com/roquerodrigo/ha-xiaomi-vacuum/actions/workflows/ci.yml/badge.svg)](https://github.com/roquerodrigo/ha-xiaomi-vacuum/actions/workflows/ci.yml)
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
+
+---
+
 [![Open your Home Assistant instance and open the repository inside HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=roquerodrigo&repository=ha-xiaomi-vacuum&category=integration)
+
+---
 
 A **100% local** [Home Assistant](https://www.home-assistant.io/) integration for the
 **Xiaomi Robot Vacuum X20 Max** (`xiaomi.vacuum.d109gl`).
