@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, cast
 from miio import DeviceException, MiotDevice
 
 from ..const import (  # noqa: TID252
+    ACTION_CONTINUE_SWEEP,
     ACTION_IDENTIFY,
     ACTION_PAUSE_SWEEPING,
     ACTION_RETURN_HOME,
@@ -80,6 +81,14 @@ class XiaomiVacuumApiClient:
             self._device.call_action_by,
             ACTION_START_SWEEP["siid"],
             ACTION_START_SWEEP["aiid"],
+        )
+
+    async def async_continue(self) -> None:
+        """Resume a paused job (keeps the current task instead of restarting)."""
+        await self._run(
+            self._device.call_action_by,
+            ACTION_CONTINUE_SWEEP["siid"],
+            ACTION_CONTINUE_SWEEP["aiid"],
         )
 
     async def async_pause(self) -> None:

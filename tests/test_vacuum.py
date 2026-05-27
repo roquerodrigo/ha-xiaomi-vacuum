@@ -74,7 +74,50 @@ async def test_vacuum_start_calls_api(hass, setup_integration, mock_miot_device)
         {"entity_id": "vacuum.aspirador"},
         blocking=True,
     )
-    assert mock_miot_device.call_action_by.called
+    # default state is status:2 (docked) -> fresh start (siid 2, aiid 1)
+    mock_miot_device.call_action_by.assert_any_call(2, 1)
+
+
+# Anything that isn't "parked and idle" resumes (Continue Sweep, aiid 8) instead of
+# restarting: active cleaning (4, 16, 17), pause (5, 18), mid-task break-offs
+# (3, 19, 20) and -- crucially -- the completed-but-stranded states (6 GoCharging,
+# 7 GoWash, 15 Error, 21) so a robot that finished and failed to dock is never sent
+# on a full re-clean.
+@pytest.mark.parametrize("status", [5, 19, 20, 3, 4, 16, 17, 18, 6, 7, 15, 21])
+async def test_vacuum_start_resumes_unless_parked(
+    hass, setup_integration, mock_miot_device, status
+):
+    coord = setup_integration.runtime_data.coordinator
+    coord.async_set_updated_data({**coord.data, "status": status, "fault": 0})
+    await hass.async_block_till_done()
+    mock_miot_device.call_action_by.reset_mock()
+    await hass.services.async_call(
+        "vacuum", "start", {"entity_id": "vacuum.aspirador"}, blocking=True
+    )
+    mock_miot_device.call_action_by.assert_any_call(2, 8)
+    assert all(
+        call.args[:2] != (2, 1)
+        for call in mock_miot_device.call_action_by.call_args_list
+    )
+
+
+# 1 Idle, 2 Charging, 9 Charged -> parked/idle, so start begins a fresh clean
+@pytest.mark.parametrize("status", [1, 2, 9])
+async def test_vacuum_start_fresh_when_idle(
+    hass, setup_integration, mock_miot_device, status
+):
+    coord = setup_integration.runtime_data.coordinator
+    coord.async_set_updated_data({**coord.data, "status": status, "fault": 0})
+    await hass.async_block_till_done()
+    mock_miot_device.call_action_by.reset_mock()
+    await hass.services.async_call(
+        "vacuum", "start", {"entity_id": "vacuum.aspirador"}, blocking=True
+    )
+    mock_miot_device.call_action_by.assert_any_call(2, 1)
+    assert all(
+        call.args[:2] != (2, 8)
+        for call in mock_miot_device.call_action_by.call_args_list
+    )
 
 
 async def test_vacuum_stop_calls_api(hass, setup_integration, mock_miot_device):

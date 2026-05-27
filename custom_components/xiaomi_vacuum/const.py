@@ -50,6 +50,8 @@ ACTION_START_SWEEP = {"siid": 2, "aiid": 1}
 ACTION_STOP_SWEEPING = {"siid": 2, "aiid": 2}
 ACTION_RETURN_HOME = {"siid": 2, "aiid": 3}
 ACTION_PAUSE_SWEEPING = {"siid": 2, "aiid": 7}
+# Resume a paused job (vs. ACTION_START_SWEEP, which begins a fresh clean).
+ACTION_CONTINUE_SWEEP = {"siid": 2, "aiid": 8}
 ACTION_START_ROOM_SWEEP = {"siid": 2, "aiid": 16, "in_piid": 15}
 ACTION_START_DUST_ARREST = {"siid": 2, "aiid": 18}
 ACTION_IDENTIFY = {"siid": 6, "aiid": 1}
@@ -60,7 +62,7 @@ SEND_COMMANDS: dict[str, dict[str, int]] = {
     "start_only_sweep": {"siid": 2, "aiid": 4},
     "start_mop": {"siid": 2, "aiid": 5},
     "start_sweep_mop": {"siid": 2, "aiid": 6},
-    "continue_sweep": {"siid": 2, "aiid": 8},
+    "continue_sweep": ACTION_CONTINUE_SWEEP,
     "start_mop_wash": {"siid": 2, "aiid": 19},
     "stop_mop_wash": {"siid": 2, "aiid": 31},
     "start_dry": {"siid": 2, "aiid": 20},
@@ -95,6 +97,14 @@ STATUS_TO_ACTIVITY: dict[int, VacuumActivity] = {
     20: VacuumActivity.PAUSED,
     21: VacuumActivity.RETURNING,
 }
+
+# Statuses where the robot is parked and ready to begin a NEW job — start issues
+# a fresh Start Sweep (aiid 1) only here. In every other state (cleaning, paused,
+# mid-task break-off, returning, or stuck/errored after finishing) start instead
+# calls Continue Sweep (aiid 8): it resumes an interrupted job and is a no-op when
+# there is nothing to resume, so a robot that finished but failed to dock is never
+# sent on a full re-clean.
+IDLE_STATUSES: frozenset[int] = frozenset({1, 2, 9})  # Idle, Charging, Charged
 
 STATUS_SLUGS: dict[int, str] = {
     1: "idle",
