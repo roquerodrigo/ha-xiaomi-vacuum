@@ -13,7 +13,6 @@ class XiaomiVacuumObstacleAvoidanceSelect(_XiaomiVacuumSelect):
 
     _attr_translation_key = "obstacle_avoidance_strategy"
     _attr_icon = "mdi:radar"
-    _attr_options: ClassVar[list[str]] = list(OBSTACLE_AVOIDANCES)
 
     _property_name = "obstacle_avoidance_strategy"
     _slug_to_value: ClassVar[dict[str, int]] = OBSTACLE_AVOIDANCES

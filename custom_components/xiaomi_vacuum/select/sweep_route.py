@@ -13,7 +13,6 @@ class XiaomiVacuumSweepRouteSelect(_XiaomiVacuumSelect):
 
     _attr_translation_key = "sweep_route"
     _attr_icon = "mdi:map-marker-path"
-    _attr_options: ClassVar[list[str]] = list(SWEEP_ROUTES)
 
     _property_name = "sweep_route"
     _slug_to_value: ClassVar[dict[str, int]] = SWEEP_ROUTES

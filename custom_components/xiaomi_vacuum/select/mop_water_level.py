@@ -13,7 +13,6 @@ class XiaomiVacuumMopWaterLevelSelect(_XiaomiVacuumSelect):
 
     _attr_translation_key = "mop_water_level"
     _attr_icon = "mdi:water-percent"
-    _attr_options: ClassVar[list[str]] = list(MOP_WATER_LEVELS)
 
     _property_name = "mop_water_level"
     _slug_to_value: ClassVar[dict[str, int]] = MOP_WATER_LEVELS

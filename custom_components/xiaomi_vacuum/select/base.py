@@ -30,6 +30,11 @@ class _XiaomiVacuumSelect(XiaomiVacuumEntity, SelectEntity):
         )
 
     @property
+    def options(self) -> list[str]:
+        """Return the selectable slugs (the keys of the slug->value map)."""
+        return list(self._slug_to_value)
+
+    @property
     def current_option(self) -> str | None:
         """Return the current option as a slug, or None when unknown."""
         value = self.coordinator.data.get(self._property_name)

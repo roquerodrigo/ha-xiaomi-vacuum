@@ -13,7 +13,6 @@ class XiaomiVacuumSweepMopTypeSelect(_XiaomiVacuumSelect):
 
     _attr_translation_key = "sweep_mop_type"
     _attr_icon = "mdi:broom"
-    _attr_options: ClassVar[list[str]] = list(SWEEP_MOP_TYPES)
 
     _property_name = "sweep_mop_type"
     _slug_to_value: ClassVar[dict[str, int]] = SWEEP_MOP_TYPES

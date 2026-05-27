@@ -13,7 +13,6 @@ class XiaomiVacuumCleanTimesSelect(_XiaomiVacuumSelect):
 
     _attr_translation_key = "clean_times"
     _attr_icon = "mdi:repeat"
-    _attr_options: ClassVar[list[str]] = list(CLEAN_TIMES)
 
     _property_name = "clean_times"
     _slug_to_value: ClassVar[dict[str, int]] = CLEAN_TIMES
