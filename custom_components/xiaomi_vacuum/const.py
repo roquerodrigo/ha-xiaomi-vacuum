@@ -49,24 +49,31 @@ PROPERTY_MAPPING: dict[str, dict[str, int]] = {
 ACTION_START_SWEEP = {"siid": 2, "aiid": 1}
 ACTION_STOP_SWEEPING = {"siid": 2, "aiid": 2}
 ACTION_RETURN_HOME = {"siid": 2, "aiid": 3}
+ACTION_START_ONLY_SWEEP = {"siid": 2, "aiid": 4}
+ACTION_START_MOP = {"siid": 2, "aiid": 5}
+ACTION_START_SWEEP_MOP = {"siid": 2, "aiid": 6}
 ACTION_PAUSE_SWEEPING = {"siid": 2, "aiid": 7}
 # Resume a paused job (vs. ACTION_START_SWEEP, which begins a fresh clean).
 ACTION_CONTINUE_SWEEP = {"siid": 2, "aiid": 8}
 ACTION_START_ROOM_SWEEP = {"siid": 2, "aiid": 16, "in_piid": 15}
 ACTION_START_DUST_ARREST = {"siid": 2, "aiid": 18}
+ACTION_START_MOP_WASH = {"siid": 2, "aiid": 19}
+ACTION_START_DRY = {"siid": 2, "aiid": 20}
+ACTION_STOP_MOP_WASH = {"siid": 2, "aiid": 31}
+ACTION_STOP_DRY = {"siid": 2, "aiid": 32}
 ACTION_IDENTIFY = {"siid": 6, "aiid": 1}
 
 # Whitelist for the vacuum.send_command service: command name -> MIoT action.
 # Exposes useful d109gl actions not covered by the standard vacuum controls.
 SEND_COMMANDS: dict[str, dict[str, int]] = {
-    "start_only_sweep": {"siid": 2, "aiid": 4},
-    "start_mop": {"siid": 2, "aiid": 5},
-    "start_sweep_mop": {"siid": 2, "aiid": 6},
+    "start_only_sweep": ACTION_START_ONLY_SWEEP,
+    "start_mop": ACTION_START_MOP,
+    "start_sweep_mop": ACTION_START_SWEEP_MOP,
     "continue_sweep": ACTION_CONTINUE_SWEEP,
-    "start_mop_wash": {"siid": 2, "aiid": 19},
-    "stop_mop_wash": {"siid": 2, "aiid": 31},
-    "start_dry": {"siid": 2, "aiid": 20},
-    "stop_dry": {"siid": 2, "aiid": 32},
+    "start_mop_wash": ACTION_START_MOP_WASH,
+    "stop_mop_wash": ACTION_STOP_MOP_WASH,
+    "start_dry": ACTION_START_DRY,
+    "stop_dry": ACTION_STOP_DRY,
 }
 
 # The ERROR activity is NOT produced from status: an active fault drives it (see
