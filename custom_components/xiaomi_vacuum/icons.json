@@ -1,6 +1,9 @@
 {
     "entity": {
         "sensor": {
+            "status": {
+                "default": "mdi:robot-vacuum"
+            },
             "error": {
                 "default": "mdi:alert-circle"
             },
