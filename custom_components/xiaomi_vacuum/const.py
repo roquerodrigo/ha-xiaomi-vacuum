@@ -39,11 +39,11 @@ PROPERTY_MAPPING: dict[str, dict[str, int]] = {
     "obstacle_avoidance_strategy": {"siid": 2, "piid": 75},
     "battery_level": {"siid": 3, "piid": 1},
     "charging_state": {"siid": 3, "piid": 2},
-    # Consumable remaining-life percentages.
+    # Consumable remaining-life percentages (match the Mi Home app's list).
     "mop_life": {"siid": 9, "piid": 1},
+    "main_brush_life": {"siid": 12, "piid": 1},
     "side_brush_life": {"siid": 13, "piid": 1},
     "filter_life": {"siid": 14, "piid": 1},
-    "dust_bag_life": {"siid": 19, "piid": 1},
 }
 
 ACTION_START_SWEEP = {"siid": 2, "aiid": 1}

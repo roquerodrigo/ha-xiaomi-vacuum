@@ -50,9 +50,9 @@ class VacuumState(TypedDict):
     battery_level: int | None
     charging_state: int | None
     mop_life: int | None
+    main_brush_life: int | None
     side_brush_life: int | None
     filter_life: int | None
-    dust_bag_life: int | None
     fault: int | None
     fault_text: NotRequired[str]
 

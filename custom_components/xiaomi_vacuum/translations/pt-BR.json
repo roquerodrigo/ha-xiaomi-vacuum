@@ -63,8 +63,8 @@
             "filter_life": {
                 "name": "Vida do filtro"
             },
-            "dust_bag_life": {
-                "name": "Vida do saco de pó"
+            "main_brush_life": {
+                "name": "Vida da escova principal"
             }
         },
         "button": {

@@ -16,8 +16,8 @@
             "filter_life": {
                 "default": "mdi:air-filter"
             },
-            "dust_bag_life": {
-                "default": "mdi:trash-can-outline"
+            "main_brush_life": {
+                "default": "mdi:broom"
             }
         }
     }

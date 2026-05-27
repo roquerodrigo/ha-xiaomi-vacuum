@@ -37,9 +37,9 @@ SAMPLE_STATE: dict[str, Any] = {
     "battery_level": 99,
     "charging_state": 1,
     "mop_life": 85,
+    "main_brush_life": 71,
     "side_brush_life": 90,
     "filter_life": 70,
-    "dust_bag_life": 60,
 }
 
 

@@ -63,8 +63,8 @@
             "filter_life": {
                 "name": "Filter life"
             },
-            "dust_bag_life": {
-                "name": "Dust bag life"
+            "main_brush_life": {
+                "name": "Main brush life"
             }
         },
         "button": {

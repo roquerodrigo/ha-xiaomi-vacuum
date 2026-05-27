@@ -52,9 +52,9 @@ async def test_error_sensor_falls_back_to_code(hass, setup_integration):
 async def test_consumable_life_sensors(hass, setup_integration):
     for eid, expected in (
         ("sensor.aspirador_mop_life", "85"),
+        ("sensor.aspirador_main_brush_life", "71"),
         ("sensor.aspirador_side_brush_life", "90"),
         ("sensor.aspirador_filter_life", "70"),
-        ("sensor.aspirador_dust_bag_life", "60"),
     ):
         state = hass.states.get(eid)
         assert state is not None, eid
