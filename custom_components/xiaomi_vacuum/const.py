@@ -49,10 +49,15 @@ ACTION_START_ROOM_SWEEP = {"siid": 2, "aiid": 16, "in_piid": 15}
 ACTION_START_DUST_ARREST = {"siid": 2, "aiid": 18}
 ACTION_IDENTIFY = {"siid": 6, "aiid": 1}
 
+# The ERROR activity is NOT produced from status: an active fault drives it (see
+# XiaomiVacuum.activity), keeping the vacuum state consistent with the error sensor
+# and the app. Break/interrupt statuses (3 BreakCharging, 19 GoChargeBreak,
+# 20 WashBreak) and the bare "Error" status (15) occur with no active fault during
+# normal cycles, so they map to their nearest non-error activity instead.
 STATUS_TO_ACTIVITY: dict[int, VacuumActivity] = {
     1: VacuumActivity.IDLE,
     2: VacuumActivity.DOCKED,
-    3: VacuumActivity.ERROR,
+    3: VacuumActivity.DOCKED,
     4: VacuumActivity.CLEANING,
     5: VacuumActivity.PAUSED,
     6: VacuumActivity.RETURNING,
@@ -64,12 +69,12 @@ STATUS_TO_ACTIVITY: dict[int, VacuumActivity] = {
     12: VacuumActivity.DOCKED,
     13: VacuumActivity.RETURNING,
     14: VacuumActivity.DOCKED,
-    15: VacuumActivity.ERROR,
+    15: VacuumActivity.IDLE,
     16: VacuumActivity.CLEANING,
     17: VacuumActivity.CLEANING,
     18: VacuumActivity.PAUSED,
-    19: VacuumActivity.ERROR,
-    20: VacuumActivity.ERROR,
+    19: VacuumActivity.PAUSED,
+    20: VacuumActivity.PAUSED,
     21: VacuumActivity.RETURNING,
 }
 

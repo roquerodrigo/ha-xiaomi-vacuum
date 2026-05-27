@@ -47,6 +47,15 @@ async def test_vacuum_activity_error_when_fault_active(hass, setup_integration):
     assert state.state == "error"
 
 
+async def test_vacuum_break_status_without_fault_is_not_error(hass, setup_integration):
+    coord = setup_integration.runtime_data.coordinator
+    # status 19 (GoChargeBreak) with no active fault must NOT show error
+    coord.async_set_updated_data({**coord.data, "status": 19, "fault": 0})
+    await hass.async_block_till_done()
+    state = hass.states.get("vacuum.aspirador")
+    assert state.state == "paused"
+
+
 async def test_vacuum_unknown_activity_when_no_status(hass, setup_integration):
     state = hass.states.get("vacuum.aspirador")
     # current parsed state has status=2, force a new state without it
