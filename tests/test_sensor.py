@@ -62,6 +62,31 @@ async def test_consumable_life_sensors(hass, setup_integration):
         assert state.attributes["unit_of_measurement"] == PERCENTAGE
 
 
+async def test_status_sensor(hass, setup_integration):
+    state = hass.states.get("sensor.aspirador_status")
+    assert state is not None
+    # SAMPLE_STATE has status:2 -> "charging"
+    assert state.state == "charging"
+    assert state.attributes["device_class"] == SensorDeviceClass.ENUM
+    assert "sweeping" in state.attributes["options"]
+
+    coordinator = setup_integration.runtime_data.coordinator
+    coordinator.async_set_updated_data({**coordinator.data, "status": 5})
+    await hass.async_block_till_done()
+    assert hass.states.get("sensor.aspirador_status").state == "paused"
+
+
+async def test_status_sensor_unknown_code(hass, setup_integration):
+    coordinator = setup_integration.runtime_data.coordinator
+    # an unmapped status code -> None (HA reports "unknown")
+    coordinator.async_set_updated_data({**coordinator.data, "status": 999})
+    await hass.async_block_till_done()
+    assert hass.states.get("sensor.aspirador_status").state in (
+        "unknown",
+        "unavailable",
+    )
+
+
 async def test_error_code_sensor(hass, setup_integration):
     # healthy -> 0
     state = hass.states.get("sensor.aspirador_error_code")

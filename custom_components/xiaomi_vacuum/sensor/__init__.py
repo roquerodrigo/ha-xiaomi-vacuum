@@ -11,6 +11,7 @@ from .filter_life import XiaomiVacuumFilterLifeSensor
 from .main_brush_life import XiaomiVacuumMainBrushLifeSensor
 from .mop_life import XiaomiVacuumMopLifeSensor
 from .side_brush_life import XiaomiVacuumSideBrushLifeSensor
+from .status import XiaomiVacuumStatusSensor
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -26,6 +27,7 @@ __all__ = [
     "XiaomiVacuumMainBrushLifeSensor",
     "XiaomiVacuumMopLifeSensor",
     "XiaomiVacuumSideBrushLifeSensor",
+    "XiaomiVacuumStatusSensor",
 ]
 
 
@@ -39,6 +41,7 @@ async def async_setup_entry(
     async_add_entities(
         [
             XiaomiVacuumBatterySensor(coordinator=coordinator),
+            XiaomiVacuumStatusSensor(coordinator=coordinator),
             XiaomiVacuumErrorSensor(coordinator=coordinator),
             XiaomiVacuumErrorCodeSensor(coordinator=coordinator),
             XiaomiVacuumMopLifeSensor(coordinator=coordinator),

@@ -48,6 +48,32 @@
             }
         },
         "sensor": {
+            "status": {
+                "name": "Status",
+                "state": {
+                    "idle": "Ocioso",
+                    "charging": "Carregando",
+                    "break_charging": "Carregando (em pausa)",
+                    "sweeping": "Varrendo",
+                    "paused": "Pausado",
+                    "go_charging": "Voltando à base",
+                    "go_wash": "Indo lavar o pano",
+                    "remote": "Controle remoto",
+                    "charged": "Carregado",
+                    "building_map": "Construindo mapa",
+                    "updating": "Atualizando",
+                    "multi_task_station_working": "Base trabalhando (multitarefa)",
+                    "multi_task_recharge": "Recarregando (multitarefa)",
+                    "station_working": "Base trabalhando",
+                    "error": "Erro",
+                    "sweeping_and_mopping": "Varrendo e passando pano",
+                    "mopping": "Passando pano",
+                    "mapping_pause": "Mapeamento pausado",
+                    "go_charge_break": "Voltando p/ carregar (vai retomar)",
+                    "wash_break": "Lavando o pano (vai retomar)",
+                    "go_charge_building_map": "Voltando p/ carregar (mapeando)"
+                }
+            },
             "error": {
                 "name": "Erro"
             },

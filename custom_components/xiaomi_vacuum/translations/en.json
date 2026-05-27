@@ -48,6 +48,32 @@
             }
         },
         "sensor": {
+            "status": {
+                "name": "Status",
+                "state": {
+                    "idle": "Idle",
+                    "charging": "Charging",
+                    "break_charging": "Charging (paused)",
+                    "sweeping": "Sweeping",
+                    "paused": "Paused",
+                    "go_charging": "Returning to dock",
+                    "go_wash": "Going to wash mop",
+                    "remote": "Remote control",
+                    "charged": "Charged",
+                    "building_map": "Building map",
+                    "updating": "Updating",
+                    "multi_task_station_working": "Station working (multi-task)",
+                    "multi_task_recharge": "Recharging (multi-task)",
+                    "station_working": "Station working",
+                    "error": "Error",
+                    "sweeping_and_mopping": "Sweeping and mopping",
+                    "mopping": "Mopping",
+                    "mapping_pause": "Mapping paused",
+                    "go_charge_break": "Returning to charge (will resume)",
+                    "wash_break": "Washing mop (will resume)",
+                    "go_charge_building_map": "Returning to charge (mapping)"
+                }
+            },
             "error": {
                 "name": "Error"
             },
