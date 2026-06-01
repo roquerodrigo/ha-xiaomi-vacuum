@@ -2,15 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import EntityCategory
 
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
-
-if TYPE_CHECKING:
-    from ..coordinator import XiaomiVacuumDataUpdateCoordinator  # noqa: TID252
 
 
 class XiaomiVacuumErrorSensor(XiaomiVacuumEntity, SensorEntity):
@@ -28,10 +23,10 @@ class XiaomiVacuumErrorSensor(XiaomiVacuumEntity, SensorEntity):
     _attr_translation_key = "error"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(self, coordinator: XiaomiVacuumDataUpdateCoordinator) -> None:
-        """Initialize."""
-        super().__init__(coordinator)
-        self._attr_unique_id = f"{coordinator.config_entry.entry_id}_error"
+    @property
+    def unique_id(self) -> str:
+        """Return a stable unique id for this entity."""
+        return f"{self.coordinator.config_entry.entry_id}_error"
 
     @property
     def native_value(self) -> str | None:

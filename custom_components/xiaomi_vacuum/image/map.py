@@ -32,9 +32,13 @@ class XiaomiVacuumMap(XiaomiVacuumEntity, ImageEntity):
         XiaomiVacuumEntity.__init__(self, state_coordinator)
         ImageEntity.__init__(self, hass)
         self._map_coordinator = map_coordinator
-        self._attr_unique_id = f"{state_coordinator.config_entry.entry_id}_map"
         self._last_image: bytes | None = None
         self._attr_image_last_updated = datetime.now(UTC)
+
+    @property
+    def unique_id(self) -> str:
+        """Return a stable unique id for this entity."""
+        return f"{self.coordinator.config_entry.entry_id}_map"
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to the map coordinator for refresh on new map data."""
