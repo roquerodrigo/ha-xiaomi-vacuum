@@ -1,8 +1,9 @@
 # Code Style Guide
 
-Style conventions for the `ha-xiaomi-vacuum` project. Run `scripts/lint`
-before committing — it executes `ruff format`, `ruff check --fix` and `mypy`,
-and must exit cleanly. `pytest` (with the 95 % coverage gate) follows.
+Style conventions for the `ha-xiaomi-vacuum` project. Before committing run
+`uv run ruff format .`, `uv run ruff check . --fix` and
+`uv run mypy custom_components/xiaomi_vacuum`, and they must exit cleanly.
+`uv run pytest` (with the 80 % coverage gate) follows.
 
 **Always read this file before adding or restructuring code.**
 
@@ -53,7 +54,7 @@ and must exit cleanly. `pytest` (with the 95 % coverage gate) follows.
 
 ## Typing
 
-**Strict typing. No generics, no `Any`.** Mypy on `scripts/lint` enforces this.
+**Strict typing. No generics, no `Any`.** `mypy` enforces this.
 
 Banned: `typing.Any`, `object` as a value type, bare `dict` / `list` / `tuple` /
 `set`, `dict[str, Any]`, `Mapping[str, Any]`.
@@ -136,7 +137,7 @@ explaining the deliberate narrowing.
 
 - Levels:
   - `debug` — successful fetch summaries, every-poll diagnostics.
-  - `info` — one-shot lifecycle (setup complete, reauth flow started).
+  - `info` — one-shot lifecycle (setup complete, QR login flow started).
   - `warning` — recoverable failures (transient API error, falling back).
   - `error` / `exception` — unrecoverable in current cycle.
 - Never log secrets (`token`, `cloud password`). Wrap upstream exceptions in
@@ -162,17 +163,13 @@ explaining the deliberate narrowing.
   cadence; the map coordinator only refreshes when there is a fresh map id.
 - The coordinator is typed as `DataUpdateCoordinator[<TypedDict>]`.
   `_async_update_data` returns the typed payload; client errors map to
-  `UpdateFailed`, authentication errors to `ConfigEntryAuthFailed` (which
-  triggers reauth).
+  `UpdateFailed`.
 
-## Config / repairs / diagnostics
+## Config flow
 
-- `config_flow.py` carries `user`, `reauth`, `reauth_confirm` and
-  `reconfigure` steps, all sharing one `_validate` helper and one
-  `_credentials_schema` builder. The user provides the LAN `host` + `token`
-  pair (and optional cloud credentials for map decoding).
-- `diagnostics.py` redacts `token`, `cloud_username`, `cloud_password`,
-  `cloud_country` via `async_redact_data` (driven by `TO_REDACT: frozenset[str]`).
+- `config_flow.py` carries `user`, `qr`, `qr_failed` and `discover` steps. Setup
+  is QR-based: the user scans a Xiaomi-cloud QR code to authenticate, then the
+  flow lists the account's vacuums and auto-picks when there is exactly one.
 
 ## Translations
 
@@ -183,16 +180,17 @@ explaining the deliberate narrowing.
 
 ## Pre-commit hooks
 
-`pre-commit` is a dev dependency (`requirements.txt`) and `.pre-commit-config.yaml`
-mirrors `scripts/lint` (ruff format, ruff check, mypy). Install once per
-clone:
+`pre-commit` is a dev dependency (the `dev` group in `pyproject.toml`) and
+`.pre-commit-config.yaml` mirrors the lint commands (ruff format, ruff check,
+mypy). Install once per clone:
 
 ```bash
 pre-commit install
 ```
 
-The hook runs the same gates as CI on every commit. Skip it only on
-emergency `git commit --no-verify` and immediately re-run `scripts/lint`.
+The hook runs the same gates as CI on every commit. Skip it only on emergency
+`git commit --no-verify` and immediately re-run `uv run ruff format .`,
+`uv run ruff check . --fix` and `uv run mypy custom_components/xiaomi_vacuum`.
 
 ## Conventional commits
 
@@ -217,11 +215,13 @@ which `release-please` parses to bump the version and generate `CHANGELOG.md`:
 
 ## Linting and verification
 
-- Ruff configuration lives in `.ruff.toml` with `select = ["ALL"]`.
-- Mypy configuration lives in `mypy.ini`. Both run from `scripts/lint`.
-- After every change run `scripts/lint && pytest`. Both gates mirror CI
-  (`.github/workflows/lint.yml` + `tests.yml`).
-- Tests live in `tests/`, mirroring the production layout. The 95 % coverage
-  gate (`pytest.ini`) prevents untested code from sneaking in. When a test
-  exercises a state that is impossible under the new types, update or remove
-  it — never weaken the type to satisfy the test.
+- Ruff configuration lives in `pyproject.toml` (`[tool.ruff]`) with
+  `select = ["ALL"]`.
+- Mypy configuration also lives in `pyproject.toml` (`[tool.mypy]`).
+- After every change run `uv run ruff format .`, `uv run ruff check . --fix`,
+  `uv run mypy custom_components/xiaomi_vacuum` and `uv run pytest`. All gates
+  mirror CI (`.github/workflows/ci.yml`).
+- Tests live in `tests/`, mirroring the production layout. The 80 % coverage
+  gate (`[tool.pytest.ini_options]` in `pyproject.toml`) prevents untested code
+  from sneaking in. When a test exercises a state that is impossible under the
+  new types, update or remove it — never weaken the type to satisfy the test.
