@@ -140,8 +140,10 @@ automation:
 ```bash
 scripts/setup     # install requirements (creates Python venv first if needed)
 scripts/develop   # run Home Assistant in debug mode with this integration loaded
-scripts/lint      # ruff format + ruff check + mypy
-.venv/bin/pytest  # tests + coverage (must stay ≥ 80%)
+uv run ruff format .                          # format
+uv run ruff check . --fix                      # lint + autofix
+uv run mypy custom_components/xiaomi_vacuum    # type-check
+uv run pytest                                  # tests + coverage (must stay ≥ 80%)
 ```
 
 The project is based on the
