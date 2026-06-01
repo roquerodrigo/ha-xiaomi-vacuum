@@ -2,15 +2,12 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import ClassVar, cast
 
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.const import PERCENTAGE, EntityCategory
 
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
-
-if TYPE_CHECKING:
-    from ..coordinator import XiaomiVacuumDataUpdateCoordinator  # noqa: TID252
 
 
 class _XiaomiVacuumLifeSensor(XiaomiVacuumEntity, SensorEntity):
@@ -22,12 +19,10 @@ class _XiaomiVacuumLifeSensor(XiaomiVacuumEntity, SensorEntity):
 
     _property_name: ClassVar[str]
 
-    def __init__(self, coordinator: XiaomiVacuumDataUpdateCoordinator) -> None:
-        """Initialize, deriving the unique_id from the translation key."""
-        super().__init__(coordinator)
-        self._attr_unique_id = (
-            f"{coordinator.config_entry.entry_id}_{self._attr_translation_key}"
-        )
+    @property
+    def unique_id(self) -> str:
+        """Return a stable unique id derived from the translation key."""
+        return f"{self.coordinator.config_entry.entry_id}_{self._attr_translation_key}"
 
     @property
     def native_value(self) -> int | None:

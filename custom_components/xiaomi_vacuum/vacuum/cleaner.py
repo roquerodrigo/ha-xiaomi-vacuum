@@ -69,8 +69,12 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
     def __init__(self, coordinator: XiaomiVacuumDataUpdateCoordinator) -> None:
         """Initialize."""
         super().__init__(coordinator)
-        self._attr_unique_id = coordinator.config_entry.entry_id
         self._attr_fan_speed_list = list(FAN_SPEEDS)
+
+    @property
+    def unique_id(self) -> str:
+        """Return a stable unique id for this entity."""
+        return self.coordinator.config_entry.entry_id
 
     @property
     def _client(self) -> XiaomiVacuumApiClient:
