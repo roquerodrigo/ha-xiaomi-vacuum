@@ -43,6 +43,17 @@ async def test_update_returns_data_when_cloud_returns_no_bytes(hass):
     assert result == b"OLD"
 
 
+async def test_update_skips_parse_when_blob_unchanged(hass):
+    cloud = _cloud(map_bytes=b"BIN")
+    coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
+    coord.data = b"RENDERED"
+    coord._last_raw = b"BIN"
+    coord._parser = MagicMock()
+    result = await coord._async_update_data()
+    assert result == b"RENDERED"
+    coord._parser.parse.assert_not_called()
+
+
 async def test_update_returns_data_when_parser_returns_no_image(hass):
     cloud = _cloud()
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())

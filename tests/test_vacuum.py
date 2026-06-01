@@ -225,6 +225,12 @@ def test_parse_segments_alt_key_names():
     assert segs[0].name == "Quarto"
 
 
+def test_parse_segments_warns_when_all_entries_skipped():
+    # Every room is missing a name -> no segments -> warning path.
+    raw = json.dumps([{"id": 1}, {"id": 2}])
+    assert _parse_segments(raw) == []
+
+
 async def test_async_get_segments_via_entity(hass, setup_integration):
     coord = setup_integration.runtime_data.coordinator
     from custom_components.xiaomi_vacuum.vacuum import XiaomiVacuum

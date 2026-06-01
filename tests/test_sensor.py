@@ -49,6 +49,19 @@ async def test_error_sensor_falls_back_to_code(hass, setup_integration):
     assert state.state == "Error 210009"
 
 
+async def test_error_sensor_unknown_when_fault_missing(hass, setup_integration):
+    coordinator = setup_integration.runtime_data.coordinator
+    data = dict(coordinator.data)
+    data.pop("fault", None)
+    coordinator.async_set_updated_data(data)
+    await hass.async_block_till_done()
+
+    state = hass.states.get("sensor.aspirador_error")
+    # native_value is None -> HA reports "unknown"
+    assert state.state == "unknown"
+    assert state.attributes["fault_code"] is None
+
+
 async def test_consumable_life_sensors(hass, setup_integration):
     for eid, expected in (
         ("sensor.aspirador_mop_life", "85"),

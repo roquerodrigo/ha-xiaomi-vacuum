@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 from custom_components.xiaomi_vacuum.entity import XiaomiVacuumEntity
 
@@ -65,3 +65,13 @@ def test_patch_state_merges_into_coordinator_data():
     e = XiaomiVacuumEntity(coordinator=coord)
     e._patch_state(b=99, c=3)
     coord.async_set_updated_data.assert_called_once_with({"a": 1, "b": 99, "c": 3})
+
+
+async def test_schedule_refresh_triggers_coordinator_refresh(hass):
+    coord = _coord()
+    coord.async_refresh = AsyncMock(return_value=None)
+    e = XiaomiVacuumEntity(coordinator=coord)
+    e.hass = hass
+    e._schedule_refresh(delay=0)
+    await hass.async_block_till_done()
+    coord.async_refresh.assert_awaited_once()
