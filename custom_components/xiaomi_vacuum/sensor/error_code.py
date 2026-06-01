@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class XiaomiVacuumErrorCodeSensor(XiaomiVacuumEntity, SensorEntity):
-    """Raw device fault code (MIoT siid 2 / piid 3); 0 means no error."""
+    """Raw fault code from live Fault Ids (siid 2 / piid 66); 0 means no error."""
 
     _attr_translation_key = "error_code"
     _attr_entity_category = EntityCategory.DIAGNOSTIC

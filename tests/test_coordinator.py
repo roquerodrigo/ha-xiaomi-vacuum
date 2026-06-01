@@ -15,11 +15,20 @@ from custom_components.xiaomi_vacuum.coordinator import (
 )
 
 
-def _coord_with_client(hass, client_mock):
-    coord = XiaomiVacuumDataUpdateCoordinator(hass=hass)
+def _fake_entry(client_mock=None):
     runtime = type("R", (), {"client": client_mock})()
-    coord.config_entry = type("E", (), {"runtime_data": runtime})()
-    return coord
+    # `async_on_unload` is invoked by DataUpdateCoordinator.__init__ when a
+    # config_entry is passed; a no-op is enough for these unit tests.
+    return type(
+        "E",
+        (),
+        {"runtime_data": runtime, "async_on_unload": lambda *_: None},
+    )()
+
+
+def _coord_with_client(hass, client_mock):
+    entry = _fake_entry(client_mock)
+    return XiaomiVacuumDataUpdateCoordinator(hass=hass, config_entry=entry)
 
 
 def test_update_interval_is_30s():
@@ -27,7 +36,8 @@ def test_update_interval_is_30s():
 
 
 def test_init_sets_domain_name(hass):
-    assert XiaomiVacuumDataUpdateCoordinator(hass=hass).name == DOMAIN
+    coord = XiaomiVacuumDataUpdateCoordinator(hass=hass, config_entry=_fake_entry())
+    assert coord.name == DOMAIN
 
 
 async def test_async_update_data_returns_state(hass, sample_state):

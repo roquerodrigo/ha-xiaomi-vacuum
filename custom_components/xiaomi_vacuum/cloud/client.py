@@ -33,6 +33,7 @@ class XiaomiCloud:
         self._device: XiaomiDeviceInfo | None = None
         self._logged_in = False
         self._fault_texts: dict[int, str] = {}
+        self._fault_codes_seen: set[int] = set()
 
     @classmethod
     def from_session(
@@ -165,21 +166,25 @@ class XiaomiCloud:
         Return the localized text for a fault `code`, or None if unknown.
 
         Results are cached per code; the cloud message feed is only queried
-        when a code we have not seen before appears.
+        when a code we have not seen before appears. A code with no matching
+        message is not re-queried within the session.
         """
         if not self._logged_in or not self._device or not code:
             return None
-        if code not in self._fault_texts:
+        # Query the feed once per code so an unmatched fault doesn't re-hit
+        # the cloud on every poll.
+        if code not in self._fault_codes_seen:
             try:
                 texts = await self._run(
                     self._connector.get_device_fault_texts,
                     self._device.country,
                     self._device.device_id,
                 )
-            except (requests.RequestException, XiaomiCloudError) as exc:
+            except (requests.RequestException, XiaomiCloudError, ValueError) as exc:
                 LOGGER.debug("Failed to fetch fault texts: %s", exc)
                 return None
             self._fault_texts.update(texts)
+            self._fault_codes_seen.add(int(code))
         return self._fault_texts.get(int(code))
 
     async def _run[T, **P](

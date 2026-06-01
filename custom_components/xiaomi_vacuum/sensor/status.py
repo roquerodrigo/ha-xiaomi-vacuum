@@ -12,22 +12,22 @@ from ..entity import XiaomiVacuumEntity  # noqa: TID252
 if TYPE_CHECKING:
     from ..coordinator import XiaomiVacuumDataUpdateCoordinator  # noqa: TID252
 
+# Static option list for the ENUM sensor; module-level so it isn't rebuilt per
+# access and doesn't trip RUF012 (HA types `_attr_options` as an instance var).
+_STATUS_OPTIONS = list(STATUS_SLUGS.values())
+
 
 class XiaomiVacuumStatusSensor(XiaomiVacuumEntity, SensorEntity):
     """The vacuum's raw device status (more granular than the HA activity)."""
 
     _attr_translation_key = "status"
     _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = _STATUS_OPTIONS
 
     def __init__(self, coordinator: XiaomiVacuumDataUpdateCoordinator) -> None:
         """Initialize."""
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.config_entry.entry_id}_status"
-
-    @property
-    def options(self) -> list[str]:
-        """Return every possible status slug (see STATUS_SLUGS)."""
-        return list(STATUS_SLUGS.values())
 
     @property
     def native_value(self) -> str | None:

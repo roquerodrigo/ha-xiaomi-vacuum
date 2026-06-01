@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 class XiaomiVacuumErrorSensor(XiaomiVacuumEntity, SensorEntity):
     """
-    Device fault sensor (MIoT siid 2 / piid 3).
+    Device fault sensor (live Fault Ids, siid 2 / piid 66).
 
     The device reports a numeric fault code. There is no static code->text
     table for this model anywhere in Xiaomi's ecosystem; the human-readable,

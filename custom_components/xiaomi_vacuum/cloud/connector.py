@@ -241,7 +241,7 @@ class _XiaomiCloudConnector:
             if title and value:
                 try:
                     texts.setdefault(int(value[0]), title)
-                except ValueError, TypeError:
+                except ValueError, TypeError, KeyError, IndexError:
                     continue
         return texts
 

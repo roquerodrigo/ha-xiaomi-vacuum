@@ -5,9 +5,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from homeassistant.const import Platform
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.loader import async_get_loaded_integration
 
-from .api import XiaomiVacuumApiClient
+from .api import XiaomiVacuumApiClient, XiaomiVacuumApiClientCommunicationError
 from .cloud import XiaomiCloud, XiaomiCloudError
 from .const import (
     CONF_CLOUD_COUNTRY,
@@ -41,13 +42,16 @@ async def async_setup_entry(
     entry: XiaomiVacuumConfigEntry,
 ) -> bool:
     """Set up Xiaomi Vacuum from a config entry."""
-    coordinator = XiaomiVacuumDataUpdateCoordinator(hass=hass)
+    coordinator = XiaomiVacuumDataUpdateCoordinator(hass=hass, config_entry=entry)
     client = XiaomiVacuumApiClient(
         hass=hass,
         host=entry.data[CONF_HOST],
         token=entry.data[CONF_TOKEN],
     )
-    info = await client.async_get_info()
+    try:
+        info = await client.async_get_info()
+    except XiaomiVacuumApiClientCommunicationError as exception:
+        raise ConfigEntryNotReady(exception) from exception
     LOGGER.debug(
         "Device info: model=%s raw=%s",
         getattr(info, "model", None),

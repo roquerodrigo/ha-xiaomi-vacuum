@@ -98,16 +98,20 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
     def extra_state_attributes(self) -> dict[str, _VacuumAttributes]:
         """Expose raw MIoT properties as diagnostic attributes."""
         data = self.coordinator.data
+        status = data.get("status")
+        charging_state = data.get("charging_state")
         attrs: _VacuumAttributes = {
             "status_code": data.get("status"),
-            "status": STATUS_SLUGS.get(data.get("status") or -1),
+            "status": STATUS_SLUGS.get(status) if status is not None else None,
             "fault_code": data.get("fault"),
             "cleaning_area": data.get("cleaning_area"),
             "cleaning_time": data.get("cleaning_time"),
             "last_clean_time": data.get("last_clean_time"),
             "mop_water_level": data.get("mop_water_level"),
-            "charging_state": CHARGING_STATE_SLUGS.get(
-                data.get("charging_state") or -1
+            "charging_state": (
+                CHARGING_STATE_SLUGS.get(charging_state)
+                if charging_state is not None
+                else None
             ),
             "room_information_raw": data.get("room_information"),
         }

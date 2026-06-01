@@ -45,13 +45,16 @@ class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[VacuumState]):
 
     config_entry: XiaomiVacuumConfigEntry
 
-    def __init__(self, hass: HomeAssistant) -> None:
+    def __init__(
+        self, hass: HomeAssistant, config_entry: XiaomiVacuumConfigEntry
+    ) -> None:
         """Initialize."""
         super().__init__(
             hass=hass,
             logger=LOGGER,
             name=DOMAIN,
             update_interval=UPDATE_INTERVAL,
+            config_entry=config_entry,
         )
         # Set after the cloud session resolves (see __init__.py); when present,
         # we enrich a non-zero fault code with its localized text.
