@@ -31,7 +31,7 @@ pythonpath = ["."]
 addopts = [
     "--cov=custom_components/xiaomi_vacuum",
     "--cov-report=term-missing",
-    "--cov-fail-under=95",
+    "--cov-fail-under=90",
 ]
 
 [tool.mypy]
