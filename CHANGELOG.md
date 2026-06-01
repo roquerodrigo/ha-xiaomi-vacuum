@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.3.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.3.0...v1.3.1) (2026-06-01)
+
+
+### Bug Fixes
+
+* **cloud:** harden fault-text fetch against decode errors and re-polling ([2ffeb54](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/2ffeb5421259baaa82e572cefef91e4a686746ee))
+* **coordinator:** pass config_entry and surface offline device as not-ready ([2c5249e](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/2c5249eb16d6e5feba9c3f7353d5111e4f55b6ae))
+* harden cloud, setup and entity robustness from full code review ([ded0b04](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/ded0b04d0078575e0e5d81c59b5d3fe100fed3a9))
+* **vacuum:** use None-aware status/charging slug lookup ([78ad672](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/78ad6720822f3809455b1b544d70a0070a19208b))
+
 ## [1.3.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.2.2...v1.3.0) (2026-05-27)
 
 
