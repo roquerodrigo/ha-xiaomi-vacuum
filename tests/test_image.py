@@ -32,3 +32,18 @@ async def test_image_handle_new_map_updates_state(hass, setup_integration_with_c
     await hass.async_block_till_done()
     state_after = hass.states.get("image.aspirador_map")
     assert state_after.state != state_before.state
+
+
+async def test_image_handle_new_map_ignores_identical_blob(
+    hass, setup_integration_with_cloud
+):
+    coord = setup_integration_with_cloud.runtime_data.map_coordinator
+    coord.async_set_updated_data(b"DUPLICATE")
+    await hass.async_block_till_done()
+    state_first = hass.states.get("image.aspirador_map")
+
+    # Pushing the same bytes again must be a no-op (no new last_updated).
+    coord.async_set_updated_data(b"DUPLICATE")
+    await hass.async_block_till_done()
+    state_second = hass.states.get("image.aspirador_map")
+    assert state_second.last_updated == state_first.last_updated

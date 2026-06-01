@@ -143,7 +143,7 @@ scripts/develop   # run Home Assistant in debug mode with this integration loade
 uv run ruff format .                          # format
 uv run ruff check . --fix                      # lint + autofix
 uv run mypy custom_components/xiaomi_vacuum    # type-check
-uv run pytest                                  # tests + coverage (must stay ≥ 80%)
+uv run pytest                                  # tests + coverage (must stay ≥ 90%)
 ```
 
 The project is based on the
