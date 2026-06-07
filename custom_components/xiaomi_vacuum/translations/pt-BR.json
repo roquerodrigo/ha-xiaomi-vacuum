@@ -32,6 +32,12 @@
             "local_probe_failed": "Falha inesperada na sondagem local. Veja os logs."
         }
     },
+    "issues": {
+        "cannot_connect": {
+            "title": "Sem conexão com {name}",
+            "description": "O Home Assistant não consegue se conectar ao aspirador em {host}. O robô provavelmente está desligado ou fora da rede. As entidades ficam indisponíveis e o mapa mantém a última imagem conhecida até ele reconectar. Este problema é resolvido automaticamente quando o aspirador voltar a ficar online."
+        }
+    },
     "entity": {
         "vacuum": {
             "xiaomi_vacuum": {
