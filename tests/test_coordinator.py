@@ -4,25 +4,34 @@ from datetime import timedelta
 from unittest.mock import AsyncMock
 
 import pytest
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from custom_components.xiaomi_vacuum.api import XiaomiVacuumApiClientError
-from custom_components.xiaomi_vacuum.const import DOMAIN
+from custom_components.xiaomi_vacuum.const import CONF_HOST, DOMAIN
 from custom_components.xiaomi_vacuum.coordinator import (
     UPDATE_INTERVAL,
     XiaomiVacuumDataUpdateCoordinator,
     _live_fault_code,
 )
+from custom_components.xiaomi_vacuum.repairs import async_raise_cannot_connect
 
 
 def _fake_entry(client_mock=None):
     runtime = type("R", (), {"client": client_mock})()
     # `async_on_unload` is invoked by DataUpdateCoordinator.__init__ when a
     # config_entry is passed; a no-op is enough for these unit tests.
+    # entry_id/title/data feed the cannot_connect repair issue helpers.
     return type(
         "E",
         (),
-        {"runtime_data": runtime, "async_on_unload": lambda *_: None},
+        {
+            "runtime_data": runtime,
+            "async_on_unload": lambda *_: None,
+            "entry_id": "test-entry",
+            "title": "Aspirador",
+            "data": {CONF_HOST: "192.168.1.50"},
+        },
     )()
 
 
@@ -80,6 +89,28 @@ async def test_async_update_data_raises_update_failed_on_api_error(hass):
     coord = _coord_with_client(hass, client)
     with pytest.raises(UpdateFailed):
         await coord._async_update_data()
+
+
+async def test_update_failure_creates_repair_issue(hass):
+    client = type(
+        "C",
+        (),
+        {"async_get_state": AsyncMock(side_effect=XiaomiVacuumApiClientError("off"))},
+    )()
+    coord = _coord_with_client(hass, client)
+    with pytest.raises(UpdateFailed):
+        await coord._async_update_data()
+    registry = ir.async_get(hass)
+    assert registry.async_get_issue(DOMAIN, "cannot_connect_test-entry") is not None
+
+
+async def test_update_success_clears_repair_issue(hass, sample_state):
+    client = type("C", (), {"async_get_state": AsyncMock(return_value=sample_state)})()
+    coord = _coord_with_client(hass, client)
+    async_raise_cannot_connect(hass, coord.config_entry)
+    await coord._async_update_data()
+    registry = ir.async_get(hass)
+    assert registry.async_get_issue(DOMAIN, "cannot_connect_test-entry") is None
 
 
 def test_live_fault_code_none_on_non_dict_json():

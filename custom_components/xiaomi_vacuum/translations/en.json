@@ -32,6 +32,12 @@
             "local_probe_failed": "Local probe failed unexpectedly. See logs."
         }
     },
+    "issues": {
+        "cannot_connect": {
+            "title": "Cannot reach {name}",
+            "description": "Home Assistant cannot connect to the vacuum at {host}. The robot is likely powered off or disconnected from the network. Its entities show as unavailable and the map keeps the last known image until it reconnects. This issue clears automatically once the vacuum is back online."
+        }
+    },
     "entity": {
         "vacuum": {
             "xiaomi_vacuum": {

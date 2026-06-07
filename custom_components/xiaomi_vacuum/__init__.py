@@ -2,19 +2,21 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from homeassistant.const import Platform
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.loader import async_get_loaded_integration
 
 from .api import XiaomiVacuumApiClient, XiaomiVacuumApiClientCommunicationError
+from .cached_device_info import CachedDeviceInfo
 from .cloud import XiaomiCloud, XiaomiCloudError
 from .const import (
     CONF_CLOUD_COUNTRY,
     CONF_CLOUD_SERVICE_TOKEN,
     CONF_CLOUD_SSECURITY,
     CONF_CLOUD_USER_ID,
+    CONF_DEVICE_INFO,
     CONF_HOST,
     CONF_TOKEN,
     LOGGER,
@@ -22,11 +24,12 @@ from .const import (
 from .coordinator import XiaomiVacuumDataUpdateCoordinator
 from .data import XiaomiVacuumData
 from .map_coordinator import XiaomiVacuumMapCoordinator
+from .repairs import async_raise_cannot_connect
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
-    from .data import XiaomiVacuumConfigEntry
+    from .data import DeviceInfoLike, JsonObject, XiaomiVacuumConfigEntry
 
 PLATFORMS: list[Platform] = [
     Platform.VACUUM,
@@ -48,10 +51,27 @@ async def async_setup_entry(
         host=entry.data[CONF_HOST],
         token=entry.data[CONF_TOKEN],
     )
+    offline = False
+    info: DeviceInfoLike
     try:
         info = await client.async_get_info()
     except XiaomiVacuumApiClientCommunicationError as exception:
-        raise ConfigEntryNotReady(exception) from exception
+        stored = entry.data.get(CONF_DEVICE_INFO)
+        if not stored:
+            # First setup ever — nothing cached to build entities from.
+            raise ConfigEntryNotReady(exception) from exception
+        LOGGER.warning(
+            "Vacuum unreachable at setup; continuing with cached device info: %s",
+            exception,
+        )
+        info = CachedDeviceInfo.from_stored(cast("JsonObject", stored))
+        offline = True
+    else:
+        stored_info = CachedDeviceInfo.to_stored(info)
+        if entry.data.get(CONF_DEVICE_INFO) != stored_info:
+            hass.config_entries.async_update_entry(
+                entry, data={**entry.data, CONF_DEVICE_INFO: stored_info}
+            )
     LOGGER.debug(
         "Device info: model=%s raw=%s",
         getattr(info, "model", None),
@@ -90,9 +110,17 @@ async def async_setup_entry(
         map_coordinator=map_coordinator,
     )
 
-    await coordinator.async_config_entry_first_refresh()
+    if offline:
+        async_raise_cannot_connect(hass, entry)
+        # Tolerant refresh: entities are created and marked unavailable by the
+        # coordinator instead of holding the whole entry in SETUP_RETRY.
+        await coordinator.async_refresh()
+    else:
+        await coordinator.async_config_entry_first_refresh()
     if map_coordinator is not None:
-        await map_coordinator.async_config_entry_first_refresh()
+        # The map is best-effort and must never block entity creation.
+        await map_coordinator.async_load_cached()
+        await map_coordinator.async_refresh()
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))

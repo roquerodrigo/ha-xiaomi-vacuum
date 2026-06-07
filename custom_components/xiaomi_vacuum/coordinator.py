@@ -11,6 +11,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .api import XiaomiVacuumApiClientError
 from .const import DOMAIN, LOGGER
 from .data import VacuumState
+from .repairs import async_clear_cannot_connect, async_raise_cannot_connect
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -65,7 +66,11 @@ class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[VacuumState]):
         try:
             data = await self.config_entry.runtime_data.client.async_get_state()
         except XiaomiVacuumApiClientError as exception:
+            # Raised on the first failure: the robot being powered off is a
+            # normal scenario worth surfacing in Settings → Repairs.
+            async_raise_cannot_connect(self.hass, self.config_entry)
             raise UpdateFailed(exception) from exception
+        async_clear_cannot_connect(self.hass, self.config_entry)
         data["fault"] = _live_fault_code(data.get("fault_ids"))
         await self._enrich_fault_text(data)
         return data

@@ -13,6 +13,7 @@ from custom_components.xiaomi_vacuum.const import (
     CONF_CLOUD_SERVICE_TOKEN,
     CONF_CLOUD_SSECURITY,
     CONF_CLOUD_USER_ID,
+    CONF_DEVICE_INFO,
     CONF_HOST,
     CONF_NAME,
     CONF_TOKEN,
@@ -83,6 +84,66 @@ async def test_setup_entry_not_ready_on_communication_error(
         await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
     assert entry.state == ConfigEntryState.SETUP_RETRY
+
+
+async def test_setup_persists_device_info_on_success(hass, setup_integration):
+    assert setup_integration.data[CONF_DEVICE_INFO] == {
+        "model": "xiaomi.vacuum.d109gl",
+        "mac_address": "AA:BB:CC:DD:EE:FF",
+        "firmware_version": "1.0.0",
+        "hardware_version": "rev1",
+    }
+
+
+async def test_setup_offline_with_cached_info_loads(
+    hass, mock_miot_device, enable_custom_integrations
+):
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_HOST: "192.168.1.50",
+            CONF_TOKEN: "0" * 32,
+            CONF_NAME: "Aspirador",
+            CONF_DEVICE_INFO: {
+                "model": "xiaomi.vacuum.d109gl",
+                "mac_address": "AA:BB:CC:DD:EE:FF",
+                "firmware_version": "1.0.0",
+                "hardware_version": "rev1",
+            },
+        },
+        unique_id="AA:BB:CC:DD:EE:FF",
+    )
+    entry.add_to_hass(hass)
+    offline = XiaomiVacuumApiClientCommunicationError("offline")
+    with (
+        patch(
+            "custom_components.xiaomi_vacuum.XiaomiVacuumApiClient.async_get_info",
+            AsyncMock(side_effect=offline),
+        ),
+        patch(
+            "custom_components.xiaomi_vacuum.XiaomiVacuumApiClient.async_get_state",
+            AsyncMock(side_effect=offline),
+        ),
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert entry.state == ConfigEntryState.LOADED
+    vacuum = hass.states.async_all("vacuum")
+    assert len(vacuum) == 1
+    assert vacuum[0].state == "unavailable"
+
+    from homeassistant.helpers import issue_registry as ir
+
+    registry = ir.async_get(hass)
+    issue = registry.async_get_issue(DOMAIN, f"cannot_connect_{entry.entry_id}")
+    assert issue is not None
+    assert issue.translation_placeholders == {
+        "name": entry.title,
+        "host": "192.168.1.50",
+    }
 
 
 async def test_setup_entry_warns_when_cloud_session_invalid(

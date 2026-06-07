@@ -14,6 +14,7 @@ from custom_components.xiaomi_vacuum.map_coordinator import (
 def _state_coord(map_obj_name="0/abc"):
     sc = MagicMock()
     sc.data = {"map_obj_name": map_obj_name} if map_obj_name else {}
+    sc.config_entry.entry_id = "test-entry"
     return sc
 
 
@@ -27,6 +28,65 @@ def test_update_interval_is_60s():
     from datetime import timedelta
 
     assert timedelta(seconds=60) == MAP_UPDATE_INTERVAL
+
+
+async def test_update_returns_data_when_state_data_is_none(hass):
+    # Regression: robot offline since startup → state coordinator never
+    # succeeded → data is None; must keep serving the cache, not crash.
+    sc = _state_coord()
+    sc.data = None
+    coord = XiaomiVacuumMapCoordinator(hass, _cloud(), sc)
+    coord.data = b"RESTORED"
+    assert await coord._async_update_data() == b"RESTORED"
+
+
+async def test_update_persists_png_to_store(hass, hass_storage):
+    cloud = _cloud()
+    coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
+    map_data = MagicMock()
+
+    def fake_save(buf, format):  # noqa: A002
+        buf.write(b"FAKEPNG")
+
+    map_data.image.data.save = fake_save
+    coord._parser = MagicMock()
+    coord._parser.parse = MagicMock(return_value=map_data)
+    assert await coord._async_update_data() == b"FAKEPNG"
+
+    import base64
+
+    stored = hass_storage["xiaomi_vacuum.map_test-entry"]["data"]
+    assert base64.b64decode(stored["png_b64"]) == b"FAKEPNG"
+
+
+async def test_async_load_cached_restores_png(hass, hass_storage):
+    import base64
+
+    hass_storage["xiaomi_vacuum.map_test-entry"] = {
+        "version": 1,
+        "key": "xiaomi_vacuum.map_test-entry",
+        "data": {"png_b64": base64.b64encode(b"CACHEDPNG").decode()},
+    }
+    coord = XiaomiVacuumMapCoordinator(hass, _cloud(), _state_coord())
+    await coord.async_load_cached()
+    assert coord.data == b"CACHEDPNG"
+
+
+async def test_async_load_cached_noop_when_store_empty(hass):
+    coord = XiaomiVacuumMapCoordinator(hass, _cloud(), _state_coord())
+    await coord.async_load_cached()
+    assert coord.data is None
+
+
+async def test_async_load_cached_ignores_corrupt_payload(hass, hass_storage):
+    hass_storage["xiaomi_vacuum.map_test-entry"] = {
+        "version": 1,
+        "key": "xiaomi_vacuum.map_test-entry",
+        "data": {"png_b64": "!!!not base64!!!"},
+    }
+    coord = XiaomiVacuumMapCoordinator(hass, _cloud(), _state_coord())
+    await coord.async_load_cached()
+    assert coord.data is None
 
 
 async def test_update_returns_data_when_no_map_obj_name(hass):
