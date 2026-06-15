@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.3.1...v1.4.0) (2026-06-07)
+
+
+### Features
+
+* tolerate offline vacuum at setup, keep map served and raise repair issue ([d8b2740](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/d8b2740fc72bde668ce97fb708099e7f726233b3))
+* tolerate offline vacuum at setup, keep map served and raise repair issue ([2548ac7](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/2548ac7542dcf93f8eab86cc7fcf4ba81d789e52))
+
 ## [1.3.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.3.0...v1.3.1) (2026-06-01)
 
 
