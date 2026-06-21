@@ -20,7 +20,7 @@ dev = [
     "vacuum-map-parser-xiaomi>=0.1.4",
 ]
 lint = [
-    "ruff==0.15.14",
+    "ruff==0.15.18",
     "mypy==2.1.0",
 ]
 
