@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.5.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.4.0...v1.5.0) (2026-07-03)
+
+
+### Features
+
+* add battery_charging binary sensor ([2b7401c](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/2b7401c5b836f0e85b918f1a3248639568fbb04b))
+* expose battery charging state on the battery sensor ([97fa1a1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/97fa1a1a4897f63a13b25fe94e0e4ea5efda9033))
+
 ## [1.4.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.3.1...v1.4.0) (2026-06-07)
 
 
