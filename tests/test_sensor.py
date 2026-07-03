@@ -16,6 +16,33 @@ async def test_battery_sensor_attributes(hass, setup_integration):
     assert state.attributes["device_class"] == SensorDeviceClass.BATTERY
 
 
+async def test_battery_sensor_charging_attribute(hass, setup_integration):
+    state = hass.states.get("sensor.aspirador_battery")
+    # SAMPLE_STATE has charging_state:1 -> charging
+    assert state.attributes["charging"] is True
+    assert state.attributes["charging_state"] == "charging"
+
+
+async def test_battery_sensor_not_charging(hass, setup_integration):
+    coordinator = setup_integration.runtime_data.coordinator
+    coordinator.async_set_updated_data({**coordinator.data, "charging_state": 2})
+    await hass.async_block_till_done()
+    state = hass.states.get("sensor.aspirador_battery")
+    assert state.attributes["charging"] is False
+    assert state.attributes["charging_state"] == "not_charging"
+
+
+async def test_battery_sensor_charging_unknown(hass, setup_integration):
+    coordinator = setup_integration.runtime_data.coordinator
+    data = dict(coordinator.data)
+    data.pop("charging_state", None)
+    coordinator.async_set_updated_data(data)
+    await hass.async_block_till_done()
+    state = hass.states.get("sensor.aspirador_battery")
+    # no charging_state -> attributes omitted
+    assert "charging" not in state.attributes
+
+
 async def test_error_sensor_ok_when_no_fault(hass, setup_integration):
     state = hass.states.get("sensor.aspirador_error")
     assert state is not None

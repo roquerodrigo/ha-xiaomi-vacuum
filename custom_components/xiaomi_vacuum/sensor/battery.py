@@ -5,6 +5,7 @@ from __future__ import annotations
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.const import PERCENTAGE, EntityCategory
 
+from ..const import CHARGING_STATE_SLUGS  # noqa: TID252
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 
@@ -25,3 +26,14 @@ class XiaomiVacuumBatterySensor(XiaomiVacuumEntity, SensorEntity):
         """Return battery level 0-100."""
         level = self.coordinator.data.get("battery_level")
         return int(level) if level is not None else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, bool | str | None] | None:
+        """Expose whether the battery is currently charging."""
+        charging_state = self.coordinator.data.get("charging_state")
+        if charging_state is None:
+            return None
+        return {
+            "charging": charging_state == 1,
+            "charging_state": CHARGING_STATE_SLUGS.get(charging_state),
+        }
