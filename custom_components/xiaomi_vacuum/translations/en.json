@@ -1,6 +1,16 @@
 {
     "config": {
         "step": {
+            "user": {
+                "title": "Choose your Xiaomi cloud region",
+                "description": "Pick the region your Xiaomi account is registered in. Europe and the UK use the Germany (DE) server. Choosing the wrong region means your vacuum won't be found.",
+                "data": {
+                    "cloud_country": "Region"
+                },
+                "data_description": {
+                    "cloud_country": "The Mi Home cloud server that hosts your account."
+                }
+            },
             "qr": {
                 "title": "Scan with the Mi Home app",
                 "description": "![QR]({qr_image})\n\nOpen the Mi Home app, tap the QR scanner (top-right corner), and scan the code. The dialog will advance automatically once you confirm on the phone."
@@ -36,6 +46,19 @@
             "local_probe_failed": "Local probe failed unexpectedly. See logs.",
             "reauth_successful": "Xiaomi cloud session refreshed. The cleaning map will start updating again.",
             "reauth_failed": "Could not refresh the Xiaomi cloud session. Try again."
+        }
+    },
+    "selector": {
+        "cloud_country": {
+            "options": {
+                "de": "Europe / UK",
+                "us": "United States",
+                "cn": "China (mainland)",
+                "ru": "Russia",
+                "sg": "Singapore",
+                "i2": "India",
+                "tw": "Taiwan"
+            }
         }
     },
     "issues": {

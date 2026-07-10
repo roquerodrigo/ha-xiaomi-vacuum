@@ -7,6 +7,11 @@ from typing import TYPE_CHECKING
 
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.helpers.selector import (
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 
 from .api import (
     XiaomiVacuumApiClient,
@@ -29,6 +34,7 @@ if TYPE_CHECKING:
     from .data import XiaomiVacuumConfigEntry
 
 from .const import (
+    CLOUD_REGIONS,
     CONF_CLOUD_COUNTRY,
     CONF_CLOUD_SERVICE_TOKEN,
     CONF_CLOUD_SSECURITY,
@@ -36,13 +42,13 @@ from .const import (
     CONF_HOST,
     CONF_NAME,
     CONF_TOKEN,
+    DEFAULT_CLOUD_REGION,
     DOMAIN,
     LOGGER,
 )
 
 _VACUUM_MODEL_PREFIX = "xiaomi.vacuum."
 _DEVICE_PICK = "device"
-_CLOUD_COUNTRY = "us"
 
 
 class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -64,10 +70,27 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(
         self,
-        user_input: ConfigType | None = None,  # noqa: ARG002
+        user_input: ConfigType | None = None,
     ) -> config_entries.ConfigFlowResult:
-        """Skip straight to the QR step; cloud region is hard-coded."""
-        self._user_input = {CONF_CLOUD_COUNTRY: _CLOUD_COUNTRY}
+        """Pick the Xiaomi cloud region, then advance to the QR step."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="user",
+                data_schema=vol.Schema(
+                    {
+                        vol.Required(
+                            CONF_CLOUD_COUNTRY, default=DEFAULT_CLOUD_REGION
+                        ): SelectSelector(
+                            SelectSelectorConfig(
+                                options=list(CLOUD_REGIONS),
+                                translation_key="cloud_country",
+                                mode=SelectSelectorMode.DROPDOWN,
+                            )
+                        )
+                    }
+                ),
+            )
+        self._user_input = {CONF_CLOUD_COUNTRY: user_input[CONF_CLOUD_COUNTRY]}
         return await self.async_step_qr()
 
     async def async_step_reauth(
@@ -76,7 +99,9 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> config_entries.ConfigFlowResult:
         """Handle re-auth started when the saved cloud session expired."""
         self._reauth_entry = self._get_reauth_entry()
-        self._user_input = {CONF_CLOUD_COUNTRY: _CLOUD_COUNTRY}
+        self._user_input = {
+            CONF_CLOUD_COUNTRY: self._reauth_entry.data[CONF_CLOUD_COUNTRY]
+        }
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(
@@ -228,6 +253,7 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_HOST: device.local_ip,
                 CONF_TOKEN: device.token,
                 CONF_NAME: device.name,
+                CONF_CLOUD_COUNTRY: device.country,
             }
         )
         return self._create_entry()

@@ -44,10 +44,15 @@ def _handler(hass):
     return handler
 
 
-async def test_step_user_jumps_straight_to_qr_progress(
-    hass, enable_custom_integrations
-):
-    """Add Hub → no form → QR progress dialog with the PNG embedded."""
+async def test_step_user_shows_region_form(hass, enable_custom_integrations):
+    """Add Hub → region picker form before anything else."""
+    result = await _start(hass)
+    assert result["type"] == FlowResultType.FORM
+    assert result["step_id"] == "user"
+
+
+async def test_region_selection_starts_qr_progress(hass, enable_custom_integrations):
+    """Picking a region builds the cloud client for it and shows the QR dialog."""
     cloud = MagicMock()
     cloud.async_qr_start = AsyncMock(return_value=(b"PNG", "https://lp", 60))
 
@@ -60,9 +65,12 @@ async def test_step_user_jumps_straight_to_qr_progress(
 
     with patch(
         "custom_components.xiaomi_vacuum.config_flow.XiaomiCloud", return_value=cloud
-    ):
+    ) as cloud_cls:
         try:
-            result = await _start(hass)
+            start = await _start(hass)
+            result = await hass.config_entries.flow.async_configure(
+                start["flow_id"], {CONF_CLOUD_COUNTRY: "de"}
+            )
             assert result["type"] == FlowResultType.SHOW_PROGRESS
             assert result["step_id"] == "qr"
             assert result["progress_action"] == "waiting_for_scan"
@@ -70,6 +78,8 @@ async def test_step_user_jumps_straight_to_qr_progress(
                 "data:image/png;base64,"
                 in result["description_placeholders"]["qr_image"]
             )
+            _, kwargs = cloud_cls.call_args
+            assert kwargs["country"] == "de"
         finally:
             pending.cancel()
             await asyncio.sleep(0)
@@ -187,6 +197,7 @@ async def test_qr_step_proceeds_to_reauth_finish_when_reauthing(hass):
 async def test_reauth_stores_entry_and_confirms(hass):
     handler = _handler(hass)
     entry = MagicMock()
+    entry.data = {CONF_CLOUD_COUNTRY: "de"}
     with (
         patch.object(handler, "_get_reauth_entry", return_value=entry),
         patch.object(
@@ -197,7 +208,8 @@ async def test_reauth_stores_entry_and_confirms(hass):
     ):
         result = await handler.async_step_reauth({})
     assert handler._reauth_entry is entry
-    assert handler._user_input[CONF_CLOUD_COUNTRY] == "us"
+    # Region comes from the existing entry, not a hard-coded default.
+    assert handler._user_input[CONF_CLOUD_COUNTRY] == "de"
     confirm.assert_awaited_once()
     assert result == {"type": "form"}
 
@@ -407,6 +419,8 @@ async def test_finalize_creates_entry_on_success(hass):
     assert handler._user_input[CONF_HOST] == "192.168.1.5"
     assert handler._user_input[CONF_TOKEN] == "abc"
     assert handler._user_input[CONF_NAME] == "Vacuum"
+    # Region is persisted from the resolved device, not the picker default.
+    assert handler._user_input[CONF_CLOUD_COUNTRY] == "us"
 
 
 async def test_finalize_updates_unique_id_when_mac_differs(hass):

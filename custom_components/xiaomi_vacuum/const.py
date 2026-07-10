@@ -20,6 +20,13 @@ CONF_CLOUD_SERVICE_TOKEN = "cloud_service_token"  # noqa: S105
 CONF_CLOUD_USER_ID = "cloud_user_id"
 CONF_DEVICE_INFO = "device_info"
 
+# Xiaomi cloud server regions the account can live in. The device is only found
+# on the server matching its region, so the user picks this at setup. Codes map
+# to `_api_url` hosts (e.g. "de" -> https://de.api.io.mi.com). Friendly labels
+# live in translations under `selector.cloud_country.options`.
+CLOUD_REGIONS: tuple[str, ...] = ("de", "us", "cn", "ru", "sg", "i2", "tw")
+DEFAULT_CLOUD_REGION = "us"
+
 ISSUE_CANNOT_CONNECT = "cannot_connect"
 
 
