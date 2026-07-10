@@ -1,6 +1,16 @@
 {
     "config": {
         "step": {
+            "user": {
+                "title": "Choose your Xiaomi cloud region",
+                "description": "Pick the region your Xiaomi account is registered in. Europe and the UK use the Germany (DE) server. Choosing the wrong region means your vacuum won't be found.",
+                "data": {
+                    "cloud_country": "Region"
+                },
+                "data_description": {
+                    "cloud_country": "The Mi Home cloud server that hosts your account."
+                }
+            },
             "qr": {
                 "title": "Scan with the Mi Home app",
                 "description": "![QR]({qr_image})\n\nOpen the Mi Home app, tap the QR scanner (top-right corner), and scan the code. The dialog will advance automatically once you confirm on the phone."
@@ -12,6 +22,16 @@
             "reauth_confirm": {
                 "title": "Reconnect to Xiaomi cloud",
                 "description": "The Xiaomi cloud session expired, so the cleaning map stopped updating. Submit to show a new QR code and sign in again — the vacuum and its other entities keep working in the meantime."
+            },
+            "reconfigure": {
+                "title": "Change the Xiaomi cloud region",
+                "description": "Pick the region your Xiaomi account is registered in. The current cloud session is reused, so no new QR scan is needed. If the region is wrong the vacuum won't be found.",
+                "data": {
+                    "cloud_country": "Region"
+                },
+                "data_description": {
+                    "cloud_country": "The Mi Home cloud server that hosts your account."
+                }
             },
             "discover": {
                 "title": "Pick your vacuum",
@@ -35,7 +55,22 @@
             "local_unreachable": "The vacuum was found in the cloud but Home Assistant cannot reach it on the LAN. Check it's on the same network and online.",
             "local_probe_failed": "Local probe failed unexpectedly. See logs.",
             "reauth_successful": "Xiaomi cloud session refreshed. The cleaning map will start updating again.",
-            "reauth_failed": "Could not refresh the Xiaomi cloud session. Try again."
+            "reauth_failed": "Could not refresh the Xiaomi cloud session. Try again.",
+            "reconfigure_successful": "Region updated. The vacuum now uses the selected Xiaomi cloud server.",
+            "unique_id_mismatch": "The vacuum found in that region is a different device than this entry. Region unchanged."
+        }
+    },
+    "selector": {
+        "cloud_country": {
+            "options": {
+                "de": "Europe / UK",
+                "us": "United States",
+                "cn": "China (mainland)",
+                "ru": "Russia",
+                "sg": "Singapore",
+                "i2": "India",
+                "tw": "Taiwan"
+            }
         }
     },
     "issues": {

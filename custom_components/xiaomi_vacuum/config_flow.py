@@ -7,6 +7,11 @@ from typing import TYPE_CHECKING
 
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.helpers.selector import (
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+)
 
 from .api import (
     XiaomiVacuumApiClient,
@@ -29,6 +34,7 @@ if TYPE_CHECKING:
     from .data import XiaomiVacuumConfigEntry
 
 from .const import (
+    CLOUD_REGIONS,
     CONF_CLOUD_COUNTRY,
     CONF_CLOUD_SERVICE_TOKEN,
     CONF_CLOUD_SSECURITY,
@@ -36,17 +42,22 @@ from .const import (
     CONF_HOST,
     CONF_NAME,
     CONF_TOKEN,
+    DEFAULT_CLOUD_REGION,
     DOMAIN,
     LOGGER,
 )
 
 _VACUUM_MODEL_PREFIX = "xiaomi.vacuum."
 _DEVICE_PICK = "device"
-_CLOUD_COUNTRY = "us"
 
 
 class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
-    """Cloud-first config flow: pick region → scan QR → pick vacuum → done."""
+    """
+    Cloud-first config flow: pick region → scan QR → pick vacuum → done.
+
+    Supports reauth (refresh the cloud session) and reconfigure (switch the
+    cloud region of an existing entry, reusing its stored session).
+    """
 
     VERSION = 1
 
@@ -61,14 +72,56 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._qr_task: asyncio.Task[None] | None = None
         self._devices: list[XiaomiDeviceInfo] = []
         self._reauth_entry: XiaomiVacuumConfigEntry | None = None
+        self._reconfigure_entry: XiaomiVacuumConfigEntry | None = None
+
+    def _region_schema(self, default: str) -> vol.Schema:
+        """Build the region-picker schema, preselecting `default`."""
+        return vol.Schema(
+            {
+                vol.Required(CONF_CLOUD_COUNTRY, default=default): SelectSelector(
+                    SelectSelectorConfig(
+                        options=list(CLOUD_REGIONS),
+                        translation_key="cloud_country",
+                        mode=SelectSelectorMode.DROPDOWN,
+                    )
+                )
+            }
+        )
 
     async def async_step_user(
         self,
-        user_input: ConfigType | None = None,  # noqa: ARG002
+        user_input: ConfigType | None = None,
     ) -> config_entries.ConfigFlowResult:
-        """Skip straight to the QR step; cloud region is hard-coded."""
-        self._user_input = {CONF_CLOUD_COUNTRY: _CLOUD_COUNTRY}
+        """Pick the Xiaomi cloud region, then advance to the QR step."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="user",
+                data_schema=self._region_schema(DEFAULT_CLOUD_REGION),
+            )
+        self._user_input = {CONF_CLOUD_COUNTRY: user_input[CONF_CLOUD_COUNTRY]}
         return await self.async_step_qr()
+
+    async def async_step_reconfigure(
+        self,
+        user_input: ConfigType | None = None,
+    ) -> config_entries.ConfigFlowResult:
+        """Change the cloud region of an existing entry, reusing its session."""
+        entry = self._get_reconfigure_entry()
+        self._reconfigure_entry = entry
+        if user_input is None:
+            return self.async_show_form(
+                step_id="reconfigure",
+                data_schema=self._region_schema(entry.data[CONF_CLOUD_COUNTRY]),
+            )
+        self._user_input = {CONF_CLOUD_COUNTRY: user_input[CONF_CLOUD_COUNTRY]}
+        self._cloud = XiaomiCloud.from_session(
+            self.hass,
+            country=user_input[CONF_CLOUD_COUNTRY],
+            ssecurity=entry.data[CONF_CLOUD_SSECURITY],
+            service_token=entry.data[CONF_CLOUD_SERVICE_TOKEN],
+            user_id=entry.data[CONF_CLOUD_USER_ID],
+        )
+        return await self.async_step_discover()
 
     async def async_step_reauth(
         self,
@@ -76,7 +129,9 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> config_entries.ConfigFlowResult:
         """Handle re-auth started when the saved cloud session expired."""
         self._reauth_entry = self._get_reauth_entry()
-        self._user_input = {CONF_CLOUD_COUNTRY: _CLOUD_COUNTRY}
+        self._user_input = {
+            CONF_CLOUD_COUNTRY: self._reauth_entry.data[CONF_CLOUD_COUNTRY]
+        }
         return await self.async_step_reauth_confirm()
 
     async def async_step_reauth_confirm(
@@ -201,7 +256,7 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> config_entries.ConfigFlowResult:
         """Validate the local connection (using cloud-supplied IP) and create entry."""
         await self.async_set_unique_id(device.mac or device.device_id)
-        self._abort_if_unique_id_configured()
+        self._abort_if_device_conflict()
 
         if not device.local_ip:
             return self.async_abort(reason="no_local_ip")
@@ -221,16 +276,30 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         mac = getattr(info, "mac_address", None) or device.mac
         if mac and mac != self.unique_id:
             await self.async_set_unique_id(mac, raise_on_progress=False)
-            self._abort_if_unique_id_configured()
+            self._abort_if_device_conflict()
 
         self._user_input.update(
             {
                 CONF_HOST: device.local_ip,
                 CONF_TOKEN: device.token,
                 CONF_NAME: device.name,
+                CONF_CLOUD_COUNTRY: device.country,
             }
         )
+        if self._reconfigure_entry is not None:
+            self._persist_session_tokens()
+            return self.async_update_reload_and_abort(
+                self._reconfigure_entry,
+                data={**self._reconfigure_entry.data, **self._user_input},
+            )
         return self._create_entry()
+
+    def _abort_if_device_conflict(self) -> None:
+        """Reject a duplicate device (setup) or the wrong device (reconfigure)."""
+        if self._reconfigure_entry is not None:
+            self._abort_if_unique_id_mismatch()
+        else:
+            self._abort_if_unique_id_configured()
 
     async def _refresh_qr(self) -> None:
         """Get a new QR image + long-polling URL."""
@@ -252,13 +321,18 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             return ""
         return f"data:image/png;base64,{base64.b64encode(self._qr_image).decode()}"
 
+    def _persist_session_tokens(self) -> None:
+        """Copy the live cloud session tokens into `_user_input` when complete."""
+        if self._cloud is None:
+            return
+        tokens = self._cloud.session_tokens()
+        if tokens["ssecurity"] and tokens["service_token"] and tokens["user_id"]:
+            self._user_input[CONF_CLOUD_SSECURITY] = tokens["ssecurity"]
+            self._user_input[CONF_CLOUD_SERVICE_TOKEN] = tokens["service_token"]
+            self._user_input[CONF_CLOUD_USER_ID] = tokens["user_id"]
+
     def _create_entry(self) -> config_entries.ConfigFlowResult:
-        if self._cloud is not None:
-            tokens = self._cloud.session_tokens()
-            if tokens["ssecurity"] and tokens["service_token"] and tokens["user_id"]:
-                self._user_input[CONF_CLOUD_SSECURITY] = tokens["ssecurity"]
-                self._user_input[CONF_CLOUD_SERVICE_TOKEN] = tokens["service_token"]
-                self._user_input[CONF_CLOUD_USER_ID] = tokens["user_id"]
+        self._persist_session_tokens()
         return self.async_create_entry(
             title=self._user_input[CONF_NAME],
             data=self._user_input,

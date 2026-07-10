@@ -1,6 +1,16 @@
 {
     "config": {
         "step": {
+            "user": {
+                "title": "Escolha a região do Xiaomi cloud",
+                "description": "Escolha a região em que sua conta Xiaomi está registrada. Europa e Reino Unido usam o servidor da Alemanha (DE). Escolher a região errada faz o aspirador não ser encontrado.",
+                "data": {
+                    "cloud_country": "Região"
+                },
+                "data_description": {
+                    "cloud_country": "O servidor de nuvem do Mi Home que hospeda sua conta."
+                }
+            },
             "qr": {
                 "title": "Escaneie com o app Mi Home",
                 "description": "![QR]({qr_image})\n\nAbra o app Mi Home, toque no leitor de QR (canto superior direito) e escaneie o código. A janela avança sozinha quando você confirmar no celular."
@@ -12,6 +22,16 @@
             "reauth_confirm": {
                 "title": "Reconectar ao Xiaomi cloud",
                 "description": "A sessão do Xiaomi cloud expirou, então o mapa de limpeza parou de atualizar. Clique em Enviar para exibir um novo QR e entrar de novo — o aspirador e as outras entidades continuam funcionando enquanto isso."
+            },
+            "reconfigure": {
+                "title": "Alterar a região do Xiaomi cloud",
+                "description": "Escolha a região em que sua conta Xiaomi está registrada. A sessão atual é reaproveitada, então não é preciso escanear um novo QR. Se a região estiver errada, o aspirador não será encontrado.",
+                "data": {
+                    "cloud_country": "Região"
+                },
+                "data_description": {
+                    "cloud_country": "O servidor de nuvem do Mi Home que hospeda sua conta."
+                }
             },
             "discover": {
                 "title": "Escolha seu aspirador",
@@ -35,7 +55,22 @@
             "local_unreachable": "O aspirador foi encontrado na conta, mas o Home Assistant não consegue alcançá-lo na rede local. Verifique se está na mesma rede e online.",
             "local_probe_failed": "Falha inesperada na sondagem local. Veja os logs.",
             "reauth_successful": "Sessão do Xiaomi cloud renovada. O mapa de limpeza volta a atualizar.",
-            "reauth_failed": "Não foi possível renovar a sessão do Xiaomi cloud. Tente de novo."
+            "reauth_failed": "Não foi possível renovar a sessão do Xiaomi cloud. Tente de novo.",
+            "reconfigure_successful": "Região atualizada. O aspirador agora usa o servidor Xiaomi cloud selecionado.",
+            "unique_id_mismatch": "O aspirador encontrado nessa região é um dispositivo diferente desta entrada. A região não foi alterada."
+        }
+    },
+    "selector": {
+        "cloud_country": {
+            "options": {
+                "de": "Europa / Reino Unido",
+                "us": "Estados Unidos",
+                "cn": "China (continental)",
+                "ru": "Rússia",
+                "sg": "Singapura",
+                "i2": "Índia",
+                "tw": "Taiwan"
+            }
         }
     },
     "issues": {
