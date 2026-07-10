@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.6.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.5.0...v1.6.0) (2026-07-10)
+
+
+### Features
+
+* **config:** add a reconfigure flow to change the cloud region ([85554e4](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/85554e4fc84ebf49d06c4d74d2091d2a5e6d7b52))
+* **config:** let the user pick the Xiaomi cloud region ([7ff14b1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/7ff14b1437796ac576eb3a4003655a491ee25604)), closes [#50](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/50)
+* **map:** recover cleaning map via reauth when the cloud session expires ([6920da2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/6920da2d62b7de4178446e01bba53e8812ca1e53))
+
 ## [1.5.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.4.0...v1.5.0) (2026-07-03)
 
 
