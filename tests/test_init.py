@@ -182,3 +182,46 @@ async def test_setup_entry_warns_when_cloud_session_invalid(
     # Setup still succeeds; only the map coordinator is skipped.
     assert entry.state == ConfigEntryState.LOADED
     assert entry.runtime_data.map_coordinator is None
+
+
+async def test_setup_entry_starts_reauth_when_cloud_session_invalid(
+    hass, mock_miot_device, enable_custom_integrations
+):
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudError
+
+    cloud = AsyncMock()
+    cloud.async_resolve_device = AsyncMock(
+        side_effect=XiaomiCloudError("session expired")
+    )
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_HOST: "192.168.1.50",
+            CONF_TOKEN: "0" * 32,
+            CONF_NAME: "Aspirador",
+            CONF_CLOUD_COUNTRY: "cn",
+            CONF_CLOUD_SSECURITY: "ssec",
+            CONF_CLOUD_SERVICE_TOKEN: "tok",
+            CONF_CLOUD_USER_ID: "uid",
+        },
+        unique_id="AA:BB:CC:DD:EE:FF",
+    )
+    entry.add_to_hass(hass)
+    with (
+        patch(
+            "custom_components.xiaomi_vacuum.XiaomiCloud.from_session",
+            return_value=cloud,
+        ),
+        patch.object(MockConfigEntry, "async_start_reauth") as start_reauth,
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    # The invalid cloud session surfaces a reauth prompt, but the entry stays
+    # loaded so the local (miIO) entities keep working.
+    start_reauth.assert_called_once()
+    assert entry.state == ConfigEntryState.LOADED
+    assert len(hass.states.async_all("vacuum")) == 1
