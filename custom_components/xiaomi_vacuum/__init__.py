@@ -95,8 +95,11 @@ async def async_setup_entry(
             await cloud.async_resolve_device(entry.data[CONF_TOKEN])
         except XiaomiCloudError as exception:
             LOGGER.warning(
-                "Cloud session invalid; reconfigure to refresh: %s", exception
+                "Cloud session invalid; starting reauth to refresh: %s", exception
             )
+            # Surface a repair/reauth prompt instead of silently dropping the map;
+            # local entities stay available since the entry itself keeps loading.
+            entry.async_start_reauth(hass)
         else:
             coordinator.cloud = cloud
             map_coordinator = XiaomiVacuumMapCoordinator(

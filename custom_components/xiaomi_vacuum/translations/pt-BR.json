@@ -9,6 +9,10 @@
                 "title": "QR não escaneado a tempo",
                 "description": "O código QR expirou antes de ser escaneado. Clique em Enviar para gerar um novo."
             },
+            "reauth_confirm": {
+                "title": "Reconectar ao Xiaomi cloud",
+                "description": "A sessão do Xiaomi cloud expirou, então o mapa de limpeza parou de atualizar. Clique em Enviar para exibir um novo QR e entrar de novo — o aspirador e as outras entidades continuam funcionando enquanto isso."
+            },
             "discover": {
                 "title": "Escolha seu aspirador",
                 "description": "Mais de um aspirador foi encontrado na sua conta. Escolha qual adicionar.",
@@ -29,7 +33,9 @@
             "cloud_list_failed": "Não foi possível listar os dispositivos da sua conta Xiaomi. Tente novamente mais tarde.",
             "no_local_ip": "O Xiaomi cloud não retornou um IP local pra esse aspirador. Verifique se ele está online e na mesma rede Wi-Fi do Home Assistant.",
             "local_unreachable": "O aspirador foi encontrado na conta, mas o Home Assistant não consegue alcançá-lo na rede local. Verifique se está na mesma rede e online.",
-            "local_probe_failed": "Falha inesperada na sondagem local. Veja os logs."
+            "local_probe_failed": "Falha inesperada na sondagem local. Veja os logs.",
+            "reauth_successful": "Sessão do Xiaomi cloud renovada. O mapa de limpeza volta a atualizar.",
+            "reauth_failed": "Não foi possível renovar a sessão do Xiaomi cloud. Tente de novo."
         }
     },
     "issues": {

@@ -22,8 +22,11 @@ from .cloud import (
 
 if TYPE_CHECKING:
     import asyncio
+    from collections.abc import Mapping
 
     from homeassistant.helpers.typing import ConfigType
+
+    from .data import XiaomiVacuumConfigEntry
 
 from .const import (
     CONF_CLOUD_COUNTRY,
@@ -57,6 +60,7 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._qr_timeout: int = 300
         self._qr_task: asyncio.Task[None] | None = None
         self._devices: list[XiaomiDeviceInfo] = []
+        self._reauth_entry: XiaomiVacuumConfigEntry | None = None
 
     async def async_step_user(
         self,
@@ -65,6 +69,47 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         """Skip straight to the QR step; cloud region is hard-coded."""
         self._user_input = {CONF_CLOUD_COUNTRY: _CLOUD_COUNTRY}
         return await self.async_step_qr()
+
+    async def async_step_reauth(
+        self,
+        entry_data: Mapping[str, str],  # noqa: ARG002
+    ) -> config_entries.ConfigFlowResult:
+        """Handle re-auth started when the saved cloud session expired."""
+        self._reauth_entry = self._get_reauth_entry()
+        self._user_input = {CONF_CLOUD_COUNTRY: _CLOUD_COUNTRY}
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self,
+        user_input: ConfigType | None = None,
+    ) -> config_entries.ConfigFlowResult:
+        """Confirm, then show a fresh QR to refresh the cloud session."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="reauth_confirm", data_schema=vol.Schema({})
+            )
+        return await self.async_step_qr()
+
+    async def async_step_reauth_finish(
+        self,
+        user_input: ConfigType | None = None,  # noqa: ARG002
+    ) -> config_entries.ConfigFlowResult:
+        """Persist the refreshed cloud tokens onto the existing entry."""
+        entry = self._reauth_entry
+        if entry is None or self._cloud is None:
+            return self.async_abort(reason="reauth_failed")
+        tokens = self._cloud.session_tokens()
+        if not (tokens["ssecurity"] and tokens["service_token"] and tokens["user_id"]):
+            return self.async_abort(reason="reauth_failed")
+        return self.async_update_reload_and_abort(
+            entry,
+            data={
+                **entry.data,
+                CONF_CLOUD_SSECURITY: tokens["ssecurity"],
+                CONF_CLOUD_SERVICE_TOKEN: tokens["service_token"],
+                CONF_CLOUD_USER_ID: tokens["user_id"],
+            },
+        )
 
     async def async_step_qr(
         self,
@@ -98,7 +143,8 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             LOGGER.warning("Cloud login failed: %s", exc)
             self._qr_task = None
             return self.async_show_progress_done(next_step_id="qr_failed")
-        return self.async_show_progress_done(next_step_id="discover")
+        next_step = "reauth_finish" if self._reauth_entry is not None else "discover"
+        return self.async_show_progress_done(next_step_id=next_step)
 
     async def async_step_qr_failed(
         self, user_input: ConfigType | None = None

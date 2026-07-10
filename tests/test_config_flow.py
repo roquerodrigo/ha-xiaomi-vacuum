@@ -9,6 +9,7 @@ from homeassistant.data_entry_flow import FlowResultType
 from custom_components.xiaomi_vacuum.cloud import XiaomiDeviceInfo
 from custom_components.xiaomi_vacuum.config_flow import XiaomiVacuumFlowHandler
 from custom_components.xiaomi_vacuum.const import (
+    CONF_CLOUD_COUNTRY,
     CONF_CLOUD_SERVICE_TOKEN,
     CONF_CLOUD_SSECURITY,
     CONF_CLOUD_USER_ID,
@@ -170,6 +171,98 @@ async def test_qr_step_proceeds_to_discover_on_success(hass):
     handler._qr_task = task
     result = await handler.async_step_qr()
     assert result["step_id"] == "discover"
+
+
+async def test_qr_step_proceeds_to_reauth_finish_when_reauthing(hass):
+    handler = _handler(hass)
+    handler._reauth_entry = MagicMock()
+    task = MagicMock()
+    task.done.return_value = True
+    task.result.return_value = None
+    handler._qr_task = task
+    result = await handler.async_step_qr()
+    assert result["step_id"] == "reauth_finish"
+
+
+async def test_reauth_stores_entry_and_confirms(hass):
+    handler = _handler(hass)
+    entry = MagicMock()
+    with (
+        patch.object(handler, "_get_reauth_entry", return_value=entry),
+        patch.object(
+            handler,
+            "async_step_reauth_confirm",
+            AsyncMock(return_value={"type": "form"}),
+        ) as confirm,
+    ):
+        result = await handler.async_step_reauth({})
+    assert handler._reauth_entry is entry
+    assert handler._user_input[CONF_CLOUD_COUNTRY] == "us"
+    confirm.assert_awaited_once()
+    assert result == {"type": "form"}
+
+
+async def test_reauth_confirm_shows_form(hass):
+    handler = _handler(hass)
+    result = await handler.async_step_reauth_confirm()
+    assert result["type"] == FlowResultType.FORM
+    assert result["step_id"] == "reauth_confirm"
+
+
+async def test_reauth_confirm_input_starts_qr(hass):
+    handler = _handler(hass)
+    with patch.object(
+        handler, "async_step_qr", AsyncMock(return_value={"type": "progress"})
+    ) as qr:
+        result = await handler.async_step_reauth_confirm(user_input={})
+    qr.assert_awaited_once()
+    assert result == {"type": "progress"}
+
+
+async def test_reauth_finish_persists_tokens_onto_entry(hass):
+    handler = _handler(hass)
+    entry = MagicMock()
+    entry.data = {CONF_HOST: "192.168.1.5", CONF_TOKEN: "abc"}
+    handler._reauth_entry = entry
+    cloud = MagicMock()
+    cloud.session_tokens = MagicMock(
+        return_value={"ssecurity": "S", "service_token": "T", "user_id": "U"}
+    )
+    handler._cloud = cloud
+    aborted = {"type": FlowResultType.ABORT, "reason": "reauth_successful"}
+    with patch.object(
+        handler, "async_update_reload_and_abort", return_value=aborted
+    ) as upd:
+        result = await handler.async_step_reauth_finish()
+    assert result is aborted
+    args, kwargs = upd.call_args
+    assert args[0] is entry
+    assert kwargs["data"][CONF_CLOUD_SSECURITY] == "S"
+    assert kwargs["data"][CONF_CLOUD_SERVICE_TOKEN] == "T"
+    assert kwargs["data"][CONF_CLOUD_USER_ID] == "U"
+    assert kwargs["data"][CONF_HOST] == "192.168.1.5"
+    assert kwargs["data"][CONF_TOKEN] == "abc"
+
+
+async def test_reauth_finish_aborts_without_entry(hass):
+    handler = _handler(hass)
+    handler._reauth_entry = None
+    handler._cloud = MagicMock()
+    result = await handler.async_step_reauth_finish()
+    assert result["type"] == FlowResultType.ABORT
+    assert result["reason"] == "reauth_failed"
+
+
+async def test_reauth_finish_aborts_on_incomplete_tokens(hass):
+    handler = _handler(hass)
+    handler._reauth_entry = MagicMock(data={})
+    cloud = MagicMock()
+    cloud.session_tokens = MagicMock(
+        return_value={"ssecurity": "S", "service_token": None, "user_id": "U"}
+    )
+    handler._cloud = cloud
+    result = await handler.async_step_reauth_finish()
+    assert result["reason"] == "reauth_failed"
 
 
 async def test_discover_aborts_when_cloud_missing(hass):
