@@ -197,6 +197,32 @@ class _XiaomiCloudConnector:
                 return url_value
         return None
 
+    def call_action(
+        self, country: str, did: str, siid: int, aiid: int, params: list[str] | None
+    ) -> JsonObject | None:
+        """
+        Invoke a MIoT action through the cloud (reliable TCP) instead of local UDP.
+
+        Local miio actions on Xiaomi vacuums frequently hit ``-9999 user ack
+        timeout`` on flaky Wi-Fi; the Mi Home app sidesteps this by issuing
+        actions over the cloud HTTP API. We replicate that path here so
+        multi-step flows (e.g. the S20+ room-clean) succeed reliably. Payload
+        shape matches what the app sends (captured): ``{"params": {did, siid,
+        aiid, in}}``.
+        """
+        url = self._api_url(country) + "/miotspec/action"
+        params_payload = {
+            "did": str(did),
+            "siid": siid,
+            "aiid": aiid,
+            "in": params or [],
+        }
+        request_params = {"data": json.dumps({"params": params_payload})}
+        response = self._encrypted_call(url, request_params)
+        if not response:
+            return None
+        return response
+
     def get_map_bytes(self, map_url: str) -> bytes | None:
         """Download the raw binary map from the temporary URL."""
         response = self._session.get(map_url, timeout=10)

@@ -3,7 +3,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from custom_components.xiaomi_vacuum.cached_device_info import CachedDeviceInfo
-from custom_components.xiaomi_vacuum.const import MODEL
+from custom_components.xiaomi_vacuum.spec import DEFAULT_MODEL
 
 
 def test_to_stored_then_from_stored_roundtrip():
@@ -23,7 +23,7 @@ def test_to_stored_then_from_stored_roundtrip():
 
 def test_from_stored_falls_back_on_missing_or_invalid_fields():
     cached = CachedDeviceInfo.from_stored({"mac_address": 42})
-    assert cached.model == MODEL
+    assert cached.model == DEFAULT_MODEL
     assert cached.mac_address is None
     assert cached.firmware_version is None
     assert cached.hardware_version is None

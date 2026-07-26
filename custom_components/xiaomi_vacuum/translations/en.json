@@ -50,6 +50,7 @@
         "abort": {
             "already_configured": "This vacuum is already configured.",
             "no_vacuum_found": "No vacuum was found in this Xiaomi account. Make sure it's paired in the Mi Home app and try again.",
+            "no_vacuum_in_account": "This Xiaomi account has devices, but none of them is a supported vacuum. The Xiaomi cloud region must match the one your Mi Home account uses — reconfigure and pick the correct region, or pair the vacuum to this account in the Mi Home app.",
             "cloud_list_failed": "Could not list devices in your Xiaomi account. Try again later.",
             "no_local_ip": "Xiaomi cloud did not return a local IP for this vacuum. Make sure it's online and connected to the same Wi-Fi as Home Assistant.",
             "local_unreachable": "The vacuum was found in the cloud but Home Assistant cannot reach it on the LAN. Check it's on the same network and online.",
@@ -77,6 +78,10 @@
         "cannot_connect": {
             "title": "Cannot reach {name}",
             "description": "Home Assistant cannot connect to the vacuum at {host}. The robot is likely powered off or disconnected from the network. Its entities show as unavailable and the map keeps the last known image until it reconnects. This issue clears automatically once the vacuum is back online."
+        },
+        "unsupported_model": {
+            "title": "{name} is an unsupported model",
+            "description": "The vacuum reports model `{model}`, which this integration does not yet know about. It fell back to a best-effort spec so basic local control keeps working, but some entities (status, fault, capabilities) may be wrong or missing. Please open an issue on the project's GitHub page with this model name so support can be added."
         }
     },
     "entity": {
@@ -164,12 +169,14 @@
                 "name": "Clean times",
                 "state": {
                     "one_time": "Once",
-                    "two_times": "Twice"
+                    "two_times": "Twice",
+                    "three_times": "Three times"
                 }
             },
             "mop_water_level": {
                 "name": "Mop water level",
                 "state": {
+                    "off": "Off",
                     "level_1": "Level 1",
                     "level_2": "Level 2",
                     "level_3": "Level 3"

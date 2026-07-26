@@ -606,6 +606,18 @@ async def test_async_list_devices_filters_by_model_prefix(hass):
     assert devices == [vacuum]
 
 
+async def test_async_list_devices_prefix_matches_b108gl(hass):
+    """The X20 (b108gl) must be discoverable by the same `xiaomi.vacuum.` prefix."""
+    cloud = XiaomiCloud(hass, "us")
+    x20 = XiaomiDeviceInfo("d2", "x20", "xiaomi.vacuum.b108gl", "abc", "us")
+    lamp = XiaomiDeviceInfo("l", "lamp", "yeelink.light.1", "def", "us")
+    with patch.object(
+        cloud._connector, "_iter_devices", return_value=iter([x20, lamp])
+    ):
+        devices = await cloud.async_list_devices(model_prefix="xiaomi.vacuum.")
+    assert devices == [x20]
+
+
 async def test_async_list_devices_returns_all_without_prefix(hass):
     cloud = XiaomiCloud(hass, "us")
     vacuum = XiaomiDeviceInfo("d", "x", "xiaomi.vacuum.d109gl", "abc", "us")
@@ -676,3 +688,122 @@ async def test_async_fault_text_returns_none_on_connector_error(hass):
         side_effect=XiaomiCloudError("boom"),
     ):
         assert await cloud.async_fault_text(210009) is None
+
+
+def test_call_action_targets_mdotspec_endpoint():
+    """The cloud action URL is the standard miot-spec endpoint for any model."""
+    c = _signed_connector()
+    captured = {}
+
+    def fake_encrypted_call(url, params):
+        captured["url"] = url
+        captured["params"] = params
+        return {"result": {"code": 0}}
+
+    with patch.object(c, "_encrypted_call", side_effect=fake_encrypted_call):
+        c.call_action("us", "did-42", siid=2, aiid=10, params=["x"])
+    assert captured["url"] == "https://us.api.io.mi.com/app/miotspec/action"
+
+
+def test_call_action_payload_carries_did_siid_aiid_in():
+    """The payload is the generic miot-spec shape — no model-specific fields."""
+    c = _signed_connector()
+    captured = {}
+
+    def fake_encrypted_call(url, params):
+        captured["params"] = params
+        return {"result": {"code": 0}}
+
+    with patch.object(c, "_encrypted_call", side_effect=fake_encrypted_call):
+        c.call_action("us", "did-42", siid=6, aiid=7, params=["a", "b"])
+    # The outer `data` wraps an inner `params` object with the action call shape.
+    inner = json.loads(captured["params"]["data"])["params"]
+    assert inner == {"did": "did-42", "siid": 6, "aiid": 7, "in": ["a", "b"]}
+
+
+def test_call_action_defaults_params_to_empty_list_when_none():
+    """A None params (actions that take no input) becomes an empty `in` list."""
+    c = _signed_connector()
+    captured = {}
+
+    def fake_encrypted_call(url, params):
+        captured["params"] = params
+        return {"result": {"code": 0}}
+
+    with patch.object(c, "_encrypted_call", side_effect=fake_encrypted_call):
+        c.call_action("us", "did-42", siid=6, aiid=7, params=None)
+    inner = json.loads(captured["params"]["data"])["params"]
+    assert inner["in"] == []
+
+
+def test_call_action_returns_none_when_encrypted_call_returns_none():
+    """A failed encrypted call (offline / 5xx) surfaces as None, not an exception."""
+    c = _signed_connector()
+    with patch.object(c, "_encrypted_call", return_value=None):
+        assert c.call_action("us", "d", siid=2, aiid=1, params=None) is None
+
+
+def test_call_action_returns_response_body_on_success():
+    """A successful call returns the decoded JSON body to the caller verbatim."""
+    c = _signed_connector()
+    body = {"result": {"code": 0, "message": "ok"}}
+    with patch.object(c, "_encrypted_call", return_value=body):
+        assert c.call_action("us", "d", siid=2, aiid=1, params=None) == body
+
+
+@pytest.mark.parametrize(
+    "model",
+    ["xiaomi.vacuum.d109gl", "xiaomi.vacuum.b108gl"],
+    ids=["x20_max_d109gl", "s20_plus_b108gl"],
+)
+def test_every_model_action_round_trips_through_call_action(model):
+    """For each supported model, every spec action survives the generic cloud path."""
+    from custom_components.xiaomi_vacuum.spec import MODELS
+
+    spec = MODELS[model]
+    actions = spec.actions
+    pairs = [
+        ("start_sweep", actions.start_sweep),
+        ("stop_sweeping", actions.stop_sweeping),
+        ("return_home", actions.return_home),
+        ("start_only_sweep", actions.start_only_sweep),
+        ("start_mop", actions.start_mop),
+        ("start_sweep_mop", actions.start_sweep_mop),
+        ("pause_sweeping", actions.pause_sweeping),
+        ("continue_sweep", actions.continue_sweep),
+        ("identify", actions.identify),
+        ("start_room_sweep", actions.start_room_sweep),
+        ("set_room_clean_configs", actions.set_room_clean_configs),
+        ("start_custom_sweep", actions.start_custom_sweep),
+        ("start_dust_arrest", actions.start_dust_arrest),
+        ("start_mop_wash", actions.start_mop_wash),
+        ("start_dry", actions.start_dry),
+        ("stop_mop_wash", actions.stop_mop_wash),
+        ("stop_dry", actions.stop_dry),
+    ]
+    c = _signed_connector()
+    seen: list[tuple[int, int]] = []
+
+    def fake_encrypted_call(url, params):
+        inner = json.loads(params["data"])["params"]
+        seen.append((inner["siid"], inner["aiid"]))
+        assert inner["did"] == "did-test"
+        assert inner["in"] == []
+        assert url == "https://us.api.io.mi.com/app/miotspec/action"
+        return {"result": {"code": 0}}
+
+    with patch.object(c, "_encrypted_call", side_effect=fake_encrypted_call):
+        for _name, addr in pairs:
+            if addr is None:  # optional action the model doesn't have
+                continue
+            c.call_action("us", "did-test", addr["siid"], addr["aiid"], params=[])
+
+    # Every non-None action of this model must have produced exactly one cloud
+    # call carrying its own (siid, aiid) — proving the endpoint doesn't rewrite
+    # or assume anything about the active model.
+    expected = {
+        (addr["siid"], addr["aiid"]) for _name, addr in pairs if addr is not None
+    }
+    assert set(seen) == expected
+    # Each action called exactly once (no model-specific short-circuit / dedupe).
+    assert len(seen) == len(expected)

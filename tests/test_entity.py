@@ -39,6 +39,12 @@ def test_device_info_falls_back_to_model_name():
     assert e._attr_device_info["name"] == "xiaomi.vacuum.d109gl"
 
 
+def test_device_info_reports_b108gl_model():
+    """The X20 (b108gl) model string flows through to device registry unchanged."""
+    e = XiaomiVacuumEntity(coordinator=_coord(model="xiaomi.vacuum.b108gl"))
+    assert e._attr_device_info["model"] == "xiaomi.vacuum.b108gl"
+
+
 def test_device_info_includes_firmware_and_hardware():
     e = XiaomiVacuumEntity(coordinator=_coord())
     assert e._attr_device_info["sw_version"] == "1.0.0"

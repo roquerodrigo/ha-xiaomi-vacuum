@@ -402,6 +402,19 @@ async def test_discover_aborts_when_no_vacuum_found(hass):
     assert result["reason"] == "no_vacuum_found"
 
 
+async def test_discover_aborts_no_vacuum_in_account_when_only_non_vacuums(hass):
+    """Devices exist but none matches the xiaomi.vacuum. prefix."""
+    handler = _handler(hass)
+    cloud = MagicMock()
+    lamp = XiaomiDeviceInfo(
+        device_id="l1", name="Lamp", model="yeelink.light.1", token="x", country="us"
+    )
+    cloud.async_list_devices = AsyncMock(return_value=[lamp])
+    handler._cloud = cloud
+    result = await handler.async_step_discover()
+    assert result["reason"] == "no_vacuum_in_account"
+
+
 async def test_discover_auto_finalizes_single_device(hass):
     handler = _handler(hass)
     cloud = MagicMock()

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.const import EntityCategory
 
 
 async def test_setup_creates_5_select_entities(hass, setup_integration):

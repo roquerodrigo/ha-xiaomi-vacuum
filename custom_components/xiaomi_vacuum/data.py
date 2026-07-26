@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from .api import XiaomiVacuumApiClient
     from .coordinator import XiaomiVacuumDataUpdateCoordinator
     from .map_coordinator import XiaomiVacuumMapCoordinator
+    from .spec import ModelSpec
 
 
 type XiaomiVacuumConfigEntry = ConfigEntry[XiaomiVacuumData]
@@ -27,34 +28,47 @@ type JsonObject = dict[str, JsonValue]
 
 class VacuumState(TypedDict):
     """
-    Parsed MIoT state, keyed by the names in ``PROPERTY_MAPPING``.
+    Parsed MIoT state, keyed by the names in the active model's property mapping.
 
-    Every key mirrors a ``PROPERTY_MAPPING`` entry and is built dynamically by
-    ``XiaomiVacuumApiClient.async_get_state``. ``fault`` and ``fault_text`` are
-    derived by the coordinator from the live ``fault_ids`` payload.
+    Every key mirrors a ``ModelSpec.property_mapping`` entry and is built
+    dynamically by ``XiaomiVacuumApiClient.async_get_state``. Fields are
+    optional because the supported models expose different properties (e.g.
+    the S20+ has no ``fault_ids`` / ``sweep_route`` / ``obstacle_avoidance``).
+    ``fault`` and ``fault_text`` are derived by the coordinator from the live
+    fault payload.
     """
 
     status: int | None
-    fault_ids: str | None
-    sweep_mop_type: int | None
-    cleaning_area: int | None
-    cleaning_time: int | None
-    clean_times: int | None
-    fan_speed: int | None
-    mop_water_level: int | None
-    room_information: str | None
-    last_clean_time: int | None
-    map_obj_name: str | None
-    sweep_route: int | None
-    obstacle_avoidance_strategy: int | None
-    battery_level: int | None
-    charging_state: int | None
-    mop_life: int | None
-    main_brush_life: int | None
-    side_brush_life: int | None
-    filter_life: int | None
-    fault: int | None
+    sweep_mop_type: NotRequired[int | None]
+    cleaning_area: NotRequired[int | None]
+    cleaning_time: NotRequired[int | None]
+    clean_times: NotRequired[int | None]
+    fan_speed: NotRequired[int | None]
+    mop_water_level: NotRequired[int | None]
+    room_information: NotRequired[str | None]
+    last_clean_time: NotRequired[int | None]
+    map_obj_name: NotRequired[str | None]
+    sweep_route: NotRequired[int | None]
+    obstacle_avoidance_strategy: NotRequired[int | None]
+    battery_level: NotRequired[int | None]
+    charging_state: NotRequired[int | None]
+    mop_life: NotRequired[int | None]
+    main_brush_life: NotRequired[int | None]
+    side_brush_life: NotRequired[int | None]
+    filter_life: NotRequired[int | None]
+    # Live fault payload — the raw shape depends on the model's fault_kind:
+    # "ids" (X20 Max) → a JSON string; "simple" (S20+) → an int.
+    fault_ids: NotRequired[str | None]
+    fault: NotRequired[int | None]
     fault_text: NotRequired[str]
+
+
+class CloudSessionTokens(TypedDict):
+    """Xiaomi cloud session tokens persisted in the config entry."""
+
+    ssecurity: str | None
+    service_token: str | None
+    user_id: str | None
 
 
 class DeviceInfoLike(Protocol):
@@ -89,4 +103,5 @@ class XiaomiVacuumData:
     coordinator: XiaomiVacuumDataUpdateCoordinator
     integration: Integration
     info: DeviceInfoLike
+    spec: ModelSpec
     map_coordinator: XiaomiVacuumMapCoordinator | None = None

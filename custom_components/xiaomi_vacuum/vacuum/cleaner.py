@@ -8,28 +8,22 @@ from typing import TYPE_CHECKING, TypedDict
 from homeassistant.components.vacuum import (
     Segment,
     StateVacuumEntity,
+)
+from homeassistant.components.vacuum.const import (
     VacuumActivity,
     VacuumEntityFeature,
 )
 from homeassistant.exceptions import ServiceValidationError
 
-from ..const import (  # noqa: TID252
-    CHARGING_STATE_SLUGS,
-    DOMAIN,
-    FAN_SPEED_NAMES,
-    FAN_SPEEDS,
-    IDLE_STATUSES,
-    LOGGER,
-    SEND_COMMANDS,
-    STATUS_SLUGS,
-    STATUS_TO_ACTIVITY,
-)
+from ..const import DOMAIN, LOGGER  # noqa: TID252
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
+from ..spec import CHARGING_STATE_SLUGS  # noqa: TID252
 
 if TYPE_CHECKING:
     from ..api import XiaomiVacuumApiClient  # noqa: TID252
     from ..coordinator import XiaomiVacuumDataUpdateCoordinator  # noqa: TID252
     from ..data import JsonValue  # noqa: TID252
+    from ..spec import ModelSpec  # noqa: TID252
 
 
 class _VacuumAttributes(TypedDict):
@@ -69,7 +63,12 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
     def __init__(self, coordinator: XiaomiVacuumDataUpdateCoordinator) -> None:
         """Initialize."""
         super().__init__(coordinator)
-        self._attr_fan_speed_list = list(FAN_SPEEDS)
+        self._attr_fan_speed_list = list(self.spec.fan_speeds)
+
+    @property
+    def spec(self) -> ModelSpec:
+        """The active model's spec."""
+        return self.coordinator.spec
 
     @property
     def unique_id(self) -> str:
@@ -90,13 +89,13 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         status = self.coordinator.data.get("status")
         if status is None:
             return None
-        return STATUS_TO_ACTIVITY.get(int(status))
+        return self.spec.status_to_activity.get(int(status))
 
     @property
     def fan_speed(self) -> str | None:
         """Return current fan speed label."""
         speed = self.coordinator.data.get("fan_speed")
-        return FAN_SPEED_NAMES.get(int(speed)) if speed is not None else None
+        return self.spec.fan_speed_names.get(int(speed)) if speed is not None else None
 
     @property
     def extra_state_attributes(self) -> dict[str, _VacuumAttributes]:
@@ -106,7 +105,9 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         charging_state = data.get("charging_state")
         attrs: _VacuumAttributes = {
             "status_code": data.get("status"),
-            "status": STATUS_SLUGS.get(status) if status is not None else None,
+            "status": (
+                self.spec.status_slugs.get(status) if status is not None else None
+            ),
             "fault_code": data.get("fault"),
             "cleaning_area": data.get("cleaning_area"),
             "cleaning_time": data.get("cleaning_time"),
@@ -139,7 +140,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
 
     def _idle_at_dock(self) -> bool:
         """Whether the robot is parked/idle, so start begins a fresh clean."""
-        return self.coordinator.data.get("status") in IDLE_STATUSES
+        return self.coordinator.data.get("status") in self.spec.idle_statuses
 
     async def async_pause(self) -> None:
         """Pause cleaning."""
@@ -169,10 +170,11 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         params: dict[str, object] | list[object] | None = None,  # noqa: ARG002
         **kwargs: object,  # noqa: ARG002
     ) -> None:
-        """Invoke a whitelisted MIoT action by name (see SEND_COMMANDS)."""
-        action = SEND_COMMANDS.get(command)
+        """Invoke a whitelisted MIoT action by name (see spec.send_commands)."""
+        send_commands = self.spec.send_commands
+        action = send_commands.get(command)
         if action is None:
-            valid = ", ".join(SEND_COMMANDS)
+            valid = ", ".join(send_commands)
             msg = f"Unknown command '{command}'. Valid commands: {valid}"
             raise ServiceValidationError(msg)
         await self._client.async_call_action(action["siid"], action["aiid"])
@@ -181,7 +183,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
     async def async_set_fan_speed(self, fan_speed: str, **kwargs: object) -> None:  # noqa: ARG002
         """Set fan speed by label."""
         await self._client.async_set_fan_speed(fan_speed)
-        if (code := FAN_SPEEDS.get(fan_speed)) is not None:
+        if (code := self.spec.fan_speeds.get(fan_speed)) is not None:
             self._patch_state(fan_speed=code)
         self._schedule_refresh()
 
@@ -196,13 +198,34 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         **kwargs: object,  # noqa: ARG002
     ) -> None:
         """Clean specific segments by ID."""
-        await self._client.async_clean_segments(segment_ids)
+        await self._client.async_clean_segments(
+            segment_ids,
+            room_information=self.coordinator.data.get("room_information"),
+        )
         self._patch_state(status=4)
         self._schedule_refresh()
 
 
+# Column/key aliases for room id and name across both payload shapes
+# (object-array on the X20 Max, table/matrix on the S20+). Keys are matched
+# verbatim against object-array dicts; for the table format the header row is
+# case-folded first, so lowercase spellings cover both original and folded forms.
+_ID_HEADERS = ("id", "room_id", "roomId", "roomid")
+_NAME_HEADERS = ("room_name", "roomName", "name", "roomname")
+
+
 def _parse_segments(raw: str | None) -> list[Segment]:
-    """Parse d109gl `room-information` (string) into Segment objects (JSON expected)."""
+    """
+    Parse `room-information` (string) into Segment objects.
+
+    Two payload shapes are supported:
+
+    * object array (X20 Max) — ``{"rooms": [{"id": 10, "name": "..."}]}`` or a
+      bare list of such dicts;
+    * table/matrix (S20+) — ``{"version": 2, "room_attrs": [[header...],
+      [row...], ...]}`` where the first row names the columns (``id``,
+      ``room_name``, …) and the rest are positional values.
+    """
     if not raw:
         return []
     try:
@@ -215,20 +238,46 @@ def _parse_segments(raw: str | None) -> list[Segment]:
     if isinstance(data, list):
         rooms = [r for r in data if isinstance(r, dict)]
     elif isinstance(data, dict):
-        for key in ("rooms", "list", "data"):
-            value = data.get(key)
-            if isinstance(value, list):
-                rooms = [r for r in value if isinstance(r, dict)]
-                break
+        if isinstance(data.get("room_attrs"), list):
+            # S20+-style matrix payload: first row is the header, rest are rows.
+            rooms = _rows_to_attrs(data["room_attrs"])
+        else:
+            for key in ("rooms", "list", "data"):
+                value = data.get(key)
+                if isinstance(value, list):
+                    rooms = [r for r in value if isinstance(r, dict)]
+                    break
 
     segments: list[Segment] = []
     for room in rooms:
-        room_id = room.get("id") or room.get("roomId") or room.get("room_id")
-        name = room.get("name") or room.get("roomName") or room.get("room_name")
-        if room_id is None or name is None:
-            continue
-        segments.append(Segment(id=str(room_id), name=str(name)))
+        segment = _extract_segment(room)
+        if segment is not None:
+            segments.append(segment)
 
     if not segments:
         LOGGER.warning("No segments parsed from room_information; raw payload: %r", raw)
     return segments
+
+
+def _rows_to_attrs(matrix: JsonValue) -> list[dict[str, JsonValue]]:
+    """Turn an S20+ ``room_attrs`` matrix into per-room dicts keyed by header."""
+    rows = (
+        [r for r in matrix if isinstance(r, list)] if isinstance(matrix, list) else []
+    )
+    if not rows:
+        return []
+    # Header row: normalise to lower-case strings so lookups are forgiving.
+    header = [str(col).casefold() if col is not None else "" for col in rows[0]]
+    return [dict(zip(header, row, strict=False)) for row in rows[1:]]
+
+
+def _extract_segment(room: dict[str, JsonValue]) -> Segment | None:
+    """Pull a stable id + name out of one room dict, skipping unnamed rooms."""
+    room_id = next((room[k] for k in _ID_HEADERS if room.get(k) is not None), None)
+    name = next((room[k] for k in _NAME_HEADERS if room.get(k) is not None), None)
+    # Skip rooms without an id or with a blank name — HA segments need a label
+    # and unnamed rooms (common on the S20+ until the user names them in Mi Home)
+    # only clutter the mapping dialog.
+    if room_id is None or name is None or not str(name).strip():
+        return None
+    return Segment(id=str(room_id), name=str(name).strip())

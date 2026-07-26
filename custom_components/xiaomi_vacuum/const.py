@@ -1,15 +1,20 @@
-"""Constants for xiaomi_vacuum (xiaomi.vacuum.d109gl MIoT spec v2)."""
+"""
+Model-agnostic constants for xiaomi_vacuum.
+
+Everything that varies between supported vacuum models (MIoT property/action
+mapping, status tables, enumerations) lives in
+:mod:`custom_components.xiaomi_vacuum.spec`.
+This module holds only the integration-level constants (domain, config keys,
+cloud regions) that are independent of which Xiaomi vacuum is connected.
+"""
 
 from __future__ import annotations
 
 from logging import Logger, getLogger
 
-from homeassistant.components.vacuum import VacuumActivity
-
 LOGGER: Logger = getLogger(__package__)
 
 DOMAIN = "xiaomi_vacuum"
-MODEL = "xiaomi.vacuum.d109gl"
 
 CONF_HOST = "host"
 CONF_TOKEN = "token"  # noqa: S105
@@ -28,176 +33,14 @@ CLOUD_REGIONS: tuple[str, ...] = ("de", "us", "cn", "ru", "sg", "i2", "tw")
 DEFAULT_CLOUD_REGION = "us"
 
 ISSUE_CANNOT_CONNECT = "cannot_connect"
+ISSUE_UNSUPPORTED_MODEL = "unsupported_model"
 
+# Vacuum models discovered in the cloud are matched by this prefix (see
+# config_flow); the per-model MIoT spec lives in `spec.MODELS`. Adding a new
+# model means adding a `ModelSpec` entry there.
+VACUUM_MODEL_PREFIX = "xiaomi.vacuum."
 
-PROPERTY_MAPPING: dict[str, dict[str, int]] = {
-    "status": {"siid": 2, "piid": 2},
-    # Live fault state. The Device Fault property (piid 3) is deliberately NOT read:
-    # it latches the last code and never resets. Fault Ids (piid 66) is the live
-    # {"fault": [codes]} list ([0] = none); the coordinator derives the fault from it.
-    "fault_ids": {"siid": 2, "piid": 66},
-    "sweep_mop_type": {"siid": 2, "piid": 4},
-    "cleaning_area": {"siid": 2, "piid": 6},
-    "cleaning_time": {"siid": 2, "piid": 7},
-    "clean_times": {"siid": 2, "piid": 8},
-    "fan_speed": {"siid": 2, "piid": 9},
-    "mop_water_level": {"siid": 2, "piid": 10},
-    "room_information": {"siid": 2, "piid": 16},
-    "last_clean_time": {"siid": 2, "piid": 17},
-    "map_obj_name": {"siid": 10, "piid": 1},
-    "sweep_route": {"siid": 2, "piid": 74},
-    "obstacle_avoidance_strategy": {"siid": 2, "piid": 75},
-    "battery_level": {"siid": 3, "piid": 1},
-    "charging_state": {"siid": 3, "piid": 2},
-    # Consumable remaining-life percentages (match the Mi Home app's list).
-    "mop_life": {"siid": 9, "piid": 1},
-    "main_brush_life": {"siid": 12, "piid": 1},
-    "side_brush_life": {"siid": 13, "piid": 1},
-    "filter_life": {"siid": 14, "piid": 1},
-}
-
-ACTION_START_SWEEP = {"siid": 2, "aiid": 1}
-ACTION_STOP_SWEEPING = {"siid": 2, "aiid": 2}
-ACTION_RETURN_HOME = {"siid": 2, "aiid": 3}
-ACTION_START_ONLY_SWEEP = {"siid": 2, "aiid": 4}
-ACTION_START_MOP = {"siid": 2, "aiid": 5}
-ACTION_START_SWEEP_MOP = {"siid": 2, "aiid": 6}
-ACTION_PAUSE_SWEEPING = {"siid": 2, "aiid": 7}
-# Resume a paused job (vs. ACTION_START_SWEEP, which begins a fresh clean).
-ACTION_CONTINUE_SWEEP = {"siid": 2, "aiid": 8}
-ACTION_START_ROOM_SWEEP = {"siid": 2, "aiid": 16, "in_piid": 15}
-ACTION_START_DUST_ARREST = {"siid": 2, "aiid": 18}
-ACTION_START_MOP_WASH = {"siid": 2, "aiid": 19}
-ACTION_START_DRY = {"siid": 2, "aiid": 20}
-ACTION_STOP_MOP_WASH = {"siid": 2, "aiid": 31}
-ACTION_STOP_DRY = {"siid": 2, "aiid": 32}
-ACTION_IDENTIFY = {"siid": 6, "aiid": 1}
-
-# Whitelist for the vacuum.send_command service: command name -> MIoT action.
-# Exposes useful d109gl actions not covered by the standard vacuum controls.
-SEND_COMMANDS: dict[str, dict[str, int]] = {
-    "start_only_sweep": ACTION_START_ONLY_SWEEP,
-    "start_mop": ACTION_START_MOP,
-    "start_sweep_mop": ACTION_START_SWEEP_MOP,
-    "continue_sweep": ACTION_CONTINUE_SWEEP,
-    "start_mop_wash": ACTION_START_MOP_WASH,
-    "stop_mop_wash": ACTION_STOP_MOP_WASH,
-    "start_dry": ACTION_START_DRY,
-    "stop_dry": ACTION_STOP_DRY,
-}
-
-# The ERROR activity is NOT produced from status: an active fault drives it (see
-# XiaomiVacuum.activity), keeping the vacuum state consistent with the error sensor
-# and the app. Break/interrupt statuses (3 BreakCharging, 19 GoChargeBreak,
-# 20 WashBreak) and the bare "Error" status (15) occur with no active fault during
-# normal cycles, so they map to their nearest non-error activity instead.
-STATUS_TO_ACTIVITY: dict[int, VacuumActivity] = {
-    1: VacuumActivity.IDLE,
-    2: VacuumActivity.DOCKED,
-    3: VacuumActivity.DOCKED,
-    4: VacuumActivity.CLEANING,
-    5: VacuumActivity.PAUSED,
-    6: VacuumActivity.RETURNING,
-    7: VacuumActivity.RETURNING,
-    8: VacuumActivity.CLEANING,
-    9: VacuumActivity.DOCKED,
-    10: VacuumActivity.CLEANING,
-    11: VacuumActivity.IDLE,
-    12: VacuumActivity.DOCKED,
-    13: VacuumActivity.RETURNING,
-    14: VacuumActivity.DOCKED,
-    15: VacuumActivity.IDLE,
-    16: VacuumActivity.CLEANING,
-    17: VacuumActivity.CLEANING,
-    18: VacuumActivity.PAUSED,
-    19: VacuumActivity.PAUSED,
-    20: VacuumActivity.PAUSED,
-    21: VacuumActivity.RETURNING,
-}
-
-# Statuses where the robot is parked and ready to begin a NEW job — start issues
-# a fresh Start Sweep (aiid 1) only here. In every other state (cleaning, paused,
-# mid-task break-off, returning, or stuck/errored after finishing) start instead
-# calls Continue Sweep (aiid 8): it resumes an interrupted job and is a no-op when
-# there is nothing to resume, so a robot that finished but failed to dock is never
-# sent on a full re-clean.
-IDLE_STATUSES: frozenset[int] = frozenset({1, 2, 9})  # Idle, Charging, Charged
-
-STATUS_SLUGS: dict[int, str] = {
-    1: "idle",
-    2: "charging",
-    3: "break_charging",
-    4: "sweeping",
-    5: "paused",
-    6: "go_charging",
-    7: "go_wash",
-    8: "remote",
-    9: "charged",
-    10: "building_map",
-    11: "updating",
-    12: "multi_task_station_working",
-    13: "multi_task_recharge",
-    14: "station_working",
-    15: "error",
-    16: "sweeping_and_mopping",
-    17: "mopping",
-    18: "mapping_pause",
-    19: "go_charge_break",
-    20: "wash_break",
-    21: "go_charge_building_map",
-}
-
-FAN_SPEEDS: dict[str, int] = {
-    "silent": 1,
-    "basic": 2,
-    "strong": 3,
-    "full_speed": 4,
-}
-FAN_SPEED_NAMES: dict[int, str] = {v: k for k, v in FAN_SPEEDS.items()}
-
-SWEEP_MOP_TYPES: dict[str, int] = {
-    "sweep": 1,
-    "mop": 2,
-    "sweep_mop": 3,
-    "sweep_before_mopping": 4,
-}
-SWEEP_MOP_TYPE_NAMES: dict[int, str] = {v: k for k, v in SWEEP_MOP_TYPES.items()}
-
-CLEAN_TIMES: dict[str, int] = {
-    "one_time": 1,
-    "two_times": 2,
-}
-CLEAN_TIMES_NAMES: dict[int, str] = {v: k for k, v in CLEAN_TIMES.items()}
-
-MOP_WATER_LEVELS: dict[str, int] = {
-    "level_1": 1,
-    "level_2": 2,
-    "level_3": 3,
-}
-MOP_WATER_LEVEL_NAMES: dict[int, str] = {v: k for k, v in MOP_WATER_LEVELS.items()}
-
-SWEEP_ROUTES: dict[str, int] = {
-    "quick": 1,
-    "daily": 2,
-    "careful": 3,
-}
-SWEEP_ROUTE_NAMES: dict[int, str] = {v: k for k, v in SWEEP_ROUTES.items()}
-
-OBSTACLE_AVOIDANCES: dict[str, int] = {
-    "less_collisions": 0,
-    "high_coverage": 1,
-}
-OBSTACLE_AVOIDANCE_NAMES: dict[int, str] = {
-    v: k for k, v in OBSTACLE_AVOIDANCES.items()
-}
-
-CHARGING_STATE_SLUGS: dict[int, str] = {
-    1: "charging",
-    2: "not_charging",
-    3: "not_chargeable",
-}
-
-# Fault codes (MIoT siid 2 / piid 3) are large device-specific numbers (e.g. 210009)
-# with no published code->text table anywhere in Xiaomi's ecosystem. The localized,
-# human-readable text is delivered by the Xiaomi cloud as a device message (see
+# Fault codes are large device-specific numbers (e.g. 210009) with no published
+# code->text table anywhere in Xiaomi's ecosystem. The localized, human-readable
+# text is delivered by the Xiaomi cloud as a device message (see
 # cloud.XiaomiCloud.async_fault_text); the coordinator resolves it into "fault_text".

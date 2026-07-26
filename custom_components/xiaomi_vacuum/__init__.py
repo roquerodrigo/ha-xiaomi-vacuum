@@ -24,7 +24,12 @@ from .const import (
 from .coordinator import XiaomiVacuumDataUpdateCoordinator
 from .data import XiaomiVacuumData
 from .map_coordinator import XiaomiVacuumMapCoordinator
-from .repairs import async_raise_cannot_connect
+from .repairs import (
+    async_clear_unsupported_model,
+    async_raise_cannot_connect,
+    async_raise_unsupported_model,
+)
+from .spec import DEFAULT_MODEL, SUPPORTED_MODELS, get_spec
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -41,76 +46,115 @@ PLATFORMS: list[Platform] = [
 ]
 
 
+async def _setup_cloud(
+    hass: HomeAssistant,
+    entry: XiaomiVacuumConfigEntry,
+    coordinator: XiaomiVacuumDataUpdateCoordinator,
+    client: XiaomiVacuumApiClient,
+) -> XiaomiVacuumMapCoordinator | None:
+    """
+    Resolve the cloud session, wire it into the client + coordinator.
+
+    Returns the map coordinator (None when no session, or when the session is
+    invalid and reauth has been triggered). The cloud also backs cloud-routed
+    actions (e.g. the S20+ room-clean) via ``client.set_cloud``.
+    """
+    cloud_country = entry.data.get(CONF_CLOUD_COUNTRY)
+    ssecurity = entry.data.get(CONF_CLOUD_SSECURITY)
+    service_token = entry.data.get(CONF_CLOUD_SERVICE_TOKEN)
+    cloud_user_id = entry.data.get(CONF_CLOUD_USER_ID)
+    if not (cloud_country and ssecurity and service_token and cloud_user_id):
+        return None
+    cloud = XiaomiCloud.from_session(
+        hass,
+        country=cloud_country,
+        ssecurity=ssecurity,
+        service_token=service_token,
+        user_id=cloud_user_id,
+    )
+    try:
+        await cloud.async_resolve_device(entry.data[CONF_TOKEN])
+    except XiaomiCloudError as exception:
+        LOGGER.warning(
+            "Cloud session invalid; starting reauth to refresh: %s", exception
+        )
+        # Surface a repair/reauth prompt instead of silently dropping the map;
+        # local entities stay available since the entry itself keeps loading.
+        entry.async_start_reauth(hass)
+        return None
+    coordinator.cloud = cloud
+    # Route multi-step actions (e.g. the S20+ room-clean) through the cloud for
+    # reliability — local UDP routinely times out (-9999).
+    client.set_cloud(cloud)
+    return XiaomiVacuumMapCoordinator(hass, cloud=cloud, state_coordinator=coordinator)
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: XiaomiVacuumConfigEntry,
 ) -> bool:
     """Set up Xiaomi Vacuum from a config entry."""
     coordinator = XiaomiVacuumDataUpdateCoordinator(hass=hass, config_entry=entry)
+    # Model is unknown until the local handshake succeeds; provisionally pick
+    # the cached/default model so the client can be built. Once the handshake
+    # resolves a different model we rebuild the client with the right spec.
+    stored_info = entry.data.get(CONF_DEVICE_INFO)
+    cached_model = stored_info.get("model") if isinstance(stored_info, dict) else None
+    provisional_spec = get_spec(cached_model or DEFAULT_MODEL)
     client = XiaomiVacuumApiClient(
         hass=hass,
         host=entry.data[CONF_HOST],
         token=entry.data[CONF_TOKEN],
+        spec=provisional_spec,
     )
     offline = False
     info: DeviceInfoLike
     try:
         info = await client.async_get_info()
     except XiaomiVacuumApiClientCommunicationError as exception:
-        stored = entry.data.get(CONF_DEVICE_INFO)
-        if not stored:
+        if not stored_info:
             # First setup ever — nothing cached to build entities from.
             raise ConfigEntryNotReady(exception) from exception
         LOGGER.warning(
             "Vacuum unreachable at setup; continuing with cached device info: %s",
             exception,
         )
-        info = CachedDeviceInfo.from_stored(cast("JsonObject", stored))
+        info = CachedDeviceInfo.from_stored(cast("JsonObject", stored_info))
         offline = True
     else:
-        stored_info = CachedDeviceInfo.to_stored(info)
-        if entry.data.get(CONF_DEVICE_INFO) != stored_info:
+        stored_info_obj = CachedDeviceInfo.to_stored(info)
+        if entry.data.get(CONF_DEVICE_INFO) != stored_info_obj:
             hass.config_entries.async_update_entry(
-                entry, data={**entry.data, CONF_DEVICE_INFO: stored_info}
+                entry, data={**entry.data, CONF_DEVICE_INFO: stored_info_obj}
             )
     LOGGER.debug(
         "Device info: model=%s raw=%s",
         getattr(info, "model", None),
         getattr(info, "raw", None),
     )
-    map_coordinator: XiaomiVacuumMapCoordinator | None = None
-    cloud_country = entry.data.get(CONF_CLOUD_COUNTRY)
-    ssecurity = entry.data.get(CONF_CLOUD_SSECURITY)
-    service_token = entry.data.get(CONF_CLOUD_SERVICE_TOKEN)
-    cloud_user_id = entry.data.get(CONF_CLOUD_USER_ID)
-    if cloud_country and ssecurity and service_token and cloud_user_id:
-        cloud = XiaomiCloud.from_session(
-            hass,
-            country=cloud_country,
-            ssecurity=ssecurity,
-            service_token=service_token,
-            user_id=cloud_user_id,
+    # Resolve the real spec from the (now-known) model and rebuild the client if
+    # the handshake revealed a different model than the cached/default one.
+    model = getattr(info, "model", None)
+    spec = get_spec(model)
+    if model and model not in SUPPORTED_MODELS:
+        async_raise_unsupported_model(hass, entry, model)
+    else:
+        async_clear_unsupported_model(hass, entry)
+    if spec is not provisional_spec:
+        client = XiaomiVacuumApiClient(
+            hass=hass,
+            host=entry.data[CONF_HOST],
+            token=entry.data[CONF_TOKEN],
+            spec=spec,
         )
-        try:
-            await cloud.async_resolve_device(entry.data[CONF_TOKEN])
-        except XiaomiCloudError as exception:
-            LOGGER.warning(
-                "Cloud session invalid; starting reauth to refresh: %s", exception
-            )
-            # Surface a repair/reauth prompt instead of silently dropping the map;
-            # local entities stay available since the entry itself keeps loading.
-            entry.async_start_reauth(hass)
-        else:
-            coordinator.cloud = cloud
-            map_coordinator = XiaomiVacuumMapCoordinator(
-                hass, cloud=cloud, state_coordinator=coordinator
-            )
+    map_coordinator = await _setup_cloud(hass, entry, coordinator, client)
 
     entry.runtime_data = XiaomiVacuumData(
         client=client,
         integration=async_get_loaded_integration(hass, entry.domain),
         coordinator=coordinator,
         info=info,
+        spec=spec,
         map_coordinator=map_coordinator,
     )
 

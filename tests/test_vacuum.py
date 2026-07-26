@@ -3,16 +3,16 @@ from __future__ import annotations
 import json
 
 import pytest
-from homeassistant.components.vacuum import VacuumActivity
+from homeassistant.components.vacuum.const import VacuumActivity
 
-from custom_components.xiaomi_vacuum.const import (
-    DOMAIN,
-    STATUS_TO_ACTIVITY,
-)
+from custom_components.xiaomi_vacuum.const import DOMAIN
+from custom_components.xiaomi_vacuum.spec import _D109GL
 from custom_components.xiaomi_vacuum.vacuum.cleaner import _parse_segments
 
 
-@pytest.mark.parametrize(("status_code", "expected"), list(STATUS_TO_ACTIVITY.items()))
+@pytest.mark.parametrize(
+    ("status_code", "expected"), list(_D109GL.status_to_activity.items())
+)
 def test_status_to_activity_mapping(status_code, expected):
     assert isinstance(expected, VacuumActivity)
 
@@ -228,6 +228,58 @@ def test_parse_segments_alt_key_names():
 def test_parse_segments_warns_when_all_entries_skipped():
     # Every room is missing a name -> no segments -> warning path.
     raw = json.dumps([{"id": 1}, {"id": 2}])
+    assert _parse_segments(raw) == []
+
+
+def test_parse_segments_s20_table_format():
+    """The S20+ emits room-info as a header+rows matrix under `room_attrs`."""
+    raw = json.dumps(
+        {
+            "version": 2,
+            "room_attrs": [
+                [
+                    "id",
+                    "room_name",
+                    "fan_level",
+                    "water_level",
+                    "clean_mode",
+                    "clean_times",
+                    "mop_mode",
+                    "on",
+                ],
+                [3, "Living room", 4, 3, 1, 1, 0, False],
+                [4, "Kitchen", 4, 3, 3, 1, 0, False],
+                [5, "Hall", 4, 3, 3, 1, 0, True],
+                # Unnamed room -> must be skipped (HA segments need a label).
+                [6, "", 2, 1, 3, 1, 0, False],
+            ],
+        }
+    )
+    segs = _parse_segments(raw)
+    assert [(s.id, s.name) for s in segs] == [
+        ("3", "Living room"),
+        ("4", "Kitchen"),
+        ("5", "Hall"),
+    ]
+
+
+def test_parse_segments_s20_table_format_skips_unnamed():
+    raw = json.dumps(
+        {
+            "version": 2,
+            "room_attrs": [
+                ["id", "room_name"],
+                [7, ""],
+                [8, "  "],
+            ],
+        }
+    )
+    assert _parse_segments(raw) == []
+
+
+def test_parse_segments_room_attrs_without_header_row_is_noop():
+    # A matrix whose first row isn't a string header shouldn't crash.
+    raw = json.dumps({"room_attrs": [[1, 2, 3], [4, 5, 6]]})
     assert _parse_segments(raw) == []
 
 

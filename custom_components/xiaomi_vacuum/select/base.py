@@ -2,22 +2,34 @@
 
 from __future__ import annotations
 
-from typing import ClassVar, cast
-
 from homeassistant.components.select import SelectEntity
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.const import EntityCategory
 
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 
 class _XiaomiVacuumSelect(XiaomiVacuumEntity, SelectEntity):
-    """Base for a MIoT property exposed as a slug-valued select."""
+    """
+    Base for a MIoT property exposed as a slug-valued select.
+
+    Subclasses pin ``_property_name`` (the :class:`Property` they read/write) and
+    override :attr:`_slug_to_value` with the slug→value map for the active model.
+    Both come from the active model's spec so the option list matches what the
+    device actually supports.
+    """
 
     _attr_entity_category = EntityCategory.CONFIG
 
-    _property_name: ClassVar[str]
-    _slug_to_value: ClassVar[dict[str, int]]
-    _value_to_slug: ClassVar[dict[int, str]]
+    _property_name: str
+
+    @property
+    def _slug_to_value(self) -> dict[str, int]:
+        """Slug→value map; subclasses must override with the active model's spec."""
+        raise NotImplementedError
+
+    @property
+    def _value_to_slug(self) -> dict[int, str]:
+        return {v: k for k, v in self._slug_to_value.items()}
 
     @property
     def unique_id(self) -> str:
@@ -33,11 +45,7 @@ class _XiaomiVacuumSelect(XiaomiVacuumEntity, SelectEntity):
     def current_option(self) -> str | None:
         """Return the current option as a slug, or None when unknown."""
         value = self.coordinator.data.get(self._property_name)
-        return (
-            self._value_to_slug.get(int(cast("int", value)))
-            if value is not None
-            else None
-        )
+        return self._value_to_slug.get(int(value)) if isinstance(value, int) else None
 
     async def async_select_option(self, option: str) -> None:
         """Set the option on the device, with optimistic update."""

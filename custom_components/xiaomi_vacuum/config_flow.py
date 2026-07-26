@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 
     from homeassistant.helpers.typing import ConfigType
 
-    from .data import XiaomiVacuumConfigEntry
+    from .data import CloudSessionTokens, XiaomiVacuumConfigEntry
 
 from .const import (
     CLOUD_REGIONS,
@@ -45,9 +45,10 @@ from .const import (
     DEFAULT_CLOUD_REGION,
     DOMAIN,
     LOGGER,
+    VACUUM_MODEL_PREFIX,
 )
+from .spec import get_spec
 
-_VACUUM_MODEL_PREFIX = "xiaomi.vacuum."
 _DEVICE_PICK = "device"
 
 
@@ -154,7 +155,7 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if entry is None or self._cloud is None:
             return self.async_abort(reason="reauth_failed")
         tokens = self._cloud.session_tokens()
-        if not (tokens["ssecurity"] and tokens["service_token"] and tokens["user_id"]):
+        if not self._has_full_session(tokens):
             return self.async_abort(reason="reauth_failed")
         return self.async_update_reload_and_abort(
             entry,
@@ -222,14 +223,25 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             if self._cloud is None:
                 return self.async_abort(reason="cloud_list_failed")
             try:
-                self._devices = await self._cloud.async_list_devices(
-                    model_prefix=_VACUUM_MODEL_PREFIX
-                )
+                # Fetch every device first (unfiltered) so we can give the user a
+                # useful hint when the vacuum they expect is missing — usually a
+                # wrong cloud region, or a device whose model does not match the
+                # `xiaomi.vacuum.` prefix this integration recognises.
+                all_devices = await self._cloud.async_list_devices()
             except XiaomiCloudError as exc:
                 LOGGER.warning("Failed to list devices: %s", exc)
                 return self.async_abort(reason="cloud_list_failed")
+            LOGGER.debug(
+                "Cloud returned %d device(s): %s",
+                len(all_devices),
+                {d.model for d in all_devices},
+            )
+            self._devices = [
+                d for d in all_devices if d.model.startswith(VACUUM_MODEL_PREFIX)
+            ]
             if not self._devices:
-                return self.async_abort(reason="no_vacuum_found")
+                reason = self._missing_vacuum_reason(all_devices)
+                return self.async_abort(reason=reason)
 
         if len(self._devices) == 1:
             return await self._finalize(self._devices[0])
@@ -251,6 +263,25 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({vol.Required(_DEVICE_PICK): vol.In(options)}),
         )
 
+    @staticmethod
+    def _missing_vacuum_reason(all_devices: list[XiaomiDeviceInfo]) -> str:
+        """Pick the abort reason (and log a hint) when no vacuum was found."""
+        if not all_devices:
+            return "no_vacuum_found"
+        # Devices exist on the account, but none is a recognised vacuum —
+        # most likely the S20+/X20 Max lives on a different region than the
+        # one selected, or the account only holds non-vacuum hardware.
+        LOGGER.warning(
+            "Found %d device(s) on this account but none matches the %r prefix. "
+            "Models seen: %s. If your vacuum is missing, try a different cloud "
+            "region (reconfigure flow) or check the device is paired to this "
+            "Mi Home account.",
+            len(all_devices),
+            VACUUM_MODEL_PREFIX,
+            sorted({d.model for d in all_devices}),
+        )
+        return "no_vacuum_in_account"
+
     async def _finalize(
         self, device: XiaomiDeviceInfo
     ) -> config_entries.ConfigFlowResult:
@@ -262,7 +293,10 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="no_local_ip")
 
         client = XiaomiVacuumApiClient(
-            hass=self.hass, host=device.local_ip, token=device.token
+            hass=self.hass,
+            host=device.local_ip,
+            token=device.token,
+            spec=get_spec(device.model),
         )
         try:
             info = await client.async_get_info()
@@ -326,10 +360,18 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if self._cloud is None:
             return
         tokens = self._cloud.session_tokens()
-        if tokens["ssecurity"] and tokens["service_token"] and tokens["user_id"]:
-            self._user_input[CONF_CLOUD_SSECURITY] = tokens["ssecurity"]
-            self._user_input[CONF_CLOUD_SERVICE_TOKEN] = tokens["service_token"]
-            self._user_input[CONF_CLOUD_USER_ID] = tokens["user_id"]
+        if not self._has_full_session(tokens):
+            return
+        self._user_input[CONF_CLOUD_SSECURITY] = tokens["ssecurity"]
+        self._user_input[CONF_CLOUD_SERVICE_TOKEN] = tokens["service_token"]
+        self._user_input[CONF_CLOUD_USER_ID] = tokens["user_id"]
+
+    @staticmethod
+    def _has_full_session(tokens: CloudSessionTokens) -> bool:
+        """Whether all three cloud session token fields are present."""
+        return bool(
+            tokens["ssecurity"] and tokens["service_token"] and tokens["user_id"]
+        )
 
     def _create_entry(self) -> config_entries.ConfigFlowResult:
         self._persist_session_tokens()
