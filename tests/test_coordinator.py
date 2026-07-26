@@ -12,13 +12,14 @@ from custom_components.xiaomi_vacuum.const import CONF_HOST, DOMAIN
 from custom_components.xiaomi_vacuum.coordinator import (
     UPDATE_INTERVAL,
     XiaomiVacuumDataUpdateCoordinator,
-    _live_fault_code,
+    _live_fault_code_ids,
 )
 from custom_components.xiaomi_vacuum.repairs import async_raise_cannot_connect
+from custom_components.xiaomi_vacuum.spec import _B108GL, _D109GL
 
 
-def _fake_entry(client_mock=None):
-    runtime = type("R", (), {"client": client_mock})()
+def _fake_entry(client_mock=None, spec=_D109GL):
+    runtime = type("R", (), {"client": client_mock, "spec": spec})()
     # `async_on_unload` is invoked by DataUpdateCoordinator.__init__ when a
     # config_entry is passed; a no-op is enough for these unit tests.
     # entry_id/title/data feed the cannot_connect repair issue helpers.
@@ -35,8 +36,8 @@ def _fake_entry(client_mock=None):
     )()
 
 
-def _coord_with_client(hass, client_mock):
-    entry = _fake_entry(client_mock)
+def _coord_with_client(hass, client_mock, spec=_D109GL):
+    entry = _fake_entry(client_mock, spec=spec)
     return XiaomiVacuumDataUpdateCoordinator(hass=hass, config_entry=entry)
 
 
@@ -56,20 +57,20 @@ async def test_async_update_data_returns_state(hass, sample_state):
     assert result == sample_state
 
 
-def test_live_fault_code_zero_when_no_active_fault():
-    assert _live_fault_code('{"ts": 1, "fault": [0]}') == 0
+def test_live_fault_code_ids_zero_when_no_active_fault():
+    assert _live_fault_code_ids('{"ts": 1, "fault": [0]}') == 0
 
 
-def test_live_fault_code_returns_active_code():
-    assert _live_fault_code('{"ts": 1, "fault": [210009]}') == 210009
+def test_live_fault_code_ids_returns_active_code():
+    assert _live_fault_code_ids('{"ts": 1, "fault": [210009]}') == 210009
 
 
-def test_live_fault_code_none_without_fault_ids():
-    assert _live_fault_code(None) is None
+def test_live_fault_code_ids_none_without_fault_ids():
+    assert _live_fault_code_ids(None) is None
 
 
-def test_live_fault_code_none_on_bad_json():
-    assert _live_fault_code("not json") is None
+def test_live_fault_code_ids_none_on_bad_json():
+    assert _live_fault_code_ids("not json") is None
 
 
 async def test_async_update_data_derives_fault_from_fault_ids(hass):
@@ -113,9 +114,9 @@ async def test_update_success_clears_repair_issue(hass, sample_state):
     assert registry.async_get_issue(DOMAIN, "cannot_connect_test-entry") is None
 
 
-def test_live_fault_code_none_on_non_dict_json():
+def test_live_fault_code_ids_none_on_non_dict_json():
     # A JSON array has no `.get`, exercising the AttributeError branch.
-    assert _live_fault_code("[1, 2, 3]") is None
+    assert _live_fault_code_ids("[1, 2, 3]") is None
 
 
 async def test_enrich_fault_text_adds_localized_text(hass):
@@ -162,3 +163,20 @@ async def test_enrich_fault_text_noop_when_text_missing(hass):
     )()
     result = await coord._async_update_data()
     assert "fault_text" not in result
+
+
+async def test_b108_derives_fault_from_simple_uint32(hass):
+    """S20+ (fault_kind=simple) reads the plain fault property as an int."""
+    state = {"fault": 0}
+    client = type("C", (), {"async_get_state": AsyncMock(return_value=state)})()
+    coord = _coord_with_client(hass, client, spec=_B108GL)
+    result = await coord._async_update_data()
+    assert result["fault"] == 0
+
+
+async def test_b108_simple_fault_reports_nonzero_code(hass):
+    state = {"fault": 210009}
+    client = type("C", (), {"async_get_state": AsyncMock(return_value=state)})()
+    coord = _coord_with_client(hass, client, spec=_B108GL)
+    result = await coord._async_update_data()
+    assert result["fault"] == 210009

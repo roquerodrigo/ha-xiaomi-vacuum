@@ -50,6 +50,7 @@
         "abort": {
             "already_configured": "Este aspirador já está configurado.",
             "no_vacuum_found": "Nenhum aspirador foi encontrado nesta conta Xiaomi. Verifique se ele está pareado no app Mi Home e tente de novo.",
+            "no_vacuum_in_account": "Esta conta Xiaomi tem dispositivos, mas nenhum é um aspirador suportado. A região do Xiaomi cloud precisa ser a mesma que a da sua conta Mi Home — reconfigure e escolha a região correta, ou pareie o aspirador a esta conta no app Mi Home.",
             "cloud_list_failed": "Não foi possível listar os dispositivos da sua conta Xiaomi. Tente novamente mais tarde.",
             "no_local_ip": "O Xiaomi cloud não retornou um IP local pra esse aspirador. Verifique se ele está online e na mesma rede Wi-Fi do Home Assistant.",
             "local_unreachable": "O aspirador foi encontrado na conta, mas o Home Assistant não consegue alcançá-lo na rede local. Verifique se está na mesma rede e online.",
@@ -77,6 +78,10 @@
         "cannot_connect": {
             "title": "Sem conexão com {name}",
             "description": "O Home Assistant não consegue se conectar ao aspirador em {host}. O robô provavelmente está desligado ou fora da rede. As entidades ficam indisponíveis e o mapa mantém a última imagem conhecida até ele reconectar. Este problema é resolvido automaticamente quando o aspirador voltar a ficar online."
+        },
+        "unsupported_model": {
+            "title": "{name} é um modelo não suportado",
+            "description": "O aspirador reporta o modelo `{model}`, que esta integração ainda não conhece. Ela usou uma spec provisória para manter o controle local básico funcionando, mas algumas entidades (status, falhas, capacidades) podem estar erradas ou ausentes. Por favor abra uma issue no GitHub do projeto com o nome deste modelo para que suporte possa ser adicionado."
         }
     },
     "entity": {
@@ -164,12 +169,14 @@
                 "name": "Repetições de limpeza",
                 "state": {
                     "one_time": "Uma vez",
-                    "two_times": "Duas vezes"
+                    "two_times": "Duas vezes",
+                    "three_times": "Três vezes"
                 }
             },
             "mop_water_level": {
                 "name": "Nível de água do mop",
                 "state": {
+                    "off": "Desligado",
                     "level_1": "Nível 1",
                     "level_2": "Nível 2",
                     "level_3": "Nível 3"

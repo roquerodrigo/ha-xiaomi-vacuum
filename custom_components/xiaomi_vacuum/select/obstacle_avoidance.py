@@ -1,19 +1,24 @@
-"""Obstacle-avoidance strategy select entity."""
+"""Obstacle-avoidance select entity (X20 Max only)."""
 
 from __future__ import annotations
 
-from typing import ClassVar
-
-from ..const import OBSTACLE_AVOIDANCE_NAMES, OBSTACLE_AVOIDANCES  # noqa: TID252
+from ..spec import OBSTACLE_AVOIDANCES  # noqa: TID252
 from .base import _XiaomiVacuumSelect
 
 
 class XiaomiVacuumObstacleAvoidanceSelect(_XiaomiVacuumSelect):
-    """Select the obstacle-avoidance strategy the vacuum applies."""
+    """
+    Select the obstacle-avoidance strategy.
+
+    Only created for models whose spec advertises ``has_obstacle_avoidance``
+    (the X20 Max); the S20+ has no such property.
+    """
 
     _attr_translation_key = "obstacle_avoidance_strategy"
-    _attr_icon = "mdi:radar"
+    _attr_icon = "mdi:shield-car"
 
     _property_name = "obstacle_avoidance_strategy"
-    _slug_to_value: ClassVar[dict[str, int]] = OBSTACLE_AVOIDANCES
-    _value_to_slug: ClassVar[dict[int, str]] = OBSTACLE_AVOIDANCE_NAMES
+
+    @property
+    def _slug_to_value(self) -> dict[str, int]:
+        return dict(OBSTACLE_AVOIDANCES)

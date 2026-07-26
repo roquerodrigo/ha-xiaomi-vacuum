@@ -225,3 +225,33 @@ async def test_setup_entry_starts_reauth_when_cloud_session_invalid(
     start_reauth.assert_called_once()
     assert entry.state == ConfigEntryState.LOADED
     assert len(hass.states.async_all("vacuum")) == 1
+
+
+async def test_setup_unknown_model_raises_unsupported_repair(
+    hass, mock_miot_device, enable_custom_integrations
+):
+    """An unknown model must fall back to the default spec and raise a repair."""
+    from homeassistant.helpers import issue_registry as ir
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    mock_miot_device.info.return_value.model = "xiaomi.vacuum.unknown"
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_HOST: "192.168.1.50",
+            CONF_TOKEN: "0" * 32,
+            CONF_NAME: "Mystery Vac",
+        },
+        unique_id="AA:BB:CC:DD:EE:00",
+    )
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert entry.state == ConfigEntryState.LOADED
+    issue = ir.async_get(hass).async_get_issue(
+        DOMAIN, f"unsupported_model_{entry.entry_id}"
+    )
+    assert issue is not None
+    assert issue.translation_placeholders["model"] == "xiaomi.vacuum.unknown"

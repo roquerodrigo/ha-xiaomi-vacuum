@@ -18,13 +18,14 @@ if TYPE_CHECKING:
 
     from .cloud import XiaomiCloud
     from .data import XiaomiVacuumConfigEntry
+    from .spec import ModelSpec
 
 UPDATE_INTERVAL = timedelta(seconds=30)
 
 
-def _live_fault_code(fault_ids_raw: str | None) -> int | None:
+def _live_fault_code_ids(fault_ids_raw: str | None) -> int | None:
     """
-    Return the current active fault code from the `Fault Ids` property.
+    Return the current active fault code from the X20 Max `Fault Ids` property.
 
     `Fault Ids` (siid 2/piid 66) is the live fault state, shaped like
     ``{"ts": ..., "fault": [<codes>]}`` where ``[0]`` means no active fault. The
@@ -61,6 +62,11 @@ class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[VacuumState]):
         # we enrich a non-zero fault code with its localized text.
         self.cloud: XiaomiCloud | None = None
 
+    @property
+    def spec(self) -> ModelSpec:
+        """The active model's MIoT spec."""
+        return self.config_entry.runtime_data.spec
+
     async def _async_update_data(self) -> VacuumState:
         """Fetch all mapped properties from the device."""
         try:
@@ -71,9 +77,18 @@ class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[VacuumState]):
             async_raise_cannot_connect(self.hass, self.config_entry)
             raise UpdateFailed(exception) from exception
         async_clear_cannot_connect(self.hass, self.config_entry)
-        data["fault"] = _live_fault_code(data.get("fault_ids"))
+        data["fault"] = self._derive_fault(data)
         await self._enrich_fault_text(data)
         return data
+
+    def _derive_fault(self, data: VacuumState) -> int | None:
+        """Extract the live fault code using the model's fault representation."""
+        if self.spec.fault_kind == "simple":
+            # S20+: a plain uint32 fault property, already an int (0 == healthy).
+            value = data.get("fault")
+            return int(value) if isinstance(value, int) else None
+        # X20 Max: a JSON fault-ids list.
+        return _live_fault_code_ids(data.get("fault_ids"))
 
     async def _enrich_fault_text(self, data: VacuumState) -> None:
         """Add the localized fault text for a non-zero fault code, if available."""

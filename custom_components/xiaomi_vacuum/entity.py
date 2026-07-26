@@ -11,8 +11,9 @@ from homeassistant.helpers.device_registry import (
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_NAME, DOMAIN, MODEL
+from .const import CONF_NAME, DOMAIN
 from .coordinator import XiaomiVacuumDataUpdateCoordinator
+from .spec import DEFAULT_MODEL
 
 if TYPE_CHECKING:
     from .data import VacuumState
@@ -28,7 +29,7 @@ class XiaomiVacuumEntity(CoordinatorEntity[XiaomiVacuumDataUpdateCoordinator]):
         super().__init__(coordinator)
         entry = coordinator.config_entry
         info = entry.runtime_data.info
-        model = getattr(info, "model", None) or MODEL
+        model = getattr(info, "model", None) or DEFAULT_MODEL
         name = entry.data.get(CONF_NAME) or model
         mac = getattr(info, "mac_address", None)
         connections = {(CONNECTION_NETWORK_MAC, mac)} if mac else set()

@@ -5,8 +5,8 @@ from __future__ import annotations
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.const import PERCENTAGE, EntityCategory
 
-from ..const import CHARGING_STATE_SLUGS  # noqa: TID252
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
+from ..spec import CHARGING_STATE_SLUGS  # noqa: TID252
 
 
 class XiaomiVacuumBatterySensor(XiaomiVacuumEntity, SensorEntity):

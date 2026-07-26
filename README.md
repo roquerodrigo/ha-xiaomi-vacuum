@@ -8,15 +8,17 @@
 ---
 
 A [Home Assistant](https://www.home-assistant.io/) integration for the
-**Xiaomi Robot Vacuum X20 Max** (`xiaomi.vacuum.d109gl`).
+**Xiaomi Robot Vacuum X20 Max** (`xiaomi.vacuum.d109gl`) and **Xiaomi Robot
+Vacuum S20+** (`xiaomi.vacuum.b108gl`).
 
 Day-to-day control and state polling run **locally** over the MIoT protocol
 (`iot_class: local_polling`). The Xiaomi cloud is used for one-time setup —
 a QR login that discovers the vacuum and fetches its IP and token for you — and
 for two cloud-only extras: the **map image** and **localized error messages**.
 
-> Tested only against `xiaomi.vacuum.d109gl`. Other Xiaomi vacuums may work but
-> aren't officially supported.
+> Tested against `xiaomi.vacuum.d109gl` (X20 Max) and `xiaomi.vacuum.b108gl`
+> (S20+). Other Xiaomi vacuums matching the `xiaomi.vacuum.*` model prefix may
+> be discovered but aren't officially supported.
 
 ## Features
 
@@ -35,11 +37,14 @@ for two cloud-only extras: the **map image** and **localized error messages**.
 - **Consumable life sensors** (% remaining): mop, main brush, side brush,
   filter — matching the Mi Home app's consumables list.
 - **Configuration selects** for: cleaning mode (sweep / mop / sweep+mop /
-  sweep before mopping), clean repetitions, mop water level, sweep route
-  (quick / standard / deep), obstacle avoidance strategy.
+  sweep before mopping), clean repetitions, mop water level. The X20 Max also
+  exposes sweep route (quick / standard / deep) and obstacle avoidance
+  strategy; the S20+ has no such properties and omits those selects.
 - **Empty dust bin** button (triggers the dock to collect the vacuum's dust).
 - **`vacuum.send_command`** — a whitelist of extra MIoT actions (start mop,
-  sweep+mop, continue sweep, mop wash start/stop, dry start/stop).
+  sweep+mop, continue sweep; and on the X20 Max, mop wash start/stop and dry
+  start/stop). The mop-wash and dry actions target the X20 Max auto-wash dock
+  and are not available on the S20+.
 - **Optimistic UI updates** — actions reflect immediately in the card; a
   background refresh confirms the device state ~5 s later.
 - **Internationalization**: English and Brazilian Portuguese (`pt-BR`).
@@ -105,11 +110,11 @@ with the config entry and reused only to render the map and resolve error text.
 | `sensor.<name>_side_brush_life` | `sensor` | Side brush remaining life (%) |
 | `sensor.<name>_filter_life` | `sensor` | Filter remaining life (%) |
 | `select.<name>_mode` | `select` | Sweep / Mop / Sweep+Mop / Sweep before mopping |
-| `select.<name>_clean_times` | `select` | Once / Twice |
-| `select.<name>_mop_water_level` | `select` | Level 1–3 |
-| `select.<name>_sweep_route` | `select` | Quick / Standard / Deep |
-| `select.<name>_obstacle_avoidance` | `select` | Less collisions / High coverage |
-| `button.<name>_collect_dust` | `button` | Tells the dock to empty the dust bin |
+| `select.<name>_clean_times` | `select` | Once / Twice (X20 Max also: Three times) |
+| `select.<name>_mop_water_level` | `select` | Off (S20+ only) / Level 1–3 |
+| `select.<name>_sweep_route` | `select` | Quick / Standard / Deep — X20 Max only |
+| `select.<name>_obstacle_avoidance` | `select` | Less collisions / High coverage — X20 Max only |
+| `button.<name>_collect_dust` | `button` | Tells the dock to empty the dust bin — X20 Max only |
 
 The vacuum entity also exposes raw MIoT diagnostics as extra state attributes
 under the `xiaomi_vacuum` key.

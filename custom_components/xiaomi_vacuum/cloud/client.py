@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
     from homeassistant.core import HomeAssistant
 
+    from ..data import CloudSessionTokens, JsonValue  # noqa: TID252
     from .device_info import XiaomiDeviceInfo
 
 
@@ -52,7 +53,7 @@ class XiaomiCloud:
         instance._logged_in = True
         return instance
 
-    def session_tokens(self) -> dict[str, str | None]:
+    def session_tokens(self) -> CloudSessionTokens:
         """Expose the active session tokens for persistence in the config entry."""
         return {
             "ssecurity": self._connector._ssecurity,  # noqa: SLF001
@@ -160,6 +161,28 @@ class XiaomiCloud:
         if not url:
             return None
         return await self._run(self._connector.get_map_bytes, url)
+
+    async def async_call_action(
+        self, siid: int, aiid: int, params: list[str] | None = None
+    ) -> dict[str, JsonValue] | None:
+        """
+        Invoke a MIoT action through the cloud (reliable TCP).
+
+        Used as the transport for multi-step flows that local UDP mishandles
+        (notably the S20+ room-clean, where ``set-room-clean-configs`` +
+        ``start-custom-sweep`` routinely time out locally with ``-9999``). The
+        Mi Home app uses this same cloud path.
+        """
+        if not self._logged_in or not self._device:
+            return None
+        return await self._run(
+            self._connector.call_action,
+            self._device.country,
+            self._device.device_id,
+            siid,
+            aiid,
+            params,
+        )
 
     async def async_fault_text(self, code: int) -> str | None:
         """

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from .const import MODEL
+from .spec import DEFAULT_MODEL
 
 if TYPE_CHECKING:
     from .data import DeviceInfoLike, JsonObject, JsonValue
@@ -36,7 +36,7 @@ class CachedDeviceInfo:
     def from_stored(cls, stored: JsonObject) -> CachedDeviceInfo:
         """Rehydrate the snapshot stored under ``CONF_DEVICE_INFO``."""
         return cls(
-            model=_str_or_none(stored.get("model")) or MODEL,
+            model=_str_or_none(stored.get("model")) or DEFAULT_MODEL,
             mac_address=_str_or_none(stored.get("mac_address")),
             firmware_version=_str_or_none(stored.get("firmware_version")),
             hardware_version=_str_or_none(stored.get("hardware_version")),

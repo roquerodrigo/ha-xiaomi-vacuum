@@ -1,13 +1,16 @@
 # ha-xiaomi-vacuum
 
 Home Assistant custom integration for the **Xiaomi Robot Vacuum X20 Max**
-(`xiaomi.vacuum.d109gl`), domain `xiaomi_vacuum`. Public repo, HACS-distributed.
+(`xiaomi.vacuum.d109gl`) and **Xiaomi Robot Vacuum S20+**
+(`xiaomi.vacuum.b108gl`), domain `xiaomi_vacuum`. Public repo, HACS-distributed.
 
-Read `README.md` for the user-facing feature list and setup flow, and
-`XIAOMI_VACUUM_API.md` for the device's MIoT API reference. **Always read
-`CODE_STYLE.md` before adding or restructuring code** — it is the enforced
-style guide (one class per file/entity, strict typing, naming, property
-conventions, etc.) and takes precedence over anything not covered here.
+Read `README.md` for the user-facing feature list and setup flow,
+`XIAOMI_VACUUM_API.md` for the device's MIoT API reference, and
+`ADDING_A_MODEL.md` for the step-by-step on extending support to a new vacuum.
+**Always read `CODE_STYLE.md` before adding or restructuring code** — it is
+the enforced style guide (one class per file/entity, strict typing, naming,
+property conventions, etc.) and takes precedence over anything not covered
+here.
 
 ## Architecture
 
@@ -22,6 +25,19 @@ conventions, etc.) and takes precedence over anything not covered here.
   `EntityDescription`-with-`value_fn` pattern).
 - **`api/`** wraps the local MIoT client; **`cloud/`** wraps the Xiaomi cloud
   (QR login, device discovery, map fetch, error-message resolution).
+- **`spec.py`** — per-model MIoT spec registry. Each supported vacuum
+  (`xiaomi.vacuum.d109gl` X20 Max, `xiaomi.vacuum.b108gl` S20+) has a
+  `ModelSpec` bundling its property mapping, action mapping, status table,
+  enumerations, `send_command` whitelist, fault representation, and room-clean
+  strategy. Capabilities (`DUST_ARREST` / `SWEEP_ROUTE` / `OBSTACLE_AVOIDANCE`
+  / `MOP_WASH_DRY`) are **derived** from the spec, not declared; the set of
+  entities to create (`spec.entities`) is in turn derived from the
+  capability set plus a base roster. Platforms filter their `_*_CLASSES`
+  registries by `EntityKey in spec.entities`, so adding a new model is a
+  data-only change in `spec.py` (see `ADDING_A_MODEL.md`). The spec is
+  selected from the device model at setup and threaded through
+  `runtime_data` / the coordinator. **Read `spec.py` before touching any
+  SIID/PIID/AIID — the two models diverge on almost all of them.**
 - **`coordinator.py`** — local device state polling (`DataUpdateCoordinator`).
 - **`map_coordinator.py`** — separate coordinator for the cloud-rendered map
   image, decoupled from local polling.

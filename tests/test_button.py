@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from custom_components.xiaomi_vacuum.const import ACTION_START_DUST_ARREST
+from custom_components.xiaomi_vacuum.spec import _D109GL
 
 
 async def test_button_entity_exists(hass, setup_integration):
@@ -18,12 +18,11 @@ async def test_button_press_calls_dust_arrest(
         {"entity_id": "button.aspirador_collect_dust"},
         blocking=True,
     )
-    mock_miot_device.call_action_by.assert_called_with(
-        ACTION_START_DUST_ARREST["siid"], ACTION_START_DUST_ARREST["aiid"]
-    )
+    a = _D109GL.actions.start_dust_arrest
+    mock_miot_device.call_action_by.assert_called_with(a["siid"], a["aiid"])
 
 
-async def test_button_has_icon_and_no_category(hass, setup_integration):
+def test_button_has_icon_and_no_category(hass, setup_integration):
     from homeassistant.helpers.entity_registry import async_get
 
     er = async_get(hass)
@@ -38,8 +37,9 @@ async def test_button_has_icon_and_no_category(hass, setup_integration):
 async def test_api_client_async_start_dust_arrest(hass, mock_miot_device):
     from custom_components.xiaomi_vacuum.api import XiaomiVacuumApiClient
 
-    client = XiaomiVacuumApiClient(hass=hass, host="1.2.3.4", token="t" * 32)
-    await client.async_start_dust_arrest()
-    mock_miot_device.call_action_by.assert_called_with(
-        ACTION_START_DUST_ARREST["siid"], ACTION_START_DUST_ARREST["aiid"]
+    client = XiaomiVacuumApiClient(
+        hass=hass, host="1.2.3.4", token="t" * 32, spec=_D109GL
     )
+    await client.async_start_dust_arrest()
+    a = _D109GL.actions.start_dust_arrest
+    mock_miot_device.call_action_by.assert_called_with(a["siid"], a["aiid"])
