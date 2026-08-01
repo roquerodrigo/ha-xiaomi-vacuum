@@ -48,8 +48,14 @@ class XiaomiVacuumApiClient:
         self._device = MiotDevice(
             ip=host,
             token=token,
-            # Property uses StrEnum keys + TypedDict values; miio expects plain
-            # dict[str, dict[str, Any]]. The shapes coincide at runtime.
+            # ``property_mapping`` is a ``MappingProxyType`` (read-only view) so the
+            # spec's shared state can't be mutated through ``MiotDevice``.
+            # ``python-miio`` only reads the mapping (``.items()`` in
+            # ``get_properties_for_mapping``, ``[key]`` in ``call_action_by`` /
+            # ``set_property_by``) — verified against miio 0.5.12 — so a read-only
+            # view is safe to hand it. The ``type: ignore`` is for the key/value
+            # types (StrEnum + TypedDict vs miio's plain ``dict[str, Any]``), not
+            # for the mapping vs ``mappingproxy`` distinction.
             mapping=spec.property_mapping,  # type: ignore[arg-type]
             timeout=10,
         )

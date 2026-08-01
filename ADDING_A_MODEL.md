@@ -167,15 +167,26 @@ real device; the S20+ ignored its spec-published direct action.
 `capabilities` is **derived** automatically from the spec — you do not
 need to declare it. The rules are:
 
-| Capability        | Derived from                                            |
-| ----------------- | ------------------------------------------------------- |
-| `DUST_ARREST`     | `actions.start_dust_arrest is not None`                 |
-| `SWEEP_ROUTE`     | `Property.SWEEP_ROUTE in property_mapping`              |
+| Capability           | Derived from                                            |
+| -------------------- | ------------------------------------------------------- |
+| `DUST_ARREST`        | `actions.start_dust_arrest is not None`                 |
+| `SWEEP_ROUTE`        | `Property.SWEEP_ROUTE in property_mapping`              |
 | `OBSTACLE_AVOIDANCE` | `Property.OBSTACLE_AVOIDANCE_STRATEGY in property_mapping` |
-| `MOP_WASH_DRY`    | `actions.start_mop_wash is not None`                    |
 
 Each capability gates one entity (see `_CAPABILITY_ENTITIES`); base entities
-(sensors, vacuum, default selects) are always present (see `_BASE_ENTITIES`).
+(vacuum, sensors, binary sensor, map image, default selects) are always
+present (see `_BASE_ENTITIES`). Every platform filters its `_*_CLASSES`
+registry by `EntityKey in spec.entities`, so the entity-key set is the single
+source of truth for what a model exposes.
+
+> **Note:** mop-wash / dry dock actions exist on the X20 Max but are **not** a
+gating capability — they don't create an entity. They're exposed only through
+`send_commands` (see the X20 Max spec for an example).
+
+**Per-model enumerations.** `sweep_routes` and `obstacle_avoidances` live on
+the `ModelSpec` (alongside `fan_speeds` / `sweep_mop_types` / `clean_times` /
+`mop_water_levels`), not as module-level globals. Populate them when the model
+exposes the matching property; leave them empty (the default) otherwise.
 
 **Adding a new capability** (rare):
 
