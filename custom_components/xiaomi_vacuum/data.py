@@ -45,6 +45,7 @@ class VacuumState(TypedDict):
     clean_times: NotRequired[int | None]
     fan_speed: NotRequired[int | None]
     mop_water_level: NotRequired[int | None]
+    mop_status: NotRequired[bool | None]
     room_information: NotRequired[str | None]
     last_clean_time: NotRequired[int | None]
     map_obj_name: NotRequired[str | None]

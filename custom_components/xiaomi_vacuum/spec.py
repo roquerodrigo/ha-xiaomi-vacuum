@@ -59,6 +59,7 @@ class Property(StrEnum):
     OBSTACLE_AVOIDANCE_STRATEGY = "obstacle_avoidance_strategy"
     BATTERY_LEVEL = "battery_level"
     CHARGING_STATE = "charging_state"
+    MOP_STATUS = "mop_status"
     MOP_LIFE = "mop_life"
     MAIN_BRUSH_LIFE = "main_brush_life"
     SIDE_BRUSH_LIFE = "side_brush_life"
@@ -78,6 +79,7 @@ class EntityKey(StrEnum):
     SIDE_BRUSH_LIFE_SENSOR = "side_brush_life"
     FILTER_LIFE_SENSOR = "filter_life"
     BATTERY_CHARGING_SENSOR = "battery_charging"
+    MOP_PAD_SENSOR = "mop_pad"
     MAP_IMAGE = "map"
     SWEEP_MOP_TYPE_SELECT = "sweep_mop_type"
     CLEAN_TIMES_SELECT = "clean_times"
@@ -147,6 +149,7 @@ _BASE_ENTITIES: frozenset[EntityKey] = frozenset(
         EntityKey.SIDE_BRUSH_LIFE_SENSOR,
         EntityKey.FILTER_LIFE_SENSOR,
         EntityKey.BATTERY_CHARGING_SENSOR,
+        EntityKey.MOP_PAD_SENSOR,
         EntityKey.SWEEP_MOP_TYPE_SELECT,
         EntityKey.CLEAN_TIMES_SELECT,
         EntityKey.MOP_WATER_LEVEL_SELECT,
@@ -390,6 +393,7 @@ _D109_PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
     Property.CLEAN_TIMES: {"siid": 2, "piid": 8},
     Property.FAN_SPEED: {"siid": 2, "piid": 9},
     Property.MOP_WATER_LEVEL: {"siid": 2, "piid": 10},
+    Property.MOP_STATUS: {"siid": 2, "piid": 11},
     Property.ROOM_INFORMATION: {"siid": 2, "piid": 16},
     Property.LAST_CLEAN_TIME: {"siid": 2, "piid": 17},
     Property.MAP_OBJ_NAME: {"siid": 10, "piid": 1},
@@ -533,6 +537,8 @@ _B108_PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
     Property.CLEAN_TIMES: {"siid": 2, "piid": 7},
     Property.FAN_SPEED: {"siid": 2, "piid": 8},
     Property.MOP_WATER_LEVEL: {"siid": 2, "piid": 9},
+    # mop-status is published by the vacuum-extend service on the S20+.
+    Property.MOP_STATUS: {"siid": 6, "piid": 1},
     # room-info is published by the vacuum-extend service on the S20+.
     Property.ROOM_INFORMATION: {"siid": 6, "piid": 10},
     Property.MAP_OBJ_NAME: {"siid": 7, "piid": 1},

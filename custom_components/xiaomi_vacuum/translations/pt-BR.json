@@ -150,6 +150,11 @@
                 "name": "Coletar pó"
             }
         },
+        "binary_sensor": {
+            "mop_pad": {
+                "name": "Pano"
+            }
+        },
         "image": {
             "map": {
                 "name": "Mapa"

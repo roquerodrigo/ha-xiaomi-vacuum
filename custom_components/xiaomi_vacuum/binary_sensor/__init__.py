@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from ..spec import EntityKey  # noqa: TID252
 from .battery_charging import XiaomiVacuumBatteryChargingSensor
+from .mop_pad import XiaomiVacuumMopPadSensor
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -15,10 +16,12 @@ if TYPE_CHECKING:
 
 __all__ = [
     "XiaomiVacuumBatteryChargingSensor",
+    "XiaomiVacuumMopPadSensor",
 ]
 
 _BINARY_SENSOR_CLASSES: dict[EntityKey, type] = {
     EntityKey.BATTERY_CHARGING_SENSOR: XiaomiVacuumBatteryChargingSensor,
+    EntityKey.MOP_PAD_SENSOR: XiaomiVacuumMopPadSensor,
 }
 
 
