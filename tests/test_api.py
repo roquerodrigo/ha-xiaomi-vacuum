@@ -257,6 +257,33 @@ def test_build_room_clean_config_empty_when_no_room_info():
     assert _build_room_clean_config("not json", ["5"]) == []
 
 
+# Same room table as ``_ROOM_INFO_TABLE`` but with the header row published in
+# mixed case (``Id`` / ``Room_Name``). A real device that doesn't emit the
+# lower-case spelling must still resolve — both parsers read this payload.
+_ROOM_INFO_TABLE_MIXED_CASE = (
+    '{"version":2,"room_attrs":['
+    '["Id","Room_Name","fan_level","water_level","clean_mode",'
+    '"clean_times","mop_mode","on"],'
+    '[3,"Living room",4,3,1,1,0,false],'
+    '[4,"Kitchen",4,3,3,1,0,false],'
+    '[5,"Hall",4,3,3,1,0,true]]}'
+)
+
+
+def test_build_room_clean_config_casefolds_header():
+    """Header cells are case-folded, matching ``_rows_to_attrs`` in cleaner.py.
+
+    Without this the per-room ``id`` lookup failed on every row and the config
+    came back empty on a device that plainly published rooms.
+    """
+    from custom_components.xiaomi_vacuum.api.client import _build_room_clean_config
+
+    rooms = _build_room_clean_config(_ROOM_INFO_TABLE_MIXED_CASE, ["5"])
+    assert {r["id"] for r in rooms} == {3, 4, 5}
+    assert next(r for r in rooms if r["id"] == 5)["on"] is True
+    assert all(r["on"] is False for r in rooms if r["id"] != 5)
+
+
 async def test_b108_clean_segments_routes_through_cloud_when_available(
     hass, mock_miot_device_b108
 ):
@@ -299,6 +326,31 @@ async def test_b108_clean_segments_cloud_reject_raises(hass, mock_miot_device_b1
     client.set_cloud(cloud)
     with pytest.raises(XiaomiVacuumApiClientError, match="rejected by device"):
         await client.async_clean_segments(["5"], room_information=_ROOM_INFO_TABLE)
+
+
+async def test_b108_clean_segments_cloud_none_falls_back_to_local(
+    hass, mock_miot_device_b108
+):
+    """A ``None`` cloud response means no transport — fall back to local miio.
+
+    Regression guard: a ``None`` result previously skipped the ``code`` check and
+    silently succeeded while nothing actually ran on the device (the optimistic
+    UI had already reported the clean as started).
+    """
+    from unittest.mock import AsyncMock
+
+    client = _client(hass, mock_miot_device_b108, spec=_B108GL)
+    cloud = AsyncMock()
+    # ``async_call_action`` returns None when the cloud has no active session or
+    # no resolved device — i.e. the transport is unavailable, not success.
+    cloud.async_call_action = AsyncMock(return_value=None)
+    client.set_cloud(cloud)
+
+    await client.async_clean_segments(["5"], room_information=_ROOM_INFO_TABLE)
+
+    # Both actions fall through to the local miio transport.
+    assert cloud.async_call_action.await_count == 2
+    assert mock_miot_device_b108.call_action_by.call_count == 2
 
 
 async def test_b108_return_home_uses_battery_service(hass, mock_miot_device_b108):

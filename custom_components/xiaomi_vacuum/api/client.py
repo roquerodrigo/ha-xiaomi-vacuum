@@ -282,16 +282,30 @@ class XiaomiVacuumApiClient:
             except XiaomiCloudError as exc:
                 msg = f"Cloud action {siid}/{aiid} failed: {exc}"
                 raise XiaomiVacuumApiClientError(msg) from exc
-            LOGGER.debug("Cloud action %s/%s response: %s", siid, aiid, result)
-            if result is not None and isinstance(result.get("code"), int):
-                code = result["code"]
-                if code != 0:
-                    msg = (
-                        f"Cloud action {siid}/{aiid} rejected by device: "
-                        f"code={code} message={result.get('message')!r}"
-                    )
-                    raise XiaomiVacuumApiClientError(msg)
-            return
+            # ``async_call_action`` returns ``None`` when the cloud client has no
+            # active session or no resolved device — i.e. the cloud transport is
+            # unavailable, not that the action succeeded. Treating that as success
+            # would let a room clean silently no-op while the optimistic UI has
+            # already reported it started. Fall through to the local path so the
+            # command still gets a chance to reach the device, mirroring the
+            # session-absent branch below.
+            if result is None:
+                LOGGER.debug(
+                    "No cloud session for action %s/%s; using local transport",
+                    siid,
+                    aiid,
+                )
+            else:
+                LOGGER.debug("Cloud action %s/%s response: %s", siid, aiid, result)
+                if isinstance(result.get("code"), int):
+                    code = result["code"]
+                    if code != 0:
+                        msg = (
+                            f"Cloud action {siid}/{aiid} rejected by device: "
+                            f"code={code} message={result.get('message')!r}"
+                        )
+                        raise XiaomiVacuumApiClientError(msg)
+                return
         await self._run_action(self._device.call_action_by, siid, aiid, params)
 
 
@@ -359,7 +373,13 @@ def _build_room_clean_config(
     matrix = data.get("room_attrs") if isinstance(data, dict) else None
     if not isinstance(matrix, list) or not matrix:
         return []
-    header = matrix[0] if isinstance(matrix[0], list) else _ROOM_ATTR_HEADERS
+    header = matrix[0] if isinstance(matrix[0], list) else list(_ROOM_ATTR_HEADERS)
+    # Normalise header cells to lower-case, matching ``_rows_to_attrs`` in
+    # ``vacuum/cleaner.py``: both parsers read the same ``room_attrs`` payload,
+    # so a device publishing ``Id`` / ``Room_Name`` instead of the lower-case
+    # spelling resolves identically in both places. Without this the per-room
+    # ``id`` lookup below fails on every row and the config comes back empty.
+    header = [str(c).casefold() if c is not None else "" for c in header]
     # Requested sequence as an ordered lookup: position decides emit order.
     wanted_order = [str(s) for s in segment_ids]
     wanted = set(wanted_order)
@@ -368,7 +388,7 @@ def _build_room_clean_config(
     for row in matrix[1:]:
         if not isinstance(row, list):
             continue
-        room = dict(zip([str(c) for c in header], row, strict=False))
+        room = dict(zip(header, row, strict=False))
         room_id = room.get("id")
         if room_id is None:
             continue
