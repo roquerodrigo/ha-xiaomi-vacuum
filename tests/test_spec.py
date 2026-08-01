@@ -169,17 +169,30 @@ def test_d109_route_and_obstacle_enumerations_are_per_model():
 
 
 def test_spec_fields_are_immutable():
-    """``frozen=True`` is backed by ``MappingProxyType`` on the dict fields."""
+    """``frozen=True`` is backed by ``MappingProxyType`` on every dict field.
+
+    Covers all nine dict-typed fields wrapped in ``__post_init__`` — a partial
+    check would let a future field silently lose its read-only wrapper.
+    """
     from custom_components.xiaomi_vacuum.spec import Property
 
-    with pytest.raises(TypeError):
-        _D109GL.fan_speeds["silent"] = 99  # type: ignore[index]
-    with pytest.raises(TypeError):
-        _D109GL.property_mapping[Property.STATUS] = {"siid": 0, "piid": 0}  # type: ignore[index]
-    # ``send_commands`` is wrapped too, so a stray mutation can't introduce a
-    # whitelist entry that the integration would happily route to the device.
-    with pytest.raises(TypeError):
-        _D109GL.send_commands["boom"] = {"siid": 0, "aiid": 0}  # type: ignore[index]
+    # Keys the X20 Max actually populates, so the assignment reaches the
+    # mapping instead of short-circuiting on a missing key.
+    mutations: list[tuple[str, object, object]] = [
+        ("property_mapping", Property.STATUS, {"siid": 0, "piid": 0}),
+        ("status", 1, {"activity": VacuumActivity.IDLE, "slug": "x", "is_idle": False}),
+        ("fan_speeds", "silent", 99),
+        ("sweep_mop_types", "sweep", 99),
+        ("clean_times", "one_time", 99),
+        ("mop_water_levels", "level_1", 99),
+        ("send_commands", "boom", {"siid": 0, "aiid": 0}),
+        ("sweep_routes", "quick", 99),
+        ("obstacle_avoidances", "less_collisions", 99),
+    ]
+    for field_name, key, value in mutations:
+        mapping = getattr(_D109GL, field_name)
+        with pytest.raises(TypeError):
+            mapping[key] = value  # type: ignore[index]
 
 
 @pytest.mark.parametrize(
