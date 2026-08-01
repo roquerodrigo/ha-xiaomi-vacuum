@@ -135,7 +135,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
             await self._client.async_start()
         else:
             await self._client.async_continue()
-        self._patch_state(status=4)
+        self._patch_state(status=self.spec.status_code_for(VacuumActivity.CLEANING))
         self._schedule_refresh()
 
     def _idle_at_dock(self) -> bool:
@@ -145,19 +145,19 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
     async def async_pause(self) -> None:
         """Pause cleaning."""
         await self._client.async_pause()
-        self._patch_state(status=5)
+        self._patch_state(status=self.spec.status_code_for(VacuumActivity.PAUSED))
         self._schedule_refresh()
 
     async def async_stop(self, **kwargs: object) -> None:  # noqa: ARG002
         """Stop cleaning."""
         await self._client.async_stop()
-        self._patch_state(status=1)
+        self._patch_state(status=self.spec.status_code_for(VacuumActivity.IDLE))
         self._schedule_refresh()
 
     async def async_return_to_base(self, **kwargs: object) -> None:  # noqa: ARG002
         """Return to dock."""
         await self._client.async_return_home()
-        self._patch_state(status=6)
+        self._patch_state(status=self.spec.status_code_for(VacuumActivity.RETURNING))
         self._schedule_refresh()
 
     async def async_locate(self, **kwargs: object) -> None:  # noqa: ARG002
@@ -202,7 +202,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
             segment_ids,
             room_information=self.coordinator.data.get("room_information"),
         )
-        self._patch_state(status=4)
+        self._patch_state(status=self.spec.status_code_for(VacuumActivity.CLEANING))
         self._schedule_refresh()
 
 

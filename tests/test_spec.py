@@ -162,3 +162,32 @@ def test_has_capability_shortcuts_are_derived():
     assert _B108GL.has_sweep_route is False
     assert _B108GL.has_obstacle_avoidance is False
     assert _B108GL.has_mop_wash_dry is False
+
+
+@pytest.mark.parametrize(
+    ("spec", "activity", "expected_code"),
+    [
+        # Status code 4 ("sweeping") is the canonical CLEANING representative on
+        # both models — listed before the other CLEANING entries (``remote``,
+        # ``building_map``) in the table, so it wins the first-match lookup.
+        (_D109GL, VacuumActivity.CLEANING, 4),
+        (_B108GL, VacuumActivity.CLEANING, 4),
+        (_D109GL, VacuumActivity.PAUSED, 5),
+        (_B108GL, VacuumActivity.PAUSED, 5),
+        (_D109GL, VacuumActivity.IDLE, 1),
+        (_B108GL, VacuumActivity.IDLE, 1),
+        (_D109GL, VacuumActivity.RETURNING, 6),
+        (_B108GL, VacuumActivity.RETURNING, 6),
+    ],
+)
+def test_status_code_for_returns_canonical_code(spec, activity, expected_code):
+    assert spec.status_code_for(activity) == expected_code
+    # Round-trip: the returned code maps back to the requested activity.
+    assert spec.status_to_activity[expected_code] is activity
+
+
+def test_status_code_for_unknown_activity_raises():
+    with pytest.raises(ValueError, match="No status code maps to activity"):
+        # ERROR is intentionally not in the status table (driven by faults), so
+        # no canonical code exists for it.
+        _D109GL.status_code_for(VacuumActivity.ERROR)

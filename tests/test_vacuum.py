@@ -78,6 +78,24 @@ async def test_vacuum_start_calls_api(hass, setup_integration, mock_miot_device)
     mock_miot_device.call_action_by.assert_any_call(2, 1)
 
 
+async def test_vacuum_start_patches_activity_to_cleaning(
+    hass, setup_integration, mock_miot_device
+):
+    """The optimistic UI patch must report CLEANING immediately after start.
+
+    Regression guard for the spec-derived status code: a hard-coded ``status=4``
+    would break on any future model whose CLEANING representative isn't 4.
+    """
+    await hass.services.async_call(
+        "vacuum",
+        "start",
+        {"entity_id": "vacuum.aspirador"},
+        blocking=True,
+    )
+    state = hass.states.get("vacuum.aspirador")
+    assert state.state == "cleaning"
+
+
 # Anything that isn't "parked and idle" resumes (Continue Sweep, aiid 8) instead of
 # restarting: active cleaning (4, 16, 17), pause (5, 18), mid-task break-offs
 # (3, 19, 20) and -- crucially -- the completed-but-stranded states (6 GoCharging,
@@ -126,6 +144,9 @@ async def test_vacuum_stop_calls_api(hass, setup_integration, mock_miot_device):
         "vacuum", "stop", {"entity_id": "vacuum.aspirador"}, blocking=True
     )
     assert mock_miot_device.call_action_by.called
+    # Optimistic UI patch: stop reports IDLE immediately.
+    state = hass.states.get("vacuum.aspirador")
+    assert state.state == "idle"
 
 
 async def test_vacuum_pause_calls_api(hass, setup_integration, mock_miot_device):
@@ -134,6 +155,9 @@ async def test_vacuum_pause_calls_api(hass, setup_integration, mock_miot_device)
         "vacuum", "pause", {"entity_id": "vacuum.aspirador"}, blocking=True
     )
     assert mock_miot_device.call_action_by.called
+    # Optimistic UI patch: pause reports PAUSED immediately.
+    state = hass.states.get("vacuum.aspirador")
+    assert state.state == "paused"
 
 
 async def test_vacuum_send_command_invokes_action(
@@ -168,6 +192,9 @@ async def test_vacuum_return_to_base(hass, setup_integration, mock_miot_device):
         "vacuum", "return_to_base", {"entity_id": "vacuum.aspirador"}, blocking=True
     )
     assert mock_miot_device.call_action_by.called
+    # Optimistic UI patch: return-home reports RETURNING immediately.
+    state = hass.states.get("vacuum.aspirador")
+    assert state.state == "returning"
 
 
 async def test_vacuum_locate(hass, setup_integration, mock_miot_device):

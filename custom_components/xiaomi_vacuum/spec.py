@@ -209,6 +209,22 @@ class ModelSpec:
         """Status codes that count as parked/idle (a fresh start is safe)."""
         return frozenset(code for code, s in self.status.items() if s["is_idle"])
 
+    def status_code_for(self, activity: VacuumActivity) -> int:
+        """
+        First status code whose activity matches ``activity``.
+
+        Used by optimistic UI patches so a command reports the same activity the
+        device will confirm on the next poll, without the platform hard-coding
+        per-model status codes (X20 Max and S20+ already diverge elsewhere).
+        Order is insertion order of :attr:`status`, which lists the canonical
+        representative (e.g. ``sweeping`` for CLEANING) first.
+        """
+        for code, definition in self.status.items():
+            if definition["activity"] is activity:
+                return code
+        msg = f"No status code maps to activity {activity!r}"
+        raise ValueError(msg)
+
     @property
     def capabilities(self) -> frozenset[Capability]:
         """The set of capabilities this model advertises, derived from its spec."""
