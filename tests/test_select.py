@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from homeassistant.const import EntityCategory
 
 
@@ -72,6 +73,58 @@ async def test_select_option_optimistic_update(
     )
     state = hass.states.get("select.aspirador_sweep_route")
     assert state.state == "careful"
+
+
+async def test_sweep_mop_type_sweep_allowed_without_mop_pad(
+    hass, setup_integration, mock_miot_device
+):
+    """'sweep' mode does not need a mop pad — works even when detached."""
+    coord = setup_integration.runtime_data.coordinator
+    coord.async_set_updated_data({**coord.data, "mop_status": False})
+    await hass.async_block_till_done()
+    mock_miot_device.set_property_by.reset_mock()
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {"entity_id": "select.aspirador_mode", "option": "sweep"},
+        blocking=True,
+    )
+    assert mock_miot_device.set_property_by.called
+
+
+async def test_sweep_mop_type_mop_rejected_without_mop_pad(
+    hass, setup_integration, mock_miot_device
+):
+    """Mop modes must raise a clear error when the mop pad is not attached."""
+    from homeassistant.exceptions import ServiceValidationError
+
+    coord = setup_integration.runtime_data.coordinator
+    coord.async_set_updated_data({**coord.data, "mop_status": False})
+    await hass.async_block_till_done()
+    mock_miot_device.set_property_by.reset_mock()
+    with pytest.raises(ServiceValidationError, match="no mop pad detected"):
+        await hass.services.async_call(
+            "select",
+            "select_option",
+            {"entity_id": "select.aspirador_mode", "option": "sweep_mop"},
+            blocking=True,
+        )
+    # The write must not have been sent to the device.
+    mock_miot_device.set_property_by.assert_not_called()
+
+
+async def test_sweep_mop_type_mop_allowed_with_mop_pad(
+    hass, setup_integration, mock_miot_device
+):
+    """Mop modes work fine when the mop pad is attached (default mock state)."""
+    mock_miot_device.set_property_by.reset_mock()
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {"entity_id": "select.aspirador_mode", "option": "sweep_mop"},
+        blocking=True,
+    )
+    assert mock_miot_device.set_property_by.called
 
 
 async def test_select_has_icon(hass, setup_integration):

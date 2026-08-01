@@ -27,3 +27,18 @@ async def test_battery_charging_unknown(hass, setup_integration):
     await hass.async_block_till_done()
     state = hass.states.get("binary_sensor.aspirador_charging")
     assert state.state == "unknown"
+
+
+async def test_mop_pad_attached(hass, setup_integration):
+    """SAMPLE_STATE has mop_status:True -> mop pad is attached."""
+    state = hass.states.get("binary_sensor.aspirador_mop_pad")
+    assert state is not None
+    assert state.state == "on"
+
+
+async def test_mop_pad_detached(hass, setup_integration):
+    coordinator = setup_integration.runtime_data.coordinator
+    coordinator.async_set_updated_data({**coordinator.data, "mop_status": False})
+    await hass.async_block_till_done()
+    state = hass.states.get("binary_sensor.aspirador_mop_pad")
+    assert state.state == "off"

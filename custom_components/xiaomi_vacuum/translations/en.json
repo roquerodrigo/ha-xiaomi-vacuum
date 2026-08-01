@@ -150,6 +150,11 @@
                 "name": "Collect dust"
             }
         },
+        "binary_sensor": {
+            "mop_pad": {
+                "name": "Mop pad"
+            }
+        },
         "image": {
             "map": {
                 "name": "Map"
