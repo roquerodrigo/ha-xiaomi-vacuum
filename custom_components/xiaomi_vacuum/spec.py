@@ -5,7 +5,7 @@ Each :class:`ModelSpec` bundles everything that differs between the supported
 models (currently the X20 Max ``d109gl`` and the S20+ ``b108gl``): the
 SIID/PIID property mapping, the SIID/AIID action mapping, the status-code
 tables, the enumerations exposed as selects, the ``send_command`` whitelist,
-and a few capability flags (dust arrest, mop-wash dock, sweep route, obstacle
+and a few derived capabilities (dust arrest, sweep route, obstacle
 avoidance) that decide whether some entities are created at all.
 
 The two models are siblings but their published miot-spec instances diverge
@@ -20,9 +20,10 @@ mapping is wrong. Sources:
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import Literal, TypedDict, cast
+from types import MappingProxyType
+from typing import Literal, TypedDict
 
 from homeassistant.components.vacuum.const import VacuumActivity
 
@@ -92,7 +93,6 @@ class Capability(StrEnum):
     DUST_ARREST = "dust_arrest"
     SWEEP_ROUTE = "sweep_route"
     OBSTACLE_AVOIDANCE = "obstacle_avoidance"
-    MOP_WASH_DRY = "mop_wash_dry"
 
 
 class MiotPropertyAddress(TypedDict):
@@ -131,9 +131,13 @@ _CAPABILITY_ENTITIES: dict[Capability, EntityKey] = {
 }
 
 #: Entities every supported vacuum exposes regardless of capabilities.
+#: Includes the platforms whose creation is otherwise unconditional
+#: (vacuum entity, sensors, binary sensor, map image) so the entity-key
+#: registry stays the single source of truth for what a model exposes.
 _BASE_ENTITIES: frozenset[EntityKey] = frozenset(
     {
         EntityKey.VACUUM,
+        EntityKey.MAP_IMAGE,
         EntityKey.BATTERY_SENSOR,
         EntityKey.STATUS_SENSOR,
         EntityKey.ERROR_SENSOR,
@@ -193,6 +197,38 @@ class ModelSpec:
     send_commands: dict[str, MiotActionAddress]
     fault_kind: FaultKind
     room_clean_strategy: RoomCleanStrategy
+    # Optional per-model enumerations, present only when the model exposes the
+    # matching property (gated by Capability.SWEEP_ROUTE / OBSTACLE_AVOIDANCE).
+    # Kept on the spec — not module-level — so a future vacuum publishing a
+    # different value table gets its own instead of the X20 Max's.
+    sweep_routes: dict[str, int] = field(default_factory=dict)
+    obstacle_avoidances: dict[str, int] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Wrap mutable dict fields in read-only views (see class docstring)."""
+        # ``frozen=True`` only blocks attribute reassignment; the dict fields are
+        # still mutable and would otherwise be shared across instances (and with
+        # ``MiotDevice`` via ``property_mapping``). Wrap them in read-only views
+        # so the immutability the dataclass advertises is actually enforced.
+        # ``object.__setattr__`` is the sanctioned way to mutate inside a frozen
+        # dataclass (e.g. to normalise fields in ``__post_init__``).
+        object.__setattr__(
+            self, "property_mapping", MappingProxyType(self.property_mapping)
+        )
+        object.__setattr__(self, "status", MappingProxyType(self.status))
+        object.__setattr__(self, "fan_speeds", MappingProxyType(self.fan_speeds))
+        object.__setattr__(
+            self, "sweep_mop_types", MappingProxyType(self.sweep_mop_types)
+        )
+        object.__setattr__(self, "clean_times", MappingProxyType(self.clean_times))
+        object.__setattr__(
+            self, "mop_water_levels", MappingProxyType(self.mop_water_levels)
+        )
+        object.__setattr__(self, "send_commands", MappingProxyType(self.send_commands))
+        object.__setattr__(self, "sweep_routes", MappingProxyType(self.sweep_routes))
+        object.__setattr__(
+            self, "obstacle_avoidances", MappingProxyType(self.obstacle_avoidances)
+        )
 
     @property
     def status_to_activity(self) -> dict[int, VacuumActivity]:
@@ -235,8 +271,6 @@ class ModelSpec:
             caps.add(Capability.SWEEP_ROUTE)
         if Property.OBSTACLE_AVOIDANCE_STRATEGY in self.property_mapping:
             caps.add(Capability.OBSTACLE_AVOIDANCE)
-        if self.actions.start_mop_wash is not None:
-            caps.add(Capability.MOP_WASH_DRY)
         return frozenset(caps)
 
     @property
@@ -267,26 +301,6 @@ class ModelSpec:
     def mop_water_level_names(self) -> dict[int, str]:
         """Reverse of :attr:`mop_water_levels` (value→slug)."""
         return {v: k for k, v in self.mop_water_levels.items()}
-
-    @property
-    def has_dust_arrest(self) -> bool:
-        """Whether the dock can empty the dust bin (X20 Max auto-dust dock)."""
-        return Capability.DUST_ARREST in self.capabilities
-
-    @property
-    def has_sweep_route(self) -> bool:
-        """Whether the model exposes the sweep-route property."""
-        return Capability.SWEEP_ROUTE in self.capabilities
-
-    @property
-    def has_obstacle_avoidance(self) -> bool:
-        """Whether the model exposes the obstacle-avoidance property."""
-        return Capability.OBSTACLE_AVOIDANCE in self.capabilities
-
-    @property
-    def has_mop_wash_dry(self) -> bool:
-        """Whether the dock can wash and dry the mop (X20 Max auto-wash dock)."""
-        return Capability.MOP_WASH_DRY in self.capabilities
 
 
 # --------------------------------------------------------------------------- #
@@ -343,9 +357,21 @@ _OBSTACLE_AVOIDANCES: dict[str, int] = {
 }
 
 
-def _cast_action(action: MiotActionAddress | None) -> MiotActionAddress:
-    """Narrow an optional action to non-None for whitelists (d109gl dock actions)."""
-    return cast("MiotActionAddress", action)
+def _require_action(action: MiotActionAddress | None, name: str) -> MiotActionAddress:
+    """
+    Return a non-``None`` action or raise at import time.
+
+    Used by ``send_commands`` whitelists that reference dock-only actions (X20
+    Max mop-wash / dry). A bare :func:`typing.cast` would silence the type
+    checker without checking anything, so a model referencing an action it does
+    not define would store a ``None`` and fail with a ``TypeError`` at command
+    time. Raising here surfaces the mismatch at import time, where the spec was
+    actually written.
+    """
+    if action is None:
+        msg = f"send_commands entry {name!r} needs an action this model defines"
+        raise ValueError(msg)
+    return action
 
 
 # --------------------------------------------------------------------------- #
@@ -469,13 +495,17 @@ _D109GL = ModelSpec(
         "start_mop": _D109_ACTIONS.start_mop,
         "start_sweep_mop": _D109_ACTIONS.start_sweep_mop,
         "continue_sweep": _D109_ACTIONS.continue_sweep,
-        "start_mop_wash": _cast_action(_D109_ACTIONS.start_mop_wash),
-        "stop_mop_wash": _cast_action(_D109_ACTIONS.stop_mop_wash),
-        "start_dry": _cast_action(_D109_ACTIONS.start_dry),
-        "stop_dry": _cast_action(_D109_ACTIONS.stop_dry),
+        "start_mop_wash": _require_action(
+            _D109_ACTIONS.start_mop_wash, "start_mop_wash"
+        ),
+        "stop_mop_wash": _require_action(_D109_ACTIONS.stop_mop_wash, "stop_mop_wash"),
+        "start_dry": _require_action(_D109_ACTIONS.start_dry, "start_dry"),
+        "stop_dry": _require_action(_D109_ACTIONS.stop_dry, "stop_dry"),
     },
     fault_kind="ids",
     room_clean_strategy="direct",
+    sweep_routes=dict(_SWEEP_ROUTES),
+    obstacle_avoidances=dict(_OBSTACLE_AVOIDANCES),
 )
 
 # --------------------------------------------------------------------------- #
@@ -591,16 +621,9 @@ DEFAULT_MODEL: str = _D109GL.model
 #: property (both specs publish the same three values).
 CHARGING_STATE_SLUGS: dict[int, str] = dict(_CHARGING_STATE_SLUGS)
 
-#: Sweep-route enumeration (X20 Max only); kept module-level so the select can
-#: stay a thin class even when it is never instantiated on the S20+.
-SWEEP_ROUTES: dict[str, int] = dict(_SWEEP_ROUTES)
-SWEEP_ROUTE_NAMES: dict[int, str] = {v: k for k, v in _SWEEP_ROUTES.items()}
 
-#: Obstacle-avoidance enumeration (X20 Max only).
-OBSTACLE_AVOIDANCES: dict[str, int] = dict(_OBSTACLE_AVOIDANCES)
-OBSTACLE_AVOIDANCE_NAMES: dict[int, str] = {
-    v: k for k, v in _OBSTACLE_AVOIDANCES.items()
-}
+#: Sweep-route / obstacle-avoidance enumerations are per-model (live on the
+#: ``ModelSpec`` instances above); no module-level exports anymore.
 
 
 def get_spec(model: str | None) -> ModelSpec:

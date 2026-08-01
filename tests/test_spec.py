@@ -49,20 +49,24 @@ def test_d109_status_activity_values_are_all_vacuum_activities():
 
 
 def test_b108_has_no_dock_only_capabilities():
-    assert not _B108GL.has_dust_arrest
-    assert not _B108GL.has_sweep_route
-    assert not _B108GL.has_obstacle_avoidance
-    assert not _B108GL.has_mop_wash_dry
+    from custom_components.xiaomi_vacuum.spec import Capability
+
+    caps = _B108GL.capabilities
+    assert Capability.DUST_ARREST not in caps
+    assert Capability.SWEEP_ROUTE not in caps
+    assert Capability.OBSTACLE_AVOIDANCE not in caps
     # The dock-only actions must be None on the S20+.
     assert _B108GL.actions.start_dust_arrest is None
     assert _B108GL.actions.start_mop_wash is None
 
 
 def test_d109_has_dock_only_capabilities():
-    assert _D109GL.has_dust_arrest
-    assert _D109GL.has_sweep_route
-    assert _D109GL.has_obstacle_avoidance
-    assert _D109GL.has_mop_wash_dry
+    from custom_components.xiaomi_vacuum.spec import Capability
+
+    caps = _D109GL.capabilities
+    assert Capability.DUST_ARREST in caps
+    assert Capability.SWEEP_ROUTE in caps
+    assert Capability.OBSTACLE_AVOIDANCE in caps
 
 
 def test_b108_mop_water_levels_include_off():
@@ -114,7 +118,6 @@ def test_d109_capabilities_include_all_optional():
     assert Capability.DUST_ARREST in caps
     assert Capability.SWEEP_ROUTE in caps
     assert Capability.OBSTACLE_AVOIDANCE in caps
-    assert Capability.MOP_WASH_DRY in caps
 
 
 def test_b108_capabilities_exclude_all_optional():
@@ -153,15 +156,30 @@ def test_status_back_compat_properties_match_status_table():
         assert is_idle == status["is_idle"]
 
 
-def test_has_capability_shortcuts_are_derived():
-    assert _D109GL.has_dust_arrest is True
-    assert _D109GL.has_sweep_route is True
-    assert _D109GL.has_obstacle_avoidance is True
-    assert _D109GL.has_mop_wash_dry is True
-    assert _B108GL.has_dust_arrest is False
-    assert _B108GL.has_sweep_route is False
-    assert _B108GL.has_obstacle_avoidance is False
-    assert _B108GL.has_mop_wash_dry is False
+def test_d109_route_and_obstacle_enumerations_are_per_model():
+    """X20 Max carries its sweep-route / obstacle-avoidance tables on the spec."""
+    assert _D109GL.sweep_routes == {"quick": 1, "daily": 2, "careful": 3}
+    assert _D109GL.obstacle_avoidances == {
+        "less_collisions": 0,
+        "high_coverage": 1,
+    }
+    # S20+ exposes neither property, so neither table is populated.
+    assert _B108GL.sweep_routes == {}
+    assert _B108GL.obstacle_avoidances == {}
+
+
+def test_spec_fields_are_immutable():
+    """``frozen=True`` is backed by ``MappingProxyType`` on the dict fields."""
+    from custom_components.xiaomi_vacuum.spec import Property
+
+    with pytest.raises(TypeError):
+        _D109GL.fan_speeds["silent"] = 99  # type: ignore[index]
+    with pytest.raises(TypeError):
+        _D109GL.property_mapping[Property.STATUS] = {"siid": 0, "piid": 0}  # type: ignore[index]
+    # ``send_commands`` is wrapped too, so a stray mutation can't introduce a
+    # whitelist entry that the integration would happily route to the device.
+    with pytest.raises(TypeError):
+        _D109GL.send_commands["boom"] = {"siid": 0, "aiid": 0}  # type: ignore[index]
 
 
 @pytest.mark.parametrize(
@@ -191,3 +209,22 @@ def test_status_code_for_unknown_activity_raises():
         # ERROR is intentionally not in the status table (driven by faults), so
         # no canonical code exists for it.
         _D109GL.status_code_for(VacuumActivity.ERROR)
+
+
+def test_require_action_returns_action_when_present():
+    from custom_components.xiaomi_vacuum.spec import _require_action
+
+    action = {"siid": 2, "aiid": 19}
+    assert _require_action(action, "start_mop_wash") is action
+
+
+def test_require_action_raises_at_import_time_when_absent():
+    """A model referencing an action it does not define is caught now, not later.
+
+    Previously a bare ``typing.cast`` silenced the type checker, so a None would
+    be stored and fail with a ``TypeError`` only when the command was sent.
+    """
+    from custom_components.xiaomi_vacuum.spec import _require_action
+
+    with pytest.raises(ValueError, match="needs an action this model defines"):
+        _require_action(None, "start_mop_wash")

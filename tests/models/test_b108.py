@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntryState
 
+from custom_components.xiaomi_vacuum.spec import Capability
+
 
 async def test_b108_setup_loads(hass, setup_integration_b108):
     assert setup_integration_b108.state == ConfigEntryState.LOADED
@@ -19,18 +21,19 @@ async def test_b108_picks_the_right_spec(hass, setup_integration_b108):
     spec = setup_integration_b108.runtime_data.spec
     assert spec.model == "xiaomi.vacuum.b108gl"
     assert spec.fault_kind == "simple"
-    assert spec.has_dust_arrest is False
-    assert spec.has_sweep_route is False
-    assert spec.has_obstacle_avoidance is False
+    assert Capability.DUST_ARREST not in spec.capabilities
+    assert Capability.SWEEP_ROUTE not in spec.capabilities
+    assert Capability.OBSTACLE_AVOIDANCE not in spec.capabilities
 
 
 async def test_b108_creates_only_three_selects(hass, setup_integration_b108):
     """No sweep-route / obstacle-avoidance selects on the S20+."""
     states = hass.states.async_all("select")
-    translation_keys = {s.attributes.get("translation_key") for s in states}
+    entity_ids = {s.entity_id for s in states}
     assert len(states) == 3
-    assert "sweep_route" not in translation_keys
-    assert "obstacle_avoidance_strategy" not in translation_keys
+    # ``translation_key`` is entity metadata, not state data, so it never appears
+    # in ``state.attributes`` — assert on entity ids instead, which carry it.
+    assert not any("sweep_route" in e or "obstacle_avoidance" in e for e in entity_ids)
 
 
 async def test_b108_has_no_dust_arrest_button(hass, setup_integration_b108):

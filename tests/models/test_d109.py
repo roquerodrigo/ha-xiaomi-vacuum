@@ -31,7 +31,9 @@ async def test_d109_picks_the_right_spec(hass, setup_integration):
     assert Capability.DUST_ARREST in spec.capabilities
     assert Capability.SWEEP_ROUTE in spec.capabilities
     assert Capability.OBSTACLE_AVOIDANCE in spec.capabilities
-    assert Capability.MOP_WASH_DRY in spec.capabilities
+    # Mop-wash / dry dock actions exist on the X20 Max but are not a gating
+    # capability (no entity is created from them); they're exposed only via
+    # send_commands and asserted in test_d109_send_command_exposes_mop_wash_and_dry.
 
 
 async def test_d109_creates_all_five_selects(hass, setup_integration):

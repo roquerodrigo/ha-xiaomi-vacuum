@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from miio import DeviceException
@@ -11,7 +11,10 @@ from custom_components.xiaomi_vacuum.api import (
     XiaomiVacuumApiClientCommunicationError,
     XiaomiVacuumApiClientError,
 )
-from custom_components.xiaomi_vacuum.api.client import _is_ack_timeout
+from custom_components.xiaomi_vacuum.api.client import (
+    _build_room_clean_config,
+    _is_ack_timeout,
+)
 from custom_components.xiaomi_vacuum.spec import _B108GL, _D109GL
 
 
@@ -227,8 +230,6 @@ async def test_b108_clean_segments_refuses_without_room_info(
 
 
 def test_build_room_clean_config_marks_requested_rooms():
-    from custom_components.xiaomi_vacuum.api.client import _build_room_clean_config
-
     rooms = _build_room_clean_config(_ROOM_INFO_TABLE, ["5"])
     assert {r["id"] for r in rooms} == {3, 4, 5}
     assert next(r for r in rooms if r["id"] == 5)["on"] is True
@@ -237,8 +238,6 @@ def test_build_room_clean_config_marks_requested_rooms():
 
 def test_build_room_clean_config_preserves_requested_sequence():
     """Selected rooms come first, in the order the caller requested."""
-    from custom_components.xiaomi_vacuum.api.client import _build_room_clean_config
-
     # Device order is [3,4,5]; request [5,3] (reversed for two of them).
     rooms = _build_room_clean_config(_ROOM_INFO_TABLE, ["5", "3"])
     selected = [r for r in rooms if r["on"]]
@@ -250,8 +249,6 @@ def test_build_room_clean_config_preserves_requested_sequence():
 
 
 def test_build_room_clean_config_empty_when_no_room_info():
-    from custom_components.xiaomi_vacuum.api.client import _build_room_clean_config
-
     assert _build_room_clean_config(None, ["5"]) == []
     assert _build_room_clean_config("", ["5"]) == []
     assert _build_room_clean_config("not json", ["5"]) == []
@@ -276,8 +273,6 @@ def test_build_room_clean_config_casefolds_header():
     Without this the per-room ``id`` lookup failed on every row and the config
     came back empty on a device that plainly published rooms.
     """
-    from custom_components.xiaomi_vacuum.api.client import _build_room_clean_config
-
     rooms = _build_room_clean_config(_ROOM_INFO_TABLE_MIXED_CASE, ["5"])
     assert {r["id"] for r in rooms} == {3, 4, 5}
     assert next(r for r in rooms if r["id"] == 5)["on"] is True
@@ -288,8 +283,6 @@ async def test_b108_clean_segments_routes_through_cloud_when_available(
     hass, mock_miot_device_b108
 ):
     """When a cloud session is attached, the S20+ room-clean uses the cloud path."""
-    from unittest.mock import AsyncMock
-
     client = _client(hass, mock_miot_device_b108, spec=_B108GL)
     cloud = AsyncMock()
     # Successful cloud action responses carry code 0.
@@ -316,8 +309,6 @@ async def test_b108_clean_segments_routes_through_cloud_when_available(
 
 async def test_b108_clean_segments_cloud_reject_raises(hass, mock_miot_device_b108):
     """A non-zero device code from the cloud surfaces as a clear error."""
-    from unittest.mock import AsyncMock
-
     client = _client(hass, mock_miot_device_b108, spec=_B108GL)
     cloud = AsyncMock()
     cloud.async_call_action = AsyncMock(
@@ -337,8 +328,6 @@ async def test_b108_clean_segments_cloud_none_falls_back_to_local(
     silently succeeded while nothing actually ran on the device (the optimistic
     UI had already reported the clean as started).
     """
-    from unittest.mock import AsyncMock
-
     client = _client(hass, mock_miot_device_b108, spec=_B108GL)
     cloud = AsyncMock()
     # ``async_call_action`` returns None when the cloud has no active session or
