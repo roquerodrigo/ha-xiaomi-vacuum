@@ -203,5 +203,10 @@
                 }
             }
         }
+    },
+    "exceptions": {
+        "mop_mode_requires_pad": {
+            "message": "Cannot select a mop mode: no mop pad detected. Attach the mop pad to the vacuum and try again."
+        }
     }
 }

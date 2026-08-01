@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from homeassistant.exceptions import ServiceValidationError
 
+from ..const import DOMAIN  # noqa: TID252
 from .base import _XiaomiVacuumSelect
 
-#: Modes that require a mop pad to be physically attached. "sweep" does not.
-_MOP_REQUIRED_MODES = frozenset({"mop", "sweep_mop", "sweep_before_mopping"})
+#: Modes that do NOT require a mop pad. All others do. Derived as a short
+#: allow-list (one entry) rather than a deny-list of mop modes, so a future
+#: mode added to the spec's ``sweep_mop_types`` is automatically covered.
+_NO_PAD_MODES = frozenset({"sweep"})
 
 
 class XiaomiVacuumSweepMopTypeSelect(_XiaomiVacuumSelect):
@@ -32,12 +35,11 @@ class XiaomiVacuumSweepMopTypeSelect(_XiaomiVacuumSelect):
 
     async def async_select_option(self, option: str) -> None:
         """Set the mode, refusing mop modes when the mop pad is not attached."""
-        if option in _MOP_REQUIRED_MODES:
+        if option not in _NO_PAD_MODES:
             mop_status = self.coordinator.data.get("mop_status")
             if mop_status is False:
-                msg = (
-                    "Cannot select a mop mode: no mop pad detected. Attach the "
-                    "mop pad to the vacuum and try again."
+                raise ServiceValidationError(
+                    translation_domain=DOMAIN,
+                    translation_key="mop_mode_requires_pad",
                 )
-                raise ServiceValidationError(msg)
         await super().async_select_option(option)
