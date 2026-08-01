@@ -203,5 +203,10 @@
                 }
             }
         }
+    },
+    "exceptions": {
+        "mop_mode_requires_pad": {
+            "message": "Não é possível selecionar um modo de esfregação: nenhum pano detectado. Fixe o pano no robô e tente novamente."
+        }
     }
 }

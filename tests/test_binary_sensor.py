@@ -42,3 +42,13 @@ async def test_mop_pad_detached(hass, setup_integration):
     await hass.async_block_till_done()
     state = hass.states.get("binary_sensor.aspirador_mop_pad")
     assert state.state == "off"
+
+
+async def test_mop_pad_unknown(hass, setup_integration):
+    coordinator = setup_integration.runtime_data.coordinator
+    data = dict(coordinator.data)
+    data.pop("mop_status", None)
+    coordinator.async_set_updated_data(data)
+    await hass.async_block_till_done()
+    state = hass.states.get("binary_sensor.aspirador_mop_pad")
+    assert state.state == "unknown"

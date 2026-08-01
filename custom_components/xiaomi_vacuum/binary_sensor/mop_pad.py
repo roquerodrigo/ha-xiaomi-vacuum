@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
-    BinarySensorEntity,
-)
+from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.const import EntityCategory
 
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
@@ -22,7 +19,6 @@ class XiaomiVacuumMopPadSensor(XiaomiVacuumEntity, BinarySensorEntity):
     silently.
     """
 
-    _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_translation_key = "mop_pad"
 
@@ -34,4 +30,8 @@ class XiaomiVacuumMopPadSensor(XiaomiVacuumEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool | None:
         """Return True when the mop pad is attached, None when unknown."""
-        return self.coordinator.data.get("mop_status")
+        value = self.coordinator.data.get("mop_status")
+        if value is None:
+            return None
+        # Coerce to bool in case the device returns 0/1 instead of false/true.
+        return bool(value)
