@@ -1,5 +1,61 @@
 # Changelog
 
+## [2.0.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.6.0...v2.0.0) (2026-08-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* ModelSpec constructor signature changed. Use a single `status: dict[int, StatusDef]` instead of separate `status_to_activity` / `status_slugs` / `idle_statuses` arguments; drop `has_dust_arrest` / `has_sweep_route` / `has_obstacle_avoidance` (now derived from `actions.*` and `property_mapping`). Read access via the legacy names still works (computed properties).
+
+### Features
+
+* expose mop-pad status, refuse mop modes without it ([181b586](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/181b5868c56151caeaa7c521a16369c98f156e6d))
+* support more vacuum models ([0aeccb4](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/0aeccb4fb0ad42343bfda1668b759bfd88a12bde))
+
+
+### Bug Fixes
+
+* address PR [#61](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/61) review blockers ([33bf4f8](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/33bf4f8c8f87a2ee1eacf406eab8f6ba4c3ba635))
+* refuse mop modes when the pad is reported as 0 ([8a6a3cc](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/8a6a3cc6867d71060efd3018dd0afa1f306fa5eb))
+
+
+### Code Refactoring
+
+* address PR [#61](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/61) review follow-ups ([#4](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/4)-[#10](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/10)) ([3cf0c65](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/3cf0c6597a65c917b608240d2cf2370503d547e4))
+* self-review fixes for mop-pad feature ([#1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/1)-4, 6) ([77ed781](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/77ed781ee3e5fde54e9dd6656b42e8f2f71ac630))
+* split the model spec into a package ([5cf7001](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/5cf70017b93a8fd4a9f021432c8a262388599cb4))
+
+
+### Development Dependencies
+
+* **deps-dev:** bump pre-commit ([4e24b8c](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/4e24b8c432d3de194cb2c6e29e8ae6d55df0724d))
+* **deps-dev:** bump ruff ([251e72e](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/251e72e3e2f4daf2aabd5205f5234607865f9f31))
+* **deps-dev:** bump ruff in the python-development group ([ddb7cb7](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/ddb7cb71e57dfe95f236da75760769cf7a074cbe))
+* **deps-dev:** bump the python-development group with 2 updates ([3f7444f](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/3f7444f0cf3ec5f9a957f3847d863f50e6c2d22c))
+
+
+### Documentation
+
+* add CLAUDE.md ([6b3e04d](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/6b3e04d05bc99a449c3a6eed339d62a6b6c18d3f))
+* correct the CI and repairs sections ([b3effba](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/b3effba49eb8c7ac8b9db335ffec063b00fdaaaa))
+* **test:** address self-review items [#1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/1)-[#3](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/3) ([414f5d6](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/414f5d671013eb71045d9d1759c170ea4350f175))
+
+
+### Continuous Integration
+
+* assign open issues and pull requests to the repository owner ([9b0e132](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/9b0e132ce6cf8bb0852227a32ddec03184351a0f))
+* call the shared auto-assign workflow instead of duplicating it ([234798f](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/234798fae3fc947b4725779e2bf0afc7663381cf))
+* drop the auto-assign job now handled by its own workflow ([6539271](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/65392715326f9c9cc82075f6a4f1974dadceeb59))
+* drop the blank line left by the removed job ([b3dcdad](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/b3dcdade893be91bf77ad9815040c432356ba042))
+* split the CI workflow into one file per concern ([112cff6](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/112cff6945b6b3f91bd0b4a9b6d97712138e9bd9))
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump ruff to 0.16.0 ([db15001](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/db150019deeb6e7d8790fdfe00cd4e9267866448))
+* move CI to the shared workflows repository ([5f3ac5f](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/5f3ac5f3e2fa5e786c3acfb593e80727e674ed31))
+* release on every conventional commit type ([521d174](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/521d174acc1f93cd4366a1af612d8016a9083b31))
+
 ## [1.6.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.5.0...v1.6.0) (2026-07-10)
 
 
