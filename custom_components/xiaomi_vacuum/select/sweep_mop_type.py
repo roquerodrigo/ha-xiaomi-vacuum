@@ -37,7 +37,11 @@ class XiaomiVacuumSweepMopTypeSelect(_XiaomiVacuumSelect):
         """Set the mode, refusing mop modes when the mop pad is not attached."""
         if option not in _NO_PAD_MODES:
             mop_status = self.coordinator.data.get("mop_status")
-            if mop_status is False:
+            # A device may publish the pad state as 0/1 rather than a bool, so
+            # test truthiness rather than identity against False. None means the
+            # model does not report it (or has not polled yet) — allow the write
+            # instead of blocking on a state we cannot read.
+            if mop_status is not None and not mop_status:
                 raise ServiceValidationError(
                     translation_domain=DOMAIN,
                     translation_key="mop_mode_requires_pad",

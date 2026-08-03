@@ -113,6 +113,44 @@ async def test_sweep_mop_type_mop_rejected_without_mop_pad(
     mock_miot_device.set_property_by.assert_not_called()
 
 
+@pytest.mark.parametrize("detached", [False, 0])
+async def test_sweep_mop_type_mop_rejected_when_pad_reported_as_int(
+    hass, setup_integration, mock_miot_device, detached
+):
+    """A device publishing the pad state as 0 must block mop modes just like False."""
+    from homeassistant.exceptions import ServiceValidationError
+
+    coord = setup_integration.runtime_data.coordinator
+    coord.async_set_updated_data({**coord.data, "mop_status": detached})
+    await hass.async_block_till_done()
+    mock_miot_device.set_property_by.reset_mock()
+    with pytest.raises(ServiceValidationError, match="no mop pad detected"):
+        await hass.services.async_call(
+            "select",
+            "select_option",
+            {"entity_id": "select.aspirador_mode", "option": "mop"},
+            blocking=True,
+        )
+    mock_miot_device.set_property_by.assert_not_called()
+
+
+async def test_sweep_mop_type_mop_allowed_when_pad_state_unknown(
+    hass, setup_integration, mock_miot_device
+):
+    """An unreported pad state must not block the write — only a known-off one does."""
+    coord = setup_integration.runtime_data.coordinator
+    coord.async_set_updated_data({**coord.data, "mop_status": None})
+    await hass.async_block_till_done()
+    mock_miot_device.set_property_by.reset_mock()
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {"entity_id": "select.aspirador_mode", "option": "sweep_mop"},
+        blocking=True,
+    )
+    assert mock_miot_device.set_property_by.called
+
+
 async def test_sweep_mop_type_mop_allowed_with_mop_pad(
     hass, setup_integration, mock_miot_device
 ):
