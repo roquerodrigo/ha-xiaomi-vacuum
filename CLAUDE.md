@@ -47,8 +47,11 @@ here.
 - **`cached_device_info.py`** — persists device info discovered during setup.
 - **`config_flow.py`** — QR-login config flow plus a reconfigure flow for
   changing the Xiaomi cloud region.
-- **`repairs.py`** — raises a repair issue when the vacuum is offline at
-  setup (setup tolerates this and still serves the map).
+- **`repairs.py`** — per-entry repair issues, each cleared automatically once
+  the condition resolves: `cannot_connect` when the vacuum is unreachable
+  (setup tolerates this and still serves the map) and `unsupported_model` when
+  the handshake reports a model with no `ModelSpec`, which falls back to the
+  default spec so local control keeps working.
 - **`translations/`** — `en.json` and `pt-BR.json`; all user-facing strings
   live here, never hardcoded in Python.
 
@@ -87,12 +90,22 @@ uv run pytest
 - `pre-commit install` wires `ruff-check --fix` + `ruff-format` plus standard
   hygiene hooks (trailing whitespace, YAML/JSON/TOML checks, LF line endings).
 
-## CI (`.github/workflows/ci.yml`)
+## CI (`.github/workflows/`, one file per concern)
 
-Reusable workflows from `roquerodrigo/.github@v2`: `lint` → `tests` +
-`validate` (parallel, both need `lint`) → `release` (release-please, on push
-to `main`). Also `codeql` (weekly + on push/PR) and `auto-assign` /
-`update-pr-branch` for PR housekeeping.
+Every job calls a reusable workflow from `roquerodrigo/.github`, pinned to
+`@v2` — except `auto-assign.yml`, which tracks `@main`.
+
+- `ci.yml` — `lint` → `tests` + `validate` in parallel (both need `lint`),
+  then `update-pr-branch` once all three pass (pull requests only).
+- `release.yml` — release-please, triggered by `workflow_run` after CI
+  succeeds on a push to `main`. It is decoupled from `ci.yml`, not a job in
+  it, so a red CI never cuts a release.
+- `codeql.yml` — weekly (Sunday) plus every push/PR.
+- `auto-assign.yml` — new issues and PRs, plus a daily cron sweep. Uses
+  `pull_request_target`, so it needs no checkout of fork code.
+
+Required checks are named `<job id> / <workflow job name>` — renaming a job id
+silently un-requires its check in branch protection.
 
 ## Conventions worth knowing
 
@@ -100,17 +113,17 @@ to `main`). Also `codeql` (weekly + on push/PR) and `auto-assign` /
   `VacuumEntityFeature.CLEAN_AREA` and the `Segment` dataclass introduced in
   2026.3. Don't use vacuum APIs older than that without checking compat.
   `hacs.json` pins the same floor.
-- **Xiaomi cloud region is user-selectable** (via config flow + reconfigure
-  flow) — do not assume it's hard-coded; that was true before the
-  `feat/cloud-region-selection` change and is no longer accurate.
+- **Xiaomi cloud region is user-selectable** via the config flow and the
+  reconfigure flow — never assume it is hard-coded.
 - **Two coordinators, not one** — local device state and the cloud map image
   poll independently on different cadences/failure domains. Don't merge them.
 - **Optimistic UI**: vacuum actions apply state changes immediately in the
   entity, then a background refresh confirms against the device ~5s later.
   Preserve this pattern when adding new commands.
-- This repo is **public with branch protection** — per the user's global
-  git conventions, new work goes on a feature branch and lands via PR with
-  green CI; no direct pushes to `main`.
+- This repo is **public with branch protection** — new work goes on a feature
+  branch and lands via PR with green CI; no direct pushes to `main`, and the
+  protection is never lowered to land a quick fix. Only *Rebase and merge* is
+  enabled.
 - `CONTRIBUTING.md` references a VS Code devcontainer (`.devcontainer.json`)
   originally derived from the `integration_blueprint` template — still valid
   for spinning up a sandboxed HA dev instance.
