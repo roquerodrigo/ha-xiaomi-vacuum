@@ -15,10 +15,10 @@ from custom_components.xiaomi_vacuum.api.client import (
     _build_room_clean_config,
     _is_ack_timeout,
 )
-from custom_components.xiaomi_vacuum.spec import _B108GL, _D109GL
+from custom_components.xiaomi_vacuum.spec import B108GL, D109GL
 
 
-def _client(hass, mock_miot_device, spec=_D109GL):
+def _client(hass, mock_miot_device, spec=D109GL):
     return XiaomiVacuumApiClient(hass=hass, host="1.2.3.4", token="t" * 32, spec=spec)
 
 
@@ -30,11 +30,11 @@ def test_communication_error_is_api_error():
 
 def test_init_passes_mapping_to_miot_device(hass, mock_miot_device):
     with patch("custom_components.xiaomi_vacuum.api.client.MiotDevice") as cls:
-        XiaomiVacuumApiClient(hass=hass, host="1.2.3.4", token="t" * 32, spec=_D109GL)
+        XiaomiVacuumApiClient(hass=hass, host="1.2.3.4", token="t" * 32, spec=D109GL)
         cls.assert_called_once_with(
             ip="1.2.3.4",
             token="t" * 32,
-            mapping=_D109GL.property_mapping,
+            mapping=D109GL.property_mapping,
             timeout=10,
         )
 
@@ -75,31 +75,31 @@ async def test_async_get_state_skips_failed_rows(hass, mock_miot_device):
 
 async def test_async_start_calls_action(hass, mock_miot_device):
     await _client(hass, mock_miot_device).async_start()
-    a = _D109GL.actions.start_sweep
+    a = D109GL.actions.start_sweep
     mock_miot_device.call_action_by.assert_called_with(a["siid"], a["aiid"])
 
 
 async def test_async_pause_calls_action(hass, mock_miot_device):
     await _client(hass, mock_miot_device).async_pause()
-    a = _D109GL.actions.pause_sweeping
+    a = D109GL.actions.pause_sweeping
     mock_miot_device.call_action_by.assert_called_with(a["siid"], a["aiid"])
 
 
 async def test_async_stop_calls_action(hass, mock_miot_device):
     await _client(hass, mock_miot_device).async_stop()
-    a = _D109GL.actions.stop_sweeping
+    a = D109GL.actions.stop_sweeping
     mock_miot_device.call_action_by.assert_called_with(a["siid"], a["aiid"])
 
 
 async def test_async_return_home_calls_action(hass, mock_miot_device):
     await _client(hass, mock_miot_device).async_return_home()
-    a = _D109GL.actions.return_home
+    a = D109GL.actions.return_home
     mock_miot_device.call_action_by.assert_called_with(a["siid"], a["aiid"])
 
 
 async def test_async_locate_calls_action(hass, mock_miot_device):
     await _client(hass, mock_miot_device).async_locate()
-    a = _D109GL.actions.identify
+    a = D109GL.actions.identify
     mock_miot_device.call_action_by.assert_called_with(a["siid"], a["aiid"])
 
 
@@ -143,7 +143,7 @@ async def test_async_set_fan_speed_unknown_raises(hass, mock_miot_device):
 
 async def test_async_set_fan_speed_known_writes_property(hass, mock_miot_device):
     await _client(hass, mock_miot_device).async_set_fan_speed("strong")
-    prop = _D109GL.property_mapping["fan_speed"]
+    prop = D109GL.property_mapping["fan_speed"]
     mock_miot_device.set_property_by.assert_called_with(prop["siid"], prop["piid"], 3)
 
 
@@ -154,7 +154,7 @@ async def test_async_set_sweep_mop_type_unknown_raises(hass, mock_miot_device):
 
 async def test_async_set_sweep_mop_type_writes_property(hass, mock_miot_device):
     await _client(hass, mock_miot_device).async_set_sweep_mop_type("mop")
-    prop = _D109GL.property_mapping["sweep_mop_type"]
+    prop = D109GL.property_mapping["sweep_mop_type"]
     mock_miot_device.set_property_by.assert_called_with(prop["siid"], prop["piid"], 2)
 
 
@@ -165,14 +165,14 @@ async def test_async_set_property_unknown_name_raises(hass, mock_miot_device):
 
 async def test_async_set_property_writes_value(hass, mock_miot_device):
     await _client(hass, mock_miot_device).async_set_property("clean_times", 2)
-    prop = _D109GL.property_mapping["clean_times"]
+    prop = D109GL.property_mapping["clean_times"]
     mock_miot_device.set_property_by.assert_called_with(prop["siid"], prop["piid"], 2)
 
 
 async def test_async_clean_segments_payload(hass, mock_miot_device):
     await _client(hass, mock_miot_device).async_clean_segments(["10", "28"])
     args = mock_miot_device.call_action_by.call_args.args
-    a = _D109GL.actions.start_room_sweep
+    a = D109GL.actions.start_room_sweep
     assert args[0] == a["siid"]
     assert args[1] == a["aiid"]
     assert args[2] == [{"piid": a["in_piid"], "value": "10,28"}]
@@ -195,7 +195,7 @@ _ROOM_INFO_TABLE = (
 
 async def test_b108_clean_segments_uses_two_step_flow(hass, mock_miot_device_b108):
     """S20+ marks rooms via set-room-clean-configs then fires start-custom-sweep."""
-    client = _client(hass, mock_miot_device_b108, spec=_B108GL)
+    client = _client(hass, mock_miot_device_b108, spec=B108GL)
     await client.async_clean_segments(["5"], room_information=_ROOM_INFO_TABLE)
 
     calls = mock_miot_device_b108.call_action_by.call_args_list
@@ -223,7 +223,7 @@ async def test_b108_clean_segments_refuses_without_room_info(
     hass, mock_miot_device_b108
 ):
     """Without room_information the S20+ cannot build the config — refuse clearly."""
-    client = _client(hass, mock_miot_device_b108, spec=_B108GL)
+    client = _client(hass, mock_miot_device_b108, spec=B108GL)
     with pytest.raises(XiaomiVacuumApiClientError, match="no room information"):
         await client.async_clean_segments(["5"], room_information=None)
     mock_miot_device_b108.call_action_by.assert_not_called()
@@ -283,7 +283,7 @@ async def test_b108_clean_segments_routes_through_cloud_when_available(
     hass, mock_miot_device_b108
 ):
     """When a cloud session is attached, the S20+ room-clean uses the cloud path."""
-    client = _client(hass, mock_miot_device_b108, spec=_B108GL)
+    client = _client(hass, mock_miot_device_b108, spec=B108GL)
     cloud = AsyncMock()
     # Successful cloud action responses carry code 0.
     cloud.async_call_action = AsyncMock(return_value={"code": 0, "message": "ok"})
@@ -309,7 +309,7 @@ async def test_b108_clean_segments_routes_through_cloud_when_available(
 
 async def test_b108_clean_segments_cloud_reject_raises(hass, mock_miot_device_b108):
     """A non-zero device code from the cloud surfaces as a clear error."""
-    client = _client(hass, mock_miot_device_b108, spec=_B108GL)
+    client = _client(hass, mock_miot_device_b108, spec=B108GL)
     cloud = AsyncMock()
     cloud.async_call_action = AsyncMock(
         return_value={"code": -7, "message": "invalid params"}
@@ -328,7 +328,7 @@ async def test_b108_clean_segments_cloud_none_falls_back_to_local(
     silently succeeded while nothing actually ran on the device (the optimistic
     UI had already reported the clean as started).
     """
-    client = _client(hass, mock_miot_device_b108, spec=_B108GL)
+    client = _client(hass, mock_miot_device_b108, spec=B108GL)
     cloud = AsyncMock()
     # ``async_call_action`` returns None when the cloud has no active session or
     # no resolved device — i.e. the transport is unavailable, not success.
@@ -344,16 +344,16 @@ async def test_b108_clean_segments_cloud_none_falls_back_to_local(
 
 async def test_b108_return_home_uses_battery_service(hass, mock_miot_device_b108):
     """S20+ return-home hits the battery.start-charge action, not SIID 2/aiid 3."""
-    await _client(hass, mock_miot_device_b108, spec=_B108GL).async_return_home()
-    a = _B108GL.actions.return_home
+    await _client(hass, mock_miot_device_b108, spec=B108GL).async_return_home()
+    a = B108GL.actions.return_home
     mock_miot_device_b108.call_action_by.assert_called_with(a["siid"], a["aiid"])
     assert a == {"siid": 3, "aiid": 1}
 
 
 async def test_b108_continue_uses_vacuum_extend_service(hass, mock_miot_device_b108):
     """S20+ continue-sweep lives on the vacuum-extend service (SIID 6 / aiid 1)."""
-    await _client(hass, mock_miot_device_b108, spec=_B108GL).async_continue()
-    a = _B108GL.actions.continue_sweep
+    await _client(hass, mock_miot_device_b108, spec=B108GL).async_continue()
+    a = B108GL.actions.continue_sweep
     assert a == {"siid": 6, "aiid": 1}
     mock_miot_device_b108.call_action_by.assert_called_with(a["siid"], a["aiid"])
 
@@ -362,7 +362,7 @@ async def test_b108_dust_arrest_raises(hass, mock_miot_device_b108):
     """S20+ has no auto-dust dock; the action must surface a clear error."""
     with pytest.raises(XiaomiVacuumApiClientError, match="no dust-arrest"):
         await _client(
-            hass, mock_miot_device_b108, spec=_B108GL
+            hass, mock_miot_device_b108, spec=B108GL
         ).async_start_dust_arrest()
 
 

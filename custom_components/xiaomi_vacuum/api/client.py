@@ -188,11 +188,11 @@ class XiaomiVacuumApiClient:
         if mode not in types:
             msg = f"Unknown sweep_mop_type: {mode}"
             raise XiaomiVacuumApiClientError(msg)
-        await self.async_set_property("sweep_mop_type", types[mode])
+        await self.async_set_property(Property.SWEEP_MOP_TYPE, types[mode])
 
-    async def async_set_property(self, name: str, value: int) -> None:
+    async def async_set_property(self, name: Property, value: int) -> None:
         """Set a MIoT property by mapping name (raw integer value)."""
-        prop = self._spec.property_mapping.get(cast("Property", name))
+        prop = self._spec.property_mapping.get(name)
         if prop is None:
             msg = f"Unknown property: {name}"
             raise XiaomiVacuumApiClientError(msg)

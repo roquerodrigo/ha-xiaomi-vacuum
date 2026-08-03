@@ -3,7 +3,7 @@
 How the Xiaomi Home app controls vacuums via the **miot-spec** protocol, the cloud
 transport, and the **complete spec for `xiaomi.vacuum.d109gl`** (this integration's
 historical target model). The S20+ (`xiaomi.vacuum.b108gl`) is also supported;
-its divergences are summarised in `custom_components/xiaomi_vacuum/spec.py`.
+its divergences are summarised in `custom_components/xiaomi_vacuum/spec/`.
 All identifiers below come from the public miot-spec service.
 
 ---

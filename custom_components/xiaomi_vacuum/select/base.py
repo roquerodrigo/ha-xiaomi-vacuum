@@ -2,10 +2,15 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from homeassistant.components.select import SelectEntity
 from homeassistant.const import EntityCategory
 
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
+
+if TYPE_CHECKING:
+    from ..spec import Property  # noqa: TID252
 
 
 class _XiaomiVacuumSelect(XiaomiVacuumEntity, SelectEntity):
@@ -20,7 +25,7 @@ class _XiaomiVacuumSelect(XiaomiVacuumEntity, SelectEntity):
 
     _attr_entity_category = EntityCategory.CONFIG
 
-    _property_name: str
+    _property_name: Property
 
     @property
     def _slug_to_value(self) -> dict[str, int]:

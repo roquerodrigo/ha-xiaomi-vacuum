@@ -17,7 +17,6 @@ from homeassistant.exceptions import ServiceValidationError
 
 from ..const import DOMAIN, LOGGER  # noqa: TID252
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
-from ..spec import CHARGING_STATE_SLUGS  # noqa: TID252
 
 if TYPE_CHECKING:
     from ..api import XiaomiVacuumApiClient  # noqa: TID252
@@ -114,7 +113,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
             "last_clean_time": data.get("last_clean_time"),
             "mop_water_level": data.get("mop_water_level"),
             "charging_state": (
-                CHARGING_STATE_SLUGS.get(charging_state)
+                self.spec.charging_state_slugs.get(charging_state)
                 if charging_state is not None
                 else None
             ),
@@ -230,7 +229,7 @@ def _parse_segments(raw: str | None) -> list[Segment]:
         return []
     try:
         data: JsonValue = json.loads(raw)
-    except (ValueError, TypeError):  # fmt: skip
+    except ValueError, TypeError:
         LOGGER.warning("Could not JSON-parse room_information: %r", raw)
         return []
 

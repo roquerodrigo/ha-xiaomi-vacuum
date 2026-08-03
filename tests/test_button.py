@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from custom_components.xiaomi_vacuum.spec import _D109GL
+from custom_components.xiaomi_vacuum.spec import D109GL
 
 
 async def test_button_entity_exists(hass, setup_integration):
@@ -18,7 +18,7 @@ async def test_button_press_calls_dust_arrest(
         {"entity_id": "button.aspirador_collect_dust"},
         blocking=True,
     )
-    a = _D109GL.actions.start_dust_arrest
+    a = D109GL.actions.start_dust_arrest
     mock_miot_device.call_action_by.assert_called_with(a["siid"], a["aiid"])
 
 
@@ -38,8 +38,8 @@ async def test_api_client_async_start_dust_arrest(hass, mock_miot_device):
     from custom_components.xiaomi_vacuum.api import XiaomiVacuumApiClient
 
     client = XiaomiVacuumApiClient(
-        hass=hass, host="1.2.3.4", token="t" * 32, spec=_D109GL
+        hass=hass, host="1.2.3.4", token="t" * 32, spec=D109GL
     )
     await client.async_start_dust_arrest()
-    a = _D109GL.actions.start_dust_arrest
+    a = D109GL.actions.start_dust_arrest
     mock_miot_device.call_action_by.assert_called_with(a["siid"], a["aiid"])

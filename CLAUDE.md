@@ -25,19 +25,22 @@ here.
   `EntityDescription`-with-`value_fn` pattern).
 - **`api/`** wraps the local MIoT client; **`cloud/`** wraps the Xiaomi cloud
   (QR login, device discovery, map fetch, error-message resolution).
-- **`spec.py`** — per-model MIoT spec registry. Each supported vacuum
-  (`xiaomi.vacuum.d109gl` X20 Max, `xiaomi.vacuum.b108gl` S20+) has a
-  `ModelSpec` bundling its property mapping, action mapping, status table,
-  enumerations, `send_command` whitelist, fault representation, and room-clean
-  strategy. Capabilities (`DUST_ARREST` / `SWEEP_ROUTE` / `OBSTACLE_AVOIDANCE`
-  / `MOP_WASH_DRY`) are **derived** from the spec, not declared; the set of
-  entities to create (`spec.entities`) is in turn derived from the
-  capability set plus a base roster. Platforms filter their `_*_CLASSES`
-  registries by `EntityKey in spec.entities`, so adding a new model is a
-  data-only change in `spec.py` (see `ADDING_A_MODEL.md`). The spec is
-  selected from the device model at setup and threaded through
-  `runtime_data` / the coordinator. **Read `spec.py` before touching any
-  SIID/PIID/AIID — the two models diverge on almost all of them.**
+- **`spec/`** — per-model MIoT spec registry, one module per concern:
+  `property.py`, `entity_key.py`, `capability.py` and `addresses.py` hold the
+  vocabulary; `model_actions.py` and `model_spec.py` the two dataclasses;
+  `d109gl.py` (X20 Max) and `b108gl.py` (S20+) one `ModelSpec` instance each;
+  `registry.py` the model-string lookup. A `ModelSpec` bundles its property
+  mapping, action mapping, status table, enumerations, `send_command`
+  whitelist, fault representation, and room-clean strategy. Capabilities
+  (`DUST_ARREST` / `SWEEP_ROUTE` / `OBSTACLE_AVOIDANCE`) are **derived** from
+  the spec, not declared; the set of entities to create (`spec.entities`) is in
+  turn derived from the capability set plus a base roster. Platforms filter
+  their `_*_CLASSES` registries by `EntityKey in spec.entities`, so adding a
+  new model is a data-only change: one module plus a `registry.py` line (see
+  `ADDING_A_MODEL.md`). The spec is selected from the device model at setup and
+  threaded through `runtime_data` / the coordinator. **Read the model's module
+  before touching any SIID/PIID/AIID — the two models diverge on almost all of
+  them.**
 - **`coordinator.py`** — local device state polling (`DataUpdateCoordinator`).
 - **`map_coordinator.py`** — separate coordinator for the cloud-rendered map
   image, decoupled from local polling.

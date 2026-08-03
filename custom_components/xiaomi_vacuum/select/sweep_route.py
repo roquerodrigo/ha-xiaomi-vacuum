@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ..spec import Property  # noqa: TID252
 from .base import _XiaomiVacuumSelect
 
 
@@ -16,7 +17,7 @@ class XiaomiVacuumSweepRouteSelect(_XiaomiVacuumSelect):
     _attr_translation_key = "sweep_route"
     _attr_icon = "mdi:map-marker-path"
 
-    _property_name = "sweep_route"
+    _property_name = Property.SWEEP_ROUTE
 
     @property
     def _slug_to_value(self) -> dict[str, int]:

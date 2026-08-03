@@ -6,7 +6,6 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.const import PERCENTAGE, EntityCategory
 
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
-from ..spec import CHARGING_STATE_SLUGS  # noqa: TID252
 
 
 class XiaomiVacuumBatterySensor(XiaomiVacuumEntity, SensorEntity):
@@ -35,5 +34,7 @@ class XiaomiVacuumBatterySensor(XiaomiVacuumEntity, SensorEntity):
             return None
         return {
             "charging": charging_state == 1,
-            "charging_state": CHARGING_STATE_SLUGS.get(charging_state),
+            "charging_state": self.coordinator.spec.charging_state_slugs.get(
+                charging_state
+            ),
         }

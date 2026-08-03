@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ..spec import Property  # noqa: TID252
 from .base import _XiaomiVacuumSelect
 
 
@@ -17,7 +18,7 @@ class XiaomiVacuumObstacleAvoidanceSelect(_XiaomiVacuumSelect):
     _attr_translation_key = "obstacle_avoidance_strategy"
     _attr_icon = "mdi:shield-car"
 
-    _property_name = "obstacle_avoidance_strategy"
+    _property_name = Property.OBSTACLE_AVOIDANCE_STRATEGY
 
     @property
     def _slug_to_value(self) -> dict[str, int]:
