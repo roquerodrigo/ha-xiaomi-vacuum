@@ -6,12 +6,12 @@ import pytest
 from homeassistant.components.vacuum.const import VacuumActivity
 
 from custom_components.xiaomi_vacuum.const import DOMAIN
-from custom_components.xiaomi_vacuum.spec import _D109GL
+from custom_components.xiaomi_vacuum.spec import D109GL
 from custom_components.xiaomi_vacuum.vacuum.cleaner import _parse_segments
 
 
 @pytest.mark.parametrize(
-    ("status_code", "expected"), list(_D109GL.status_to_activity.items())
+    ("status_code", "expected"), list(D109GL.status_to_activity.items())
 )
 def test_status_to_activity_mapping(status_code, expected):
     assert isinstance(expected, VacuumActivity)

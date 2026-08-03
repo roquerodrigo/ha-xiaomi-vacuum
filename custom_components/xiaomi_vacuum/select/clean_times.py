@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ..spec import Property  # noqa: TID252
 from .base import _XiaomiVacuumSelect
 
 
@@ -11,7 +12,7 @@ class XiaomiVacuumCleanTimesSelect(_XiaomiVacuumSelect):
     _attr_translation_key = "clean_times"
     _attr_icon = "mdi:repeat"
 
-    _property_name = "clean_times"
+    _property_name = Property.CLEAN_TIMES
 
     @property
     def _slug_to_value(self) -> dict[str, int]:

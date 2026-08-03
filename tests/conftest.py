@@ -142,9 +142,9 @@ def _state_to_rows(
 ) -> list[dict[str, Any]]:
     """Build raw MIoT rows from a parsed state dict (mimics device echoing did)."""
     if spec is None:
-        from custom_components.xiaomi_vacuum.spec import _D109GL
+        from custom_components.xiaomi_vacuum.spec import D109GL
 
-        spec = _D109GL
+        spec = D109GL
 
     rows = []
     for name, value in state.items():

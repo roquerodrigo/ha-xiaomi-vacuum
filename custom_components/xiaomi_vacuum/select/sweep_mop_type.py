@@ -5,6 +5,7 @@ from __future__ import annotations
 from homeassistant.exceptions import ServiceValidationError
 
 from ..const import DOMAIN  # noqa: TID252
+from ..spec import Property  # noqa: TID252
 from .base import _XiaomiVacuumSelect
 
 #: Modes that do NOT require a mop pad. All others do. Derived as a short
@@ -27,7 +28,7 @@ class XiaomiVacuumSweepMopTypeSelect(_XiaomiVacuumSelect):
     _attr_translation_key = "sweep_mop_type"
     _attr_icon = "mdi:broom"
 
-    _property_name = "sweep_mop_type"
+    _property_name = Property.SWEEP_MOP_TYPE
 
     @property
     def _slug_to_value(self) -> dict[str, int]:

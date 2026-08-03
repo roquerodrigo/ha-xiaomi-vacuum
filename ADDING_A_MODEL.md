@@ -1,7 +1,8 @@
 # Adding support for a new vacuum model
 
-This integration supports one vacuum model per `ModelSpec` entry in
-[`custom_components/xiaomi_vacuum/spec.py`](custom_components/xiaomi_vacuum/spec.py).
+This integration supports one vacuum model per `ModelSpec` instance under
+[`custom_components/xiaomi_vacuum/spec/`](custom_components/xiaomi_vacuum/spec),
+one module per model.
 Adding a new model is, by design, **a data-only change** — no platform code,
 entity classes, or cloud-client changes are needed for a model whose
 capabilities are already represented by the `Capability` / `EntityKey` enums.
@@ -56,8 +57,9 @@ direct `start-vacuum-room-sweep` action exists but the robot ignores it.
 
 ## 3. Add the `ModelSpec` entry
 
-Open `custom_components/xiaomi_vacuum/spec.py` and add a new section after
-the existing models. Mirror the structure of the closest sibling.
+Create `custom_components/xiaomi_vacuum/spec/c108gl.py`, named after the model
+string. Mirror the structure of the closest sibling (`d109gl.py` for a model
+with an auto-wash dock, `b108gl.py` for one without).
 
 ### 3.1 Property mapping
 
@@ -74,7 +76,7 @@ class Property(StrEnum):
 Then declare the per-model mapping:
 
 ```python
-_C108_PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
+_PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
     Property.STATUS: {"siid": 2, "piid": 1},
     Property.FAULT: {"siid": 2, "piid": 2},  # plain uint32 like the S20+
     Property.SWEEP_MOP_TYPE: {"siid": 2, "piid": 3},
@@ -94,7 +96,7 @@ Declare a `ModelActions(...)`. Required actions must all be present;
 when the model lacks them — the integration handles `None` gracefully.
 
 ```python
-_C108_ACTIONS = ModelActions(
+_ACTIONS = ModelActions(
     start_sweep={"siid": 2, "aiid": 1},
     stop_sweeping={"siid": 2, "aiid": 2},
     return_home={"siid": 3, "aiid": 1},  # like the S20+ battery.start-charge
@@ -115,7 +117,7 @@ translation key (see [§4 Translations](#4-translations)).
 the dock) versus whether `start` should resume an in-progress clean.
 
 ```python
-_C108_STATUS: dict[int, StatusDef] = {
+_STATUS: dict[int, StatusDef] = {
     1: {"activity": VacuumActivity.IDLE, "slug": "idle", "is_idle": True},
     2: {"activity": VacuumActivity.DOCKED, "slug": "charging", "is_idle": True},
     4: {"activity": VacuumActivity.CLEANING, "slug": "sweeping", "is_idle": False},
@@ -205,37 +207,49 @@ For most new models this is unnecessary — you only fill in
 ### 3.7 Final `ModelSpec(...)` block
 
 ```python
-_C108GL = ModelSpec(
+C108GL = ModelSpec(
     model="xiaomi.vacuum.c108gl",
     name="Xiaomi Robot Vacuum X30 Pro",
-    property_mapping=_C108_PROPERTY_MAPPING,
-    actions=_C108_ACTIONS,
-    status=_C108_STATUS,
-    fan_speeds=dict(_FAN_SPEEDS),  # reuse shared enums where identical
-    sweep_mop_types=dict(_SWEEP_MOP_TYPES),
+    property_mapping=_PROPERTY_MAPPING,
+    actions=_ACTIONS,
+    status=_STATUS,
+    fan_speeds=dict(FAN_SPEEDS),  # reuse shared enums where identical
+    sweep_mop_types=dict(SWEEP_MOP_TYPES),
     clean_times={"one_time": 1, "two_times": 2},  # if this model only has 2
-    mop_water_levels=dict(_MOP_WATER_LEVELS_B108),  # if it exposes "off"
+    mop_water_levels={"off": 0, "level_1": 1, "level_2": 2, "level_3": 3},
     send_commands={
-        "start_only_sweep": _C108_ACTIONS.start_only_sweep,
-        "start_mop": _C108_ACTIONS.start_mop,
+        "start_only_sweep": _ACTIONS.start_only_sweep,
+        "start_mop": _ACTIONS.start_mop,
         ...
     },
+    charging_state_slugs=dict(CHARGING_STATE_SLUGS),
     fault_kind="simple",
     room_clean_strategy="config_then_custom",
 )
 ```
 
+Shared value tables (`FAN_SPEEDS`, `SWEEP_MOP_TYPES`, `CLEAN_TIMES`,
+`CHARGING_STATE_SLUGS`, `SWEEP_ROUTES`, `OBSTACLE_AVOIDANCES`) live in
+`spec/enumerations.py`. Copy one into the model's own module the moment the
+new vacuum publishes a different table — every enumeration is a per-model
+field, never a global the models happen to share.
+
 ### 3.8 Register the model
 
-Add it to the `MODELS` registry at the bottom of `spec.py`:
+Import it in `spec/registry.py` and add it to `MODELS`:
 
 ```python
+from .c108gl import C108GL
+
 MODELS: dict[str, ModelSpec] = {
-    _D109GL.model: _D109GL,
-    _B108GL.model: _B108GL,
-    _C108GL.model: _C108GL,
+    D109GL.model: D109GL,
+    B108GL.model: B108GL,
+    C108GL.model: C108GL,
 }
 ```
+
+Re-export it from `spec/__init__.py` as well, so tests can import it from the
+package root like the existing models.
 
 That's it. The integration now recognises the new model — the cloud action
 endpoint (`/miotspec/action`) is model-agnostic, and the platform setup
@@ -312,7 +326,7 @@ expect to also exercise it in `tests/test_spec.py`.
   (`urn:...:c108gl:2`) that shifts PIIDs or adds services. If the new
   version is the only one installable on the device, update the existing
   `ModelSpec` in place (cite the urn in the comment block); otherwise
-  consider a separate `_C108GL_V2` entry and a model-string match rule.
+  consider a separate `C108GL_V2` entry and a model-string match rule.
 - **The Mi Home app is the source of truth.** When the spec and the app's
   captured traffic disagree, trust the app — it's what users run. The
   `room_clean_strategy` literal exists precisely to encode such deviations.

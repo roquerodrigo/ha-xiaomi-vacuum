@@ -15,10 +15,10 @@ from custom_components.xiaomi_vacuum.coordinator import (
     _live_fault_code_ids,
 )
 from custom_components.xiaomi_vacuum.repairs import async_raise_cannot_connect
-from custom_components.xiaomi_vacuum.spec import _B108GL, _D109GL
+from custom_components.xiaomi_vacuum.spec import B108GL, D109GL
 
 
-def _fake_entry(client_mock=None, spec=_D109GL):
+def _fake_entry(client_mock=None, spec=D109GL):
     runtime = type("R", (), {"client": client_mock, "spec": spec})()
     # `async_on_unload` is invoked by DataUpdateCoordinator.__init__ when a
     # config_entry is passed; a no-op is enough for these unit tests.
@@ -36,7 +36,7 @@ def _fake_entry(client_mock=None, spec=_D109GL):
     )()
 
 
-def _coord_with_client(hass, client_mock, spec=_D109GL):
+def _coord_with_client(hass, client_mock, spec=D109GL):
     entry = _fake_entry(client_mock, spec=spec)
     return XiaomiVacuumDataUpdateCoordinator(hass=hass, config_entry=entry)
 
@@ -169,7 +169,7 @@ async def test_b108_derives_fault_from_simple_uint32(hass):
     """S20+ (fault_kind=simple) reads the plain fault property as an int."""
     state = {"fault": 0}
     client = type("C", (), {"async_get_state": AsyncMock(return_value=state)})()
-    coord = _coord_with_client(hass, client, spec=_B108GL)
+    coord = _coord_with_client(hass, client, spec=B108GL)
     result = await coord._async_update_data()
     assert result["fault"] == 0
 
@@ -177,6 +177,6 @@ async def test_b108_derives_fault_from_simple_uint32(hass):
 async def test_b108_simple_fault_reports_nonzero_code(hass):
     state = {"fault": 210009}
     client = type("C", (), {"async_get_state": AsyncMock(return_value=state)})()
-    coord = _coord_with_client(hass, client, spec=_B108GL)
+    coord = _coord_with_client(hass, client, spec=B108GL)
     result = await coord._async_update_data()
     assert result["fault"] == 210009
