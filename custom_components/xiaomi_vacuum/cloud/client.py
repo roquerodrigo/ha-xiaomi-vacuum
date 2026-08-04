@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 import aiohttp
 import requests
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from ..const import LOGGER  # noqa: TID252
 from .connector import _HTTP_OK, _XiaomiCloudConnector
@@ -100,12 +100,28 @@ class XiaomiCloud:
             raise XiaomiCloudAuthError(msg)
         self._logged_in = True
 
-    async def _async_poll_qr_login(  # noqa: PLR0911
+    async def _async_poll_qr_login(
         self,
         long_polling_url: str,
         timeout: int,  # noqa: ASYNC109
     ) -> bool:
-        session = async_get_clientsession(self._hass)
+        # A dedicated session (own cookie jar) keeps the Xiaomi account cookies
+        # set during login out of Home Assistant's shared client session, where
+        # any integration hitting a Xiaomi domain would silently replay them.
+        session = async_create_clientsession(self._hass)
+        try:
+            return await self._async_poll_qr_login_in_session(
+                session, long_polling_url, timeout
+            )
+        finally:
+            await session.close()
+
+    async def _async_poll_qr_login_in_session(  # noqa: PLR0911
+        self,
+        session: aiohttp.ClientSession,
+        long_polling_url: str,
+        timeout: int,  # noqa: ASYNC109
+    ) -> bool:
         read_timeout = aiohttp.ClientTimeout(total=max(timeout + 15, 30))
         try:
             async with session.get(

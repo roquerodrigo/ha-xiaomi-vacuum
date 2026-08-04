@@ -47,11 +47,12 @@ def _aio_resp(status=200, text="", token_cookie=None):
 
 
 def _patch_aiohttp(*responses):
-    """Patch async_get_clientsession to a session whose .get yields `responses`."""
+    """Patch async_create_clientsession to a session whose .get yields `responses`."""
     session = MagicMock()
     session.get = MagicMock(side_effect=list(responses))
+    session.close = AsyncMock()
     return patch(
-        "custom_components.xiaomi_vacuum.cloud.client.async_get_clientsession",
+        "custom_components.xiaomi_vacuum.cloud.client.async_create_clientsession",
         return_value=session,
     )
 
@@ -279,8 +280,9 @@ async def test_async_poll_qr_login_returns_false_on_timeout(hass):
     cloud = XiaomiCloud(hass, "us")
     session = MagicMock()
     session.get = MagicMock(side_effect=TimeoutError())
+    session.close = AsyncMock()
     with patch(
-        "custom_components.xiaomi_vacuum.cloud.client.async_get_clientsession",
+        "custom_components.xiaomi_vacuum.cloud.client.async_create_clientsession",
         return_value=session,
     ):
         assert await cloud._async_poll_qr_login("https://lp", 1) is False
@@ -325,8 +327,9 @@ async def test_async_poll_qr_login_returns_false_on_token_fetch_timeout(hass):
     body = '&&&START&&&{"ssecurity":"S","userId":42,"location":"https://loc"}'
     session = MagicMock()
     session.get = MagicMock(side_effect=[_aio_resp(text=body), TimeoutError()])
+    session.close = AsyncMock()
     with patch(
-        "custom_components.xiaomi_vacuum.cloud.client.async_get_clientsession",
+        "custom_components.xiaomi_vacuum.cloud.client.async_create_clientsession",
         return_value=session,
     ):
         assert await cloud._async_poll_qr_login("https://lp", 1) is False
