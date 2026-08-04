@@ -163,7 +163,8 @@ marked **✓** (verified correct against the spec).
 | 83   | Worry Free Clean Mode           | uint8  | r,w,n  | 0 Silent, 1 Deep Clean, 2 Standard                                                                                                                                                                                                                                                                                    |        |
 | 84   | Wash Mop Water Temperature      | uint8  | r,w,n  | 0 Ordinary, 1 Warm, 2 Hot, 3 Smart                                                                                                                                                                                                                                                                                    |        |
 
-(Full property list incl. piid 24/27/38–72/77–81 in `resources/d109gl_spec.v2.json`.)
+(For the full property list incl. piid 24/27/38–72/77–81, query the published
+spec instance on miot-spec.org — see section 1.)
 
 **Actions** (SIID 2)
 
