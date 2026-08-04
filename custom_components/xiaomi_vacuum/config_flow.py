@@ -337,6 +337,11 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _refresh_qr(self) -> None:
         """Get a new QR image + long-polling URL."""
+        # Drop any previous QR state first: on a failed refresh the stale image
+        # and long-poll URL of an already-expired login session must not be
+        # reused by the retry path.
+        self._qr_image = None
+        self._qr_lp_url = None
         if self._cloud is None:
             self._cloud = XiaomiCloud(
                 self.hass, country=self._user_input[CONF_CLOUD_COUNTRY]
