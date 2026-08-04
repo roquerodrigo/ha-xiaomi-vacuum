@@ -9,7 +9,10 @@ from typing import TYPE_CHECKING, cast
 from miio import DeviceException, MiotDevice
 from miio.exceptions import DeviceError
 
-from ..cloud.errors import XiaomiCloudError  # noqa: TID252
+from ..cloud.errors import (  # noqa: TID252
+    XiaomiCloudConnectionError,
+    XiaomiCloudError,
+)
 from ..const import LOGGER  # noqa: TID252
 from ..spec import Property  # noqa: TID252
 from .errors import (
@@ -285,6 +288,17 @@ class XiaomiVacuumApiClient:
         if self._cloud is not None:
             try:
                 result = await self._cloud.async_call_action(siid, aiid, params)
+            except XiaomiCloudConnectionError as exc:
+                # The cloud being unreachable must not fail the command — the
+                # device may still be reachable over the LAN, so fall back to
+                # the local transport just like the session-absent case.
+                LOGGER.warning(
+                    "Cloud unreachable for action %s/%s; using local transport: %s",
+                    siid,
+                    aiid,
+                    exc,
+                )
+                result = None
             except XiaomiCloudError as exc:
                 msg = f"Cloud action {siid}/{aiid} failed: {exc}"
                 raise XiaomiVacuumApiClientError(msg) from exc
@@ -297,7 +311,7 @@ class XiaomiVacuumApiClient:
             # session-absent branch below.
             if result is None:
                 LOGGER.debug(
-                    "No cloud session for action %s/%s; using local transport",
+                    "Cloud transport unavailable for action %s/%s; using local",
                     siid,
                     aiid,
                 )

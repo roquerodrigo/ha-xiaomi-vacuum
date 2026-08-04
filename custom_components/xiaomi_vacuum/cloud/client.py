@@ -132,11 +132,7 @@ class XiaomiCloud:
 
     async def async_resolve_device(self, token: str) -> XiaomiDeviceInfo:
         """Find the vacuum in the cloud account and cache it on this client."""
-        try:
-            device = await self._run(self._connector.find_device, token, self._country)
-        except requests.RequestException as exception:
-            msg = f"Cannot reach the Xiaomi cloud: {exception}"
-            raise XiaomiCloudConnectionError(msg) from exception
+        device = await self._run(self._connector.find_device, token, self._country)
         if device is None:
             msg = f"Device with token {token[:6]}… not found in cloud"
             raise XiaomiCloudError(msg)
@@ -211,7 +207,7 @@ class XiaomiCloud:
                     self._device.country,
                     self._device.device_id,
                 )
-            except (requests.RequestException, XiaomiCloudError, ValueError) as exc:
+            except (XiaomiCloudError, ValueError) as exc:
                 LOGGER.debug("Failed to fetch fault texts: %s", exc)
                 return None
             self._fault_texts.update(texts)
@@ -221,4 +217,10 @@ class XiaomiCloud:
     async def _run[T, **P](
         self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs
     ) -> T:
-        return await self._hass.async_add_executor_job(partial(func, *args, **kwargs))
+        try:
+            return await self._hass.async_add_executor_job(
+                partial(func, *args, **kwargs)
+            )
+        except requests.RequestException as exception:
+            msg = f"Cannot reach the Xiaomi cloud: {exception}"
+            raise XiaomiCloudConnectionError(msg) from exception
