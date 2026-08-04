@@ -1,5 +1,56 @@
 # Changelog
 
+## [2.0.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.0.0...v2.0.1) (2026-08-04)
+
+
+### Bug Fixes
+
+* clear repair issues when the config entry is removed ([1096940](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/1096940177617b46cab675890e98f23b75545a13))
+* derive the charging state from the model spec ([0ec7dd8](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/0ec7dd8818474d240e81942a855db82e77594b85))
+* drop quotes around translation placeholders ([09951c3](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/09951c3d3522d71719df5472fea8072eea3ce045))
+* drop stale QR state before refreshing the login code ([d4b0108](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/d4b01086a551bfbf8eeb007ced2920ff30fd0d65))
+* expose the X20 Max off mop-water level ([38e8bb7](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/38e8bb7efe3529e747431810003f1718ce51d8a9))
+* fall back to local transport when the cloud rejects the session mid-action ([475c77a](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/475c77ac08ccc6af4e9526bd202aa32ffa5356e9))
+* isolate the QR login cookies in a dedicated client session ([32bdbed](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/32bdbed713862b63dc0f028a8f51e4e5f6ef03ee))
+* prompt reauth when the fault-text feed rejects the session ([bff738a](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/bff738a34d8619e187429efb1502215dce4afe76))
+* raise the cannot_connect repair only for communication errors ([3d3fb1d](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/3d3fb1d67eb4352e40f391da4343873eddf3f4df))
+* redact the signed query string from cloud connection errors ([308c5ea](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/308c5ea746a5ee1ce3e68fe970c7d8b65f9f96c0))
+* reject send_command parameters instead of silently dropping them ([8da150a](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/8da150a534fa2c38ba3578159acacff4f2c118f4))
+* rename the pt-BR mop pad sensor to "Mop" ([61ea9b8](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/61ea9b8f561a4d5d5b20ed5ed67fd5d0e6a0a3a9))
+* request a fresh login when the cloud session is rejected during discovery ([6759f00](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/6759f00be7dd297374dac9f0f03d3edc0cd10cfc))
+* retry map parsing when rendering a new blob fails ([197c6d2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/197c6d2666774358a8032b60a5a469443d20ed20))
+* retry setup when the Xiaomi cloud is unreachable ([60c09fd](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/60c09fd0a7011cfcadc07aee09e2be7118e8eab6))
+* return no segments while the vacuum has been offline since startup ([c7c3eb0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/c7c3eb0e2f6f7fae027a6953e3d7ba0eb5a1e408))
+* route fan speed writes through the guarded property setter ([2d7bb55](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/2d7bb55949a25e5b47c012388bc7a936b39d8271))
+* separate transient Xiaomi cloud failures from session errors ([e61fd18](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/e61fd18c0c18a2bcfcad46cdcedfe5b4a4181f2b))
+* tie the optimistic refresh task to the config entry ([e2899f0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/e2899f0ca5b0d611df6d42554195a503a473422b))
+* translate the unknown send_command error ([faa4553](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/faa455378a34282df616ef7a9ee1e8593b806712))
+* wrap malformed cloud responses in the cloud error hierarchy ([b49b410](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/b49b41069fac5ef512068417d52dbd3fe269d4cf))
+
+
+### Code Refactoring
+
+* compute fan speed list and device info as properties ([8d68ece](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/8d68ece770e1bd4174ec400eb718351fd71d9666))
+* drop the redundant entry reload listener ([0a7c87e](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/0a7c87e74b03178f12e9f38c36f7ef410768d335))
+* expose the resolved cloud device through a public property ([76a81cd](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/76a81cda4675a249f0ce96eefdddb53c3ceb66c8))
+
+
+### Documentation
+
+* document the region selector, reconfigure and reauth flows ([ba72c30](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/ba72c30dc46cb70e131523f7d24f0097c1d0aaa8))
+* document the status sensor, binary sensors and the mop-pad guard ([9702fbe](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/9702fbe6a0cf86dd0510314fd370de3086e3b345))
+* drop the dead spec JSON reference ([36233a4](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/36233a40194ff69ac159bfebf37c04f302ad816e))
+* point the CI notes at the shared workflows repository ([5ea8f2e](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/5ea8f2eebadbc22db02a11f8f716269f56570c89))
+* point the mapped fault property at Fault Ids ([d7a910c](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/d7a910ca9942bfc24e27c661ed8aafd1f00801a9))
+* replace the broken scripts/setup instruction with uv sync ([8be5c18](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/8be5c1879ffda745e2ff1542a58356d464bebc5f))
+* state the enforced 90% coverage gate in CODE_STYLE.md ([870dac0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/870dac02c7a708001c448e775aa8b4b2dbfd0ca1))
+
+
+### Miscellaneous Chores
+
+* align the map parser upper bound with the manifest ([edd8c56](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/edd8c56045ca472c5fec777ac047f35ff525e719))
+* sync uv.lock project version with the 2.0.0 release ([4848b88](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/4848b88e79913dad34cdc7daa552c134454e7e5b))
+
 ## [2.0.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v1.6.0...v2.0.0) (2026-08-03)
 
 
