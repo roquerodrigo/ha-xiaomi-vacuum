@@ -139,6 +139,20 @@ async def test_update_returns_png_bytes_on_success(hass):
     assert result == b"FAKEPNG"
 
 
+async def test_update_retries_parse_after_failure_with_same_blob(hass):
+    """A failed parse must not mark the blob as seen — the next poll retries."""
+    cloud = _cloud(map_bytes=b"BIN")
+    coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
+    coord._parser = MagicMock()
+    coord._parser.unpack_map = MagicMock(side_effect=RuntimeError("bad blob"))
+    with pytest.raises(UpdateFailed):
+        await coord._async_update_data()
+    with pytest.raises(UpdateFailed):
+        await coord._async_update_data()
+    assert coord._parser.unpack_map.call_count == 2
+    assert coord._last_raw is None
+
+
 async def test_update_raises_update_failed_on_exception(hass):
     cloud = _cloud()
     cloud.async_get_map_bytes = AsyncMock(side_effect=RuntimeError("boom"))
