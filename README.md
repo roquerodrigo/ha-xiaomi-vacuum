@@ -105,6 +105,7 @@ text, and route the S20+ room clean through the cloud.
 |--------|------|-------|
 | `vacuum.<name>` | `vacuum` | Main control + state + segment cleaning + `send_command` |
 | `image.<name>_map` | `image` | Map rendered from the Xiaomi cloud |
+| `sensor.<name>_status` | `sensor` | Detailed status (Idle / Charging / Sweeping / …) |
 | `sensor.<name>_battery` | `sensor` | Battery level |
 | `sensor.<name>_error` | `sensor` | Localized fault text (`OK` when healthy) |
 | `sensor.<name>_error_code` | `sensor` | Raw fault code (`0` when healthy) |
@@ -112,15 +113,21 @@ text, and route the S20+ room clean through the cloud.
 | `sensor.<name>_main_brush_life` | `sensor` | Main brush remaining life (%) |
 | `sensor.<name>_side_brush_life` | `sensor` | Side brush remaining life (%) |
 | `sensor.<name>_filter_life` | `sensor` | Filter remaining life (%) |
+| `binary_sensor.<name>_battery_charging` | `binary_sensor` | Whether the battery is charging |
+| `binary_sensor.<name>_mop_pad` | `binary_sensor` | Whether the mop pad is attached |
 | `select.<name>_mode` | `select` | Sweep / Mop / Sweep+Mop / Sweep before mopping |
 | `select.<name>_clean_times` | `select` | Once / Twice (X20 Max also: Three times) |
-| `select.<name>_mop_water_level` | `select` | Off (S20+ only) / Level 1–3 |
+| `select.<name>_mop_water_level` | `select` | Off / Level 1–3 |
 | `select.<name>_sweep_route` | `select` | Quick / Standard / Deep — X20 Max only |
 | `select.<name>_obstacle_avoidance` | `select` | Less collisions / High coverage — X20 Max only |
 | `button.<name>_collect_dust` | `button` | Tells the dock to empty the dust bin — X20 Max only |
 
 The vacuum entity also exposes raw MIoT diagnostics as extra state attributes
 under the `xiaomi_vacuum` key.
+
+Selecting a mop mode while no mop pad is attached is refused with a clear
+error message — the vacuum itself silently reverts such changes, so the
+integration surfaces the reason instead of letting the select snap back.
 
 ## Example automations
 
