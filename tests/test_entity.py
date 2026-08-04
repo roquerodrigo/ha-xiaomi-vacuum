@@ -31,38 +31,36 @@ def _coord(
 
 def test_device_info_uses_custom_name():
     e = XiaomiVacuumEntity(coordinator=_coord(name="Aspirador"))
-    assert e._attr_device_info["name"] == "Aspirador"
+    assert e.device_info["name"] == "Aspirador"
 
 
 def test_device_info_falls_back_to_model_name():
     e = XiaomiVacuumEntity(coordinator=_coord())
-    assert e._attr_device_info["name"] == "xiaomi.vacuum.d109gl"
+    assert e.device_info["name"] == "xiaomi.vacuum.d109gl"
 
 
 def test_device_info_reports_b108gl_model():
     """The X20 (b108gl) model string flows through to device registry unchanged."""
     e = XiaomiVacuumEntity(coordinator=_coord(model="xiaomi.vacuum.b108gl"))
-    assert e._attr_device_info["model"] == "xiaomi.vacuum.b108gl"
+    assert e.device_info["model"] == "xiaomi.vacuum.b108gl"
 
 
 def test_device_info_includes_firmware_and_hardware():
     e = XiaomiVacuumEntity(coordinator=_coord())
-    assert e._attr_device_info["sw_version"] == "1.0.0"
-    assert e._attr_device_info["hw_version"] == "rev1"
+    assert e.device_info["sw_version"] == "1.0.0"
+    assert e.device_info["hw_version"] == "rev1"
 
 
 def test_device_info_includes_mac_connection():
     from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC
 
     e = XiaomiVacuumEntity(coordinator=_coord(mac="11:22:33:44:55:66"))
-    assert (CONNECTION_NETWORK_MAC, "11:22:33:44:55:66") in e._attr_device_info[
-        "connections"
-    ]
+    assert (CONNECTION_NETWORK_MAC, "11:22:33:44:55:66") in e.device_info["connections"]
 
 
 def test_device_info_no_mac_when_unknown():
     e = XiaomiVacuumEntity(coordinator=_coord(mac=None))
-    assert e._attr_device_info["connections"] == set()
+    assert e.device_info["connections"] == set()
 
 
 def test_patch_state_merges_into_coordinator_data():
