@@ -153,7 +153,7 @@ automation:
 ## Development
 
 ```bash
-scripts/setup     # install requirements (creates Python venv first if needed)
+uv sync           # install dependencies into .venv (managed by uv)
 scripts/develop   # run Home Assistant in debug mode with this integration loaded
 uv run ruff format .                          # format
 uv run ruff check . --fix                      # lint + autofix
