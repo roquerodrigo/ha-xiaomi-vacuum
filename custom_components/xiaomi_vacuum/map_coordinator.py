@@ -167,7 +167,7 @@ class XiaomiVacuumMapCoordinator(DataUpdateCoordinator[bytes | None]):
         # serving whatever we have (possibly the disk-restored PNG).
         state = self._state_coordinator.data
         obj_name = self._extract_obj_name(state.get("map_obj_name")) if state else None
-        device = self._cloud._device  # noqa: SLF001
+        device = self._cloud.device
         if not obj_name or device is None:
             LOGGER.debug("No map obj_name or cloud device; skipping map update")
             return self.data
