@@ -82,19 +82,22 @@ for two cloud-only extras: the **map image** and **localized error messages**.
 Setup is cloud-assisted — there is **no token to copy by hand**:
 
 1. **Settings → Devices & services → Add Integration → Xiaomi Vacuum**.
-2. A **QR code** appears. Open the **Mi Home** app and scan it to authorize the
+2. Pick the **Xiaomi cloud region** your Mi Home account is registered in
+   (Europe and the UK use the Germany server).
+3. A **QR code** appears. Open the **Mi Home** app and scan it to authorize the
    login to your Xiaomi account.
-3. The integration lists the vacuums on the account and lets you pick one (it
+4. The integration lists the vacuums on the account and lets you pick one (it
    auto-selects if there's only one).
-4. It pulls the device's **local IP and token** from the cloud, verifies the
+5. It pulls the device's **local IP and token** from the cloud, verifies the
    local connection, and creates the entry.
 
 The cloud session captured during this flow (service token, user id) is stored
-with the config entry and reused only to render the map and resolve error text.
+with the config entry and reused to render the map, resolve localized error
+text, and route the S20+ room clean through the cloud.
 
-> The Xiaomi region is currently hard-coded to **`us`**. If your account/device
-> lives in another region, the QR login may not find the device — open an issue
-> if you need another region.
+> Picked the wrong region, or your vacuum was not found? Open the entry's
+> **Reconfigure** option to switch the cloud region without re-adding the
+> integration.
 
 ## Entities
 
@@ -158,9 +161,9 @@ template.
 ## Limitations
 
 - The **map** and **localized error text** depend on the Xiaomi cloud session
-  captured at setup; if that session expires, those two features stop updating
-  until you re-add the integration. Everything else keeps working locally.
-- The Xiaomi region is hard-coded to `us` (see *Configuration*).
+  captured at setup. When that session expires, Home Assistant raises a
+  **re-authentication prompt** — scan a fresh QR code and everything resumes;
+  local control keeps working in the meantime.
 
 ## License
 
