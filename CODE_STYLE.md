@@ -3,7 +3,7 @@
 Style conventions for the `ha-xiaomi-vacuum` project. Before committing run
 `uv run ruff format .`, `uv run ruff check . --fix` and
 `uv run mypy custom_components/xiaomi_vacuum`, and they must exit cleanly.
-`uv run pytest` (with the 80 % coverage gate) follows.
+`uv run pytest` (with the 90 % coverage gate) follows.
 
 **Always read this file before adding or restructuring code.**
 
@@ -221,7 +221,7 @@ which `release-please` parses to bump the version and generate `CHANGELOG.md`:
 - After every change run `uv run ruff format .`, `uv run ruff check . --fix`,
   `uv run mypy custom_components/xiaomi_vacuum` and `uv run pytest`. All gates
   mirror CI (`.github/workflows/ci.yml`).
-- Tests live in `tests/`, mirroring the production layout. The 80 % coverage
+- Tests live in `tests/`, mirroring the production layout. The 90 % coverage
   gate (`[tool.pytest.ini_options]` in `pyproject.toml`) prevents untested code
   from sneaking in. When a test exercises a state that is impossible under the
   new types, update or remove it — never weaken the type to satisfy the test.
