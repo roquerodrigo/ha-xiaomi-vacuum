@@ -152,7 +152,7 @@
         },
         "binary_sensor": {
             "mop_pad": {
-                "name": "Pano"
+                "name": "Mop"
             }
         },
         "image": {
