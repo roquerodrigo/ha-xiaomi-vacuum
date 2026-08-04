@@ -74,6 +74,9 @@ def test_patch_state_merges_into_coordinator_data():
 async def test_schedule_refresh_triggers_coordinator_refresh(hass):
     coord = _coord()
     coord.async_refresh = AsyncMock(return_value=None)
+    coord.config_entry.async_create_background_task = lambda hass, coro, name: (
+        hass.async_create_background_task(coro, name)
+    )
     e = XiaomiVacuumEntity(coordinator=coord)
     e.hass = hass
     e._schedule_refresh(delay=0)

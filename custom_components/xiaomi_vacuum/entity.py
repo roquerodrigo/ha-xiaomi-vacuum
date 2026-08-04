@@ -56,6 +56,8 @@ class XiaomiVacuumEntity(CoordinatorEntity[XiaomiVacuumDataUpdateCoordinator]):
             await asyncio.sleep(delay)
             await self.coordinator.async_refresh()
 
-        self.hass.async_create_background_task(
-            _later(), f"{DOMAIN}_post_command_refresh"
+        # Tied to the config entry so an unload/reload inside the delay window
+        # cancels the task instead of refreshing a torn-down coordinator.
+        self.coordinator.config_entry.async_create_background_task(
+            self.hass, _later(), f"{DOMAIN}_post_command_refresh"
         )
