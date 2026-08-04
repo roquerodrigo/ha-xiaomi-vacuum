@@ -91,8 +91,9 @@ uv run pytest
 
 ## CI (`.github/workflows/`, one file per concern)
 
-Every job calls a reusable workflow from `roquerodrigo/.github`, pinned to
-`@v2` — except `auto-assign.yml`, which tracks `@main`.
+Every job calls a reusable workflow from `roquerodrigo/workflows`, tracking
+`@main` (no version pinning — the workflows repo is same-owner and changes
+there take effect here immediately).
 
 - `ci.yml` — `lint` → `tests` + `validate` in parallel (both need `lint`),
   then `update-pr-branch` once all three pass (pull requests only).
