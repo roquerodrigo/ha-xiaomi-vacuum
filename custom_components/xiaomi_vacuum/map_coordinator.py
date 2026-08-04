@@ -179,7 +179,6 @@ class XiaomiVacuumMapCoordinator(DataUpdateCoordinator[bytes | None]):
             if raw == self._last_raw:
                 # Same blob as last poll — skip the (expensive) parse + render.
                 return self.data
-            self._last_raw = raw
             map_data = await self.hass.async_add_executor_job(
                 self._parse_blob, raw, device.model, device.device_id
             )
@@ -192,6 +191,10 @@ class XiaomiVacuumMapCoordinator(DataUpdateCoordinator[bytes | None]):
                 return self.data
             buf = io.BytesIO()
             map_data.image.data.save(buf, format="PNG")
+            # Marked as seen only after a successful render, so a transient
+            # parse/render failure is retried on the next poll instead of the
+            # blob being skipped as a duplicate.
+            self._last_raw = raw
         except Exception as exception:
             raise UpdateFailed(exception) from exception
         png = buf.getvalue()
