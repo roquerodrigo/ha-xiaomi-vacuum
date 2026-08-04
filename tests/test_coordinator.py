@@ -134,6 +134,26 @@ async def test_enrich_fault_text_adds_localized_text(hass):
     assert result["fault_text"] == "Cannot return to dock"
 
 
+async def test_enrich_fault_text_starts_reauth_when_session_rejected(hass):
+    from unittest.mock import MagicMock
+
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
+
+    state = {"fault_ids": '{"ts": 1, "fault": [210009]}'}
+    client = type("C", (), {"async_get_state": AsyncMock(return_value=state)})()
+    coord = _coord_with_client(hass, client)
+    coord.config_entry.async_start_reauth = MagicMock()
+    coord.cloud = type(
+        "Cloud",
+        (),
+        {"async_fault_text": AsyncMock(side_effect=XiaomiCloudAuthError("401"))},
+    )()
+    result = await coord._async_update_data()
+    assert result["fault"] == 210009
+    assert "fault_text" not in result
+    coord.config_entry.async_start_reauth.assert_called_once_with(hass)
+
+
 async def test_enrich_fault_text_noop_without_cloud(hass):
     state = {"fault_ids": '{"ts": 1, "fault": [210009]}'}
     client = type("C", (), {"async_get_state": AsyncMock(return_value=state)})()

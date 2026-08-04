@@ -233,7 +233,8 @@ class XiaomiCloud:
 
         Results are cached per code; the cloud message feed is only queried
         when a code we have not seen before appears. A code with no matching
-        message is not re-queried within the session.
+        message is not re-queried within the session. A rejected session
+        (XiaomiCloudAuthError) propagates so the caller can prompt reauth.
         """
         if not self._logged_in or not self._device or not code:
             return None
@@ -246,6 +247,8 @@ class XiaomiCloud:
                     self._device.country,
                     self._device.device_id,
                 )
+            except XiaomiCloudAuthError:
+                raise
             except XiaomiCloudError as exc:
                 LOGGER.debug("Failed to fetch fault texts: %s", exc)
                 return None
