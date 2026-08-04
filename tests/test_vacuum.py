@@ -174,6 +174,23 @@ async def test_vacuum_send_command_invokes_action(
     mock_miot_device.call_action_by.assert_any_call(2, 5)
 
 
+async def test_vacuum_send_command_rejects_params(hass, setup_integration):
+    """User-supplied params must raise instead of being silently dropped."""
+    from homeassistant.exceptions import ServiceValidationError
+
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            "vacuum",
+            "send_command",
+            {
+                "entity_id": "vacuum.aspirador",
+                "command": "start_mop",
+                "params": {"ignored": True},
+            },
+            blocking=True,
+        )
+
+
 async def test_vacuum_send_command_unknown_raises(hass, setup_integration):
     from homeassistant.exceptions import ServiceValidationError
 

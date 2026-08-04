@@ -210,6 +210,9 @@
         },
         "unknown_send_command": {
             "message": "Unknown command '{command}'. Valid commands: {valid_commands}."
+        },
+        "send_command_params_unsupported": {
+            "message": "The command '{command}' does not accept parameters."
         }
     }
 }
