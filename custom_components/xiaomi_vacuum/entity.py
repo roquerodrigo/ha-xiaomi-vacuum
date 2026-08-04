@@ -24,16 +24,16 @@ class XiaomiVacuumEntity(CoordinatorEntity[XiaomiVacuumDataUpdateCoordinator]):
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: XiaomiVacuumDataUpdateCoordinator) -> None:
-        """Initialize."""
-        super().__init__(coordinator)
-        entry = coordinator.config_entry
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Describe the vacuum device this entity belongs to."""
+        entry = self.coordinator.config_entry
         info = entry.runtime_data.info
         model = getattr(info, "model", None) or DEFAULT_MODEL
         name = entry.data.get(CONF_NAME) or model
         mac = getattr(info, "mac_address", None)
         connections = {(CONNECTION_NETWORK_MAC, mac)} if mac else set()
-        self._attr_device_info = DeviceInfo(
+        return DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             connections=connections,
             name=name,

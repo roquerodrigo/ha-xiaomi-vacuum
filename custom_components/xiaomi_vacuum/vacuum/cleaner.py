@@ -20,7 +20,6 @@ from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 if TYPE_CHECKING:
     from ..api import XiaomiVacuumApiClient  # noqa: TID252
-    from ..coordinator import XiaomiVacuumDataUpdateCoordinator  # noqa: TID252
     from ..data import JsonValue  # noqa: TID252
     from ..spec import ModelSpec  # noqa: TID252
 
@@ -59,15 +58,15 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
     _attr_supported_features = SUPPORTED_FEATURES
     _attr_translation_key = "xiaomi_vacuum"
 
-    def __init__(self, coordinator: XiaomiVacuumDataUpdateCoordinator) -> None:
-        """Initialize."""
-        super().__init__(coordinator)
-        self._attr_fan_speed_list = list(self.spec.fan_speeds)
-
     @property
     def spec(self) -> ModelSpec:
         """The active model's spec."""
         return self.coordinator.spec
+
+    @property
+    def fan_speed_list(self) -> list[str]:
+        """Return the fan speed labels supported by the active model."""
+        return list(self.spec.fan_speeds)
 
     @property
     def unique_id(self) -> str:
