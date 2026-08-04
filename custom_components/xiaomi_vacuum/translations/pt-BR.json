@@ -209,10 +209,10 @@
             "message": "Não é possível selecionar um modo de esfregação: nenhum pano detectado. Fixe o pano no robô e tente novamente."
         },
         "unknown_send_command": {
-            "message": "Comando desconhecido '{command}'. Comandos válidos: {valid_commands}."
+            "message": "Comando desconhecido {command}. Comandos válidos: {valid_commands}."
         },
         "send_command_params_unsupported": {
-            "message": "O comando '{command}' não aceita parâmetros."
+            "message": "O comando {command} não aceita parâmetros."
         }
     }
 }

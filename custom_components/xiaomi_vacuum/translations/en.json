@@ -209,10 +209,10 @@
             "message": "Cannot select a mop mode: no mop pad detected. Attach the mop pad to the vacuum and try again."
         },
         "unknown_send_command": {
-            "message": "Unknown command '{command}'. Valid commands: {valid_commands}."
+            "message": "Unknown command {command}. Valid commands: {valid_commands}."
         },
         "send_command_params_unsupported": {
-            "message": "The command '{command}' does not accept parameters."
+            "message": "The command {command} does not accept parameters."
         }
     }
 }
