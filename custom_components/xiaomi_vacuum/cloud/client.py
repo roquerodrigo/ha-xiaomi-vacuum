@@ -12,7 +12,11 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from ..const import LOGGER  # noqa: TID252
 from .connector import _HTTP_OK, _XiaomiCloudConnector
-from .errors import XiaomiCloudAuthError, XiaomiCloudError
+from .errors import (
+    XiaomiCloudAuthError,
+    XiaomiCloudConnectionError,
+    XiaomiCloudError,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -128,7 +132,11 @@ class XiaomiCloud:
 
     async def async_resolve_device(self, token: str) -> XiaomiDeviceInfo:
         """Find the vacuum in the cloud account and cache it on this client."""
-        device = await self._run(self._connector.find_device, token, self._country)
+        try:
+            device = await self._run(self._connector.find_device, token, self._country)
+        except requests.RequestException as exception:
+            msg = f"Cannot reach the Xiaomi cloud: {exception}"
+            raise XiaomiCloudConnectionError(msg) from exception
         if device is None:
             msg = f"Device with token {token[:6]}… not found in cloud"
             raise XiaomiCloudError(msg)

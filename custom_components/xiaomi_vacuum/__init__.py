@@ -10,7 +10,7 @@ from homeassistant.loader import async_get_loaded_integration
 
 from .api import XiaomiVacuumApiClient, XiaomiVacuumApiClientCommunicationError
 from .cached_device_info import CachedDeviceInfo
-from .cloud import XiaomiCloud, XiaomiCloudError
+from .cloud import XiaomiCloud, XiaomiCloudConnectionError, XiaomiCloudError
 from .const import (
     CONF_CLOUD_COUNTRY,
     CONF_CLOUD_SERVICE_TOKEN,
@@ -56,8 +56,10 @@ async def _setup_cloud(
     Resolve the cloud session, wire it into the client + coordinator.
 
     Returns the map coordinator (None when no session, or when the session is
-    invalid and reauth has been triggered). The cloud also backs cloud-routed
-    actions (e.g. the S20+ room-clean) via ``client.set_cloud``.
+    invalid and reauth has been triggered). Raises ConfigEntryNotReady when the
+    cloud is unreachable so Home Assistant retries the whole entry. The cloud
+    also backs cloud-routed actions (e.g. the S20+ room-clean) via
+    ``client.set_cloud``.
     """
     cloud_country = entry.data.get(CONF_CLOUD_COUNTRY)
     ssecurity = entry.data.get(CONF_CLOUD_SSECURITY)
@@ -74,6 +76,10 @@ async def _setup_cloud(
     )
     try:
         await cloud.async_resolve_device(entry.data[CONF_TOKEN])
+    except XiaomiCloudConnectionError as exception:
+        # Transient network failure (e.g. DNS not up yet while the host boots):
+        # retry the whole entry instead of treating it as an expired session.
+        raise ConfigEntryNotReady(exception) from exception
     except XiaomiCloudError as exception:
         LOGGER.warning(
             "Cloud session invalid; starting reauth to refresh: %s", exception

@@ -4,9 +4,11 @@ import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+import requests
 
 from custom_components.xiaomi_vacuum.cloud import (
     XiaomiCloud,
+    XiaomiCloudConnectionError,
     XiaomiCloudError,
     XiaomiDeviceInfo,
     _XiaomiCloudConnector,
@@ -335,6 +337,19 @@ async def test_async_resolve_device_not_found_raises(hass):
     with (
         patch.object(cloud._connector, "find_device", return_value=None),
         pytest.raises(XiaomiCloudError, match="not found"),
+    ):
+        await cloud.async_resolve_device("abc")
+
+
+async def test_async_resolve_device_maps_network_failure(hass):
+    cloud = XiaomiCloud(hass, "us")
+    with (
+        patch.object(
+            cloud._connector,
+            "find_device",
+            side_effect=requests.ConnectionError("dns failure"),
+        ),
+        pytest.raises(XiaomiCloudConnectionError, match="Cannot reach"),
     ):
         await cloud.async_resolve_device("abc")
 

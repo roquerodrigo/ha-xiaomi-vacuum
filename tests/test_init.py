@@ -227,6 +227,48 @@ async def test_setup_entry_starts_reauth_when_cloud_session_invalid(
     assert len(hass.states.async_all("vacuum")) == 1
 
 
+async def test_setup_entry_retries_when_cloud_unreachable(
+    hass, mock_miot_device, enable_custom_integrations
+):
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudConnectionError
+
+    cloud = AsyncMock()
+    cloud.async_resolve_device = AsyncMock(
+        side_effect=XiaomiCloudConnectionError("dns not ready")
+    )
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_HOST: "192.168.1.50",
+            CONF_TOKEN: "0" * 32,
+            CONF_NAME: "Aspirador",
+            CONF_CLOUD_COUNTRY: "us",
+            CONF_CLOUD_SSECURITY: "ssec",
+            CONF_CLOUD_SERVICE_TOKEN: "tok",
+            CONF_CLOUD_USER_ID: "uid",
+        },
+        unique_id="AA:BB:CC:DD:EE:FF",
+    )
+    entry.add_to_hass(hass)
+    with (
+        patch(
+            "custom_components.xiaomi_vacuum.XiaomiCloud.from_session",
+            return_value=cloud,
+        ),
+        patch.object(MockConfigEntry, "async_start_reauth") as start_reauth,
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    # A cloud network failure is transient (e.g. DNS not up during host boot):
+    # the entry must retry, and must not be mistaken for an expired session.
+    assert entry.state == ConfigEntryState.SETUP_RETRY
+    start_reauth.assert_not_called()
+
+
 async def test_setup_unknown_model_raises_unsupported_repair(
     hass, mock_miot_device, enable_custom_integrations
 ):

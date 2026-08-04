@@ -9,3 +9,7 @@ class XiaomiCloudError(Exception):
 
 class XiaomiCloudAuthError(XiaomiCloudError):
     """Authentication failed (login expired, QR not scanned, etc.)."""
+
+
+class XiaomiCloudConnectionError(XiaomiCloudError):
+    """Transient network failure reaching the Xiaomi cloud (DNS, timeout, ...)."""
