@@ -361,6 +361,23 @@ async def test_b108_clean_segments_cloud_unreachable_falls_back_to_local(
     assert mock_miot_device_b108.call_action_by.call_count == 2
 
 
+async def test_b108_clean_segments_expired_session_falls_back_to_local(
+    hass, mock_miot_device_b108
+):
+    """A rejected session (expired token) must not fail the room clean."""
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
+
+    client = _client(hass, mock_miot_device_b108, spec=B108GL)
+    cloud = AsyncMock()
+    cloud.async_call_action = AsyncMock(side_effect=XiaomiCloudAuthError("HTTP 401"))
+    client.set_cloud(cloud)
+
+    await client.async_clean_segments(["5"], room_information=_ROOM_INFO_TABLE)
+
+    assert cloud.async_call_action.await_count == 2
+    assert mock_miot_device_b108.call_action_by.call_count == 2
+
+
 async def test_b108_return_home_uses_battery_service(hass, mock_miot_device_b108):
     """S20+ return-home hits the battery.start-charge action, not SIID 2/aiid 3."""
     await _client(hass, mock_miot_device_b108, spec=B108GL).async_return_home()
