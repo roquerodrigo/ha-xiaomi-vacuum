@@ -146,6 +146,51 @@ async def test_setup_offline_with_cached_info_loads(
     }
 
 
+async def test_remove_entry_clears_repair_issues(
+    hass, mock_miot_device, enable_custom_integrations
+):
+    from homeassistant.helpers import issue_registry as ir
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_HOST: "192.168.1.50",
+            CONF_TOKEN: "0" * 32,
+            CONF_NAME: "Aspirador",
+            CONF_DEVICE_INFO: {
+                "model": "xiaomi.vacuum.d109gl",
+                "mac_address": "AA:BB:CC:DD:EE:FF",
+                "firmware_version": "1.0.0",
+                "hardware_version": "rev1",
+            },
+        },
+        unique_id="AA:BB:CC:DD:EE:FF",
+    )
+    entry.add_to_hass(hass)
+    offline = XiaomiVacuumApiClientCommunicationError("offline")
+    with (
+        patch(
+            "custom_components.xiaomi_vacuum.XiaomiVacuumApiClient.async_get_info",
+            AsyncMock(side_effect=offline),
+        ),
+        patch(
+            "custom_components.xiaomi_vacuum.XiaomiVacuumApiClient.async_get_state",
+            AsyncMock(side_effect=offline),
+        ),
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    registry = ir.async_get(hass)
+    issue_id = f"cannot_connect_{entry.entry_id}"
+    assert registry.async_get_issue(DOMAIN, issue_id) is not None
+
+    await hass.config_entries.async_remove(entry.entry_id)
+    await hass.async_block_till_done()
+    assert registry.async_get_issue(DOMAIN, issue_id) is None
+
+
 async def test_setup_entry_warns_when_cloud_session_invalid(
     hass, mock_miot_device, enable_custom_integrations
 ):
