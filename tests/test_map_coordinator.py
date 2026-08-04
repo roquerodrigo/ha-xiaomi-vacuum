@@ -178,7 +178,7 @@ def test_extract_obj_name_returns_none_for_empty():
 
 async def test_update_skips_when_no_device_resolved(hass):
     cloud = _cloud()
-    cloud._device = None
+    cloud.device = None
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
     coord.data = b"OLD"
     assert await coord._async_update_data() == b"OLD"

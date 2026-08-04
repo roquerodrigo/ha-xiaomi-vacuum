@@ -72,6 +72,11 @@ class XiaomiCloud:
         instance._logged_in = True
         return instance
 
+    @property
+    def device(self) -> XiaomiDeviceInfo | None:
+        """The cloud-resolved device, or None before async_resolve_device."""
+        return self._device
+
     def session_tokens(self) -> CloudSessionTokens:
         """Expose the active session tokens for persistence in the config entry."""
         return {
