@@ -354,6 +354,21 @@ async def test_async_resolve_device_maps_network_failure(hass):
         await cloud.async_resolve_device("abc")
 
 
+async def test_async_call_action_maps_network_failure(hass):
+    cloud = XiaomiCloud(hass, "us")
+    cloud._logged_in = True
+    cloud._device = XiaomiDeviceInfo("d", "x", "m", "abc", "us")
+    with (
+        patch.object(
+            cloud._connector,
+            "call_action",
+            side_effect=requests.ConnectionError("dns failure"),
+        ),
+        pytest.raises(XiaomiCloudConnectionError, match="Cannot reach"),
+    ):
+        await cloud.async_call_action(2, 10, [])
+
+
 async def test_async_get_map_bytes_returns_none_when_not_logged_in(hass):
     cloud = XiaomiCloud(hass, "us")
     assert await cloud.async_get_map_bytes("obj") is None
@@ -574,6 +589,36 @@ def test_encrypted_call_returns_none_on_non_200():
     c._session = MagicMock()
     c._session.post.return_value = _resp(status=500)
     assert c._encrypted_call("https://api.io.mi.com/app/v2/x", {"data": "{}"}) is None
+
+
+@pytest.mark.parametrize("status", [401, 403])
+def test_encrypted_call_raises_auth_error_on_auth_status(status):
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
+
+    c = _signed_connector()
+    c._session = MagicMock()
+    c._session.post.return_value = _resp(status=status)
+    with pytest.raises(XiaomiCloudAuthError, match="rejected the session"):
+        c._encrypted_call("https://api.io.mi.com/app/v2/x", {"data": "{}"})
+
+
+def test_encrypted_call_raises_connection_error_when_strict():
+    c = _signed_connector()
+    c._session = MagicMock()
+    c._session.post.return_value = _resp(status=502)
+    with pytest.raises(XiaomiCloudConnectionError, match="HTTP 502"):
+        c._encrypted_call(
+            "https://api.io.mi.com/app/v2/x", {"data": "{}"}, raise_for_status=True
+        )
+
+
+def test_find_device_raises_connection_error_on_server_error():
+    """A transient 5xx while listing homes must not read as 'device not found'."""
+    c = _signed_connector()
+    c._session = MagicMock()
+    c._session.post.return_value = _resp(status=500)
+    with pytest.raises(XiaomiCloudConnectionError):
+        c.find_device("ABC", "us")
 
 
 def test_signed_nonce_raises_without_ssecurity():

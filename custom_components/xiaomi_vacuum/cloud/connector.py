@@ -16,7 +16,7 @@ from Crypto.Cipher import ARC4
 
 from ..const import LOGGER  # noqa: TID252
 from .device_info import XiaomiDeviceInfo
-from .errors import XiaomiCloudError
+from .errors import XiaomiCloudAuthError, XiaomiCloudConnectionError, XiaomiCloudError
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -33,6 +33,9 @@ if TYPE_CHECKING:
     )
 
 _HTTP_OK = int(HTTPStatus.OK)
+_HTTP_AUTH_STATUSES = frozenset(
+    {int(HTTPStatus.UNAUTHORIZED), int(HTTPStatus.FORBIDDEN)}
+)
 _QR_DEFAULT_LOCALE = "en_US"
 
 
@@ -143,7 +146,7 @@ class _XiaomiCloudConnector:
                 }
             )
         }
-        response = self._encrypted_call(url, params)
+        response = self._encrypted_call(url, params, raise_for_status=True)
         if not response or "result" not in response:
             return
         result = cast("HomesResult", response["result"] or {})
@@ -165,7 +168,7 @@ class _XiaomiCloudConnector:
                 }
             )
         }
-        response = self._encrypted_call(url, params)
+        response = self._encrypted_call(url, params, raise_for_status=True)
         if not response or not (result := response.get("result")):
             return
         for device in cast("DevicesResult", result).get("device_info") or []:
@@ -276,7 +279,9 @@ class _XiaomiCloudConnector:
         prefix = "" if country == "cn" else f"{country}."
         return f"https://{prefix}api.io.mi.com/app"
 
-    def _encrypted_call(self, url: str, params: dict[str, str]) -> JsonObject | None:
+    def _encrypted_call(
+        self, url: str, params: dict[str, str], *, raise_for_status: bool = False
+    ) -> JsonObject | None:
         headers = {
             "Accept-Encoding": "identity",
             "User-Agent": self._agent,
@@ -301,7 +306,13 @@ class _XiaomiCloudConnector:
         response = self._session.post(
             url, headers=headers, cookies=cookies, params=fields, timeout=10
         )
+        if response.status_code in _HTTP_AUTH_STATUSES:
+            msg = f"Xiaomi cloud rejected the session (HTTP {response.status_code})"
+            raise XiaomiCloudAuthError(msg)
         if response.status_code != _HTTP_OK:
+            if raise_for_status:
+                msg = f"Xiaomi cloud returned HTTP {response.status_code} for {url}"
+                raise XiaomiCloudConnectionError(msg)
             return None
         decoded = self._decrypt_rc4(self._signed_nonce(fields["_nonce"]), response.text)
         return cast("JsonObject", json.loads(decoded))
