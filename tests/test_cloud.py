@@ -341,6 +341,22 @@ async def test_async_resolve_device_not_found_raises(hass):
         await cloud.async_resolve_device("abc")
 
 
+async def test_connection_error_text_redacts_url_query_string(hass):
+    """The signed query string (which carries ssecurity) must never be logged."""
+    cloud = XiaomiCloud(hass, "us")
+    upstream = requests.ConnectionError(
+        "Max retries exceeded with url: /app/v2/homeroom/gethome"
+        "?data=x&ssecurity=SUPERSECRET&_nonce=y (connection refused)"
+    )
+    with (
+        patch.object(cloud._connector, "find_device", side_effect=upstream),
+        pytest.raises(XiaomiCloudConnectionError) as raised,
+    ):
+        await cloud.async_resolve_device("abc")
+    assert "SUPERSECRET" not in str(raised.value)
+    assert "?<redacted>" in str(raised.value)
+
+
 async def test_async_resolve_device_maps_network_failure(hass):
     cloud = XiaomiCloud(hass, "us")
     with (

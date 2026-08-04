@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from functools import partial
 from typing import TYPE_CHECKING
 
@@ -25,6 +26,20 @@ if TYPE_CHECKING:
 
     from ..data import CloudSessionTokens, JsonValue  # noqa: TID252
     from .device_info import XiaomiDeviceInfo
+
+_URL_QUERY_STRING = re.compile(r"\?\S*")
+
+
+def _sanitized_error_text(exception: Exception) -> str:
+    """
+    Strip URL query strings from upstream error text before it can be logged.
+
+    requests/urllib3 embed the full request URL in their exception messages,
+    and the signed cloud calls carry the plaintext ``ssecurity`` session secret
+    as a query parameter — without this, a routine connection failure would
+    write the credential into Home Assistant's log.
+    """
+    return _URL_QUERY_STRING.sub("?<redacted>", str(exception))
 
 
 class XiaomiCloud:
@@ -222,5 +237,5 @@ class XiaomiCloud:
                 partial(func, *args, **kwargs)
             )
         except requests.RequestException as exception:
-            msg = f"Cannot reach the Xiaomi cloud: {exception}"
+            msg = f"Cannot reach the Xiaomi cloud: {_sanitized_error_text(exception)}"
             raise XiaomiCloudConnectionError(msg) from exception
