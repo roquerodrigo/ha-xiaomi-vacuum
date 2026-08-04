@@ -8,7 +8,10 @@ from typing import TYPE_CHECKING
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import XiaomiVacuumApiClientError
+from .api import (
+    XiaomiVacuumApiClientCommunicationError,
+    XiaomiVacuumApiClientError,
+)
 from .cloud import XiaomiCloudAuthError
 from .const import DOMAIN, LOGGER
 from .data import VacuumState
@@ -72,10 +75,14 @@ class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[VacuumState]):
         """Fetch all mapped properties from the device."""
         try:
             data = await self.config_entry.runtime_data.client.async_get_state()
-        except XiaomiVacuumApiClientError as exception:
+        except XiaomiVacuumApiClientCommunicationError as exception:
             # Raised on the first failure: the robot being powered off is a
             # normal scenario worth surfacing in Settings → Repairs.
             async_raise_cannot_connect(self.hass, self.config_entry)
+            raise UpdateFailed(exception) from exception
+        except XiaomiVacuumApiClientError as exception:
+            # Not a connectivity problem — fail the update without pointing
+            # the user at their network.
             raise UpdateFailed(exception) from exception
         async_clear_cannot_connect(self.hass, self.config_entry)
         data["fault"] = self._derive_fault(data)

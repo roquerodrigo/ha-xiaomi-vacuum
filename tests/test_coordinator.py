@@ -7,7 +7,10 @@ import pytest
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
-from custom_components.xiaomi_vacuum.api import XiaomiVacuumApiClientError
+from custom_components.xiaomi_vacuum.api import (
+    XiaomiVacuumApiClientCommunicationError,
+    XiaomiVacuumApiClientError,
+)
 from custom_components.xiaomi_vacuum.const import CONF_HOST, DOMAIN
 from custom_components.xiaomi_vacuum.coordinator import (
     UPDATE_INTERVAL,
@@ -96,13 +99,30 @@ async def test_update_failure_creates_repair_issue(hass):
     client = type(
         "C",
         (),
-        {"async_get_state": AsyncMock(side_effect=XiaomiVacuumApiClientError("off"))},
+        {
+            "async_get_state": AsyncMock(
+                side_effect=XiaomiVacuumApiClientCommunicationError("off")
+            )
+        },
     )()
     coord = _coord_with_client(hass, client)
     with pytest.raises(UpdateFailed):
         await coord._async_update_data()
     registry = ir.async_get(hass)
     assert registry.async_get_issue(DOMAIN, "cannot_connect_test-entry") is not None
+
+
+async def test_non_communication_error_does_not_create_repair_issue(hass):
+    client = type(
+        "C",
+        (),
+        {"async_get_state": AsyncMock(side_effect=XiaomiVacuumApiClientError("bug"))},
+    )()
+    coord = _coord_with_client(hass, client)
+    with pytest.raises(UpdateFailed):
+        await coord._async_update_data()
+    registry = ir.async_get(hass)
+    assert registry.async_get_issue(DOMAIN, "cannot_connect_test-entry") is None
 
 
 async def test_update_success_clears_repair_issue(hass, sample_state):
