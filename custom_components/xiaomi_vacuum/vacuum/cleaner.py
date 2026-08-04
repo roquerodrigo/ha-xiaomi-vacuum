@@ -165,7 +165,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
     async def async_send_command(
         self,
         command: str,
-        params: dict[str, object] | list[object] | None = None,  # noqa: ARG002
+        params: dict[str, object] | list[object] | None = None,
         **kwargs: object,  # noqa: ARG002
     ) -> None:
         """Invoke a whitelisted MIoT action by name (see spec.send_commands)."""
@@ -179,6 +179,14 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
                     "command": command,
                     "valid_commands": ", ".join(send_commands),
                 },
+            )
+        if params:
+            # Every whitelisted action is parameterless; silently dropping user
+            # input would let a mistyped call look like it worked.
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="send_command_params_unsupported",
+                translation_placeholders={"command": command},
             )
         await self._client.async_call_action(action["siid"], action["aiid"])
         self._schedule_refresh()
