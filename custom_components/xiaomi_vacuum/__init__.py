@@ -25,6 +25,7 @@ from .coordinator import XiaomiVacuumDataUpdateCoordinator
 from .data import XiaomiVacuumData
 from .map_coordinator import XiaomiVacuumMapCoordinator
 from .repairs import (
+    async_clear_cannot_connect,
     async_clear_unsupported_model,
     async_raise_cannot_connect,
     async_raise_unsupported_model,
@@ -188,6 +189,15 @@ async def async_unload_entry(
 ) -> bool:
     """Handle removal of an entry."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_remove_entry(
+    hass: HomeAssistant,
+    entry: XiaomiVacuumConfigEntry,
+) -> None:
+    """Delete the per-entry repair issues when the entry itself is deleted."""
+    async_clear_cannot_connect(hass, entry)
+    async_clear_unsupported_model(hass, entry)
 
 
 async def async_reload_entry(
