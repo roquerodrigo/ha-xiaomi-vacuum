@@ -137,6 +137,7 @@ D109GL = ModelSpec(
         "three_times": 3,  # spec v2 adds a third repetition
     },
     mop_water_levels={
+        "off": 0,
         "level_1": 1,
         "level_2": 2,
         "level_3": 3,

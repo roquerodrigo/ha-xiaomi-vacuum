@@ -53,11 +53,11 @@ async def test_d109_creates_dust_arrest_button(hass, setup_integration):
     assert "button.aspirador_collect_dust" in entity_ids
 
 
-async def test_d109_mop_water_level_lacks_off_option(hass, setup_integration):
-    """X20 Max does not expose the 'off' (0) mop-water level that the S20+ has."""
+async def test_d109_mop_water_level_includes_off_option(hass, setup_integration):
+    """X20 Max publishes 0 = Off for mop-water level (spec v2, siid 2 / piid 10)."""
     select = hass.states.get("select.aspirador_mop_water_level")
     assert select is not None
-    assert "off" not in select.attributes["options"]
+    assert "off" in select.attributes["options"]
 
 
 async def test_d109_return_home_uses_vacuum_service(
