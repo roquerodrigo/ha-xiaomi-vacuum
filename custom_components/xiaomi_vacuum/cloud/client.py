@@ -119,13 +119,21 @@ class XiaomiCloud:
             LOGGER.debug("QR long-poll failed: %s", exc)
             return False
 
-        body = json.loads(text.replace("&&&START&&&", ""))
-        if "ssecurity" not in body:
+        try:
+            body = json.loads(text.replace("&&&START&&&", ""))
+        except ValueError:
+            LOGGER.debug("QR long-poll returned a non-JSON body")
+            return False
+        if not isinstance(body, dict) or "ssecurity" not in body:
             LOGGER.debug("QR long-poll returned without ssecurity: %s", body)
+            return False
+        user_id = body.get("userId")
+        if user_id is None:
+            LOGGER.debug("QR long-poll returned without userId: %s", body)
             return False
         connector = self._connector
         connector._ssecurity = body["ssecurity"]  # noqa: SLF001
-        connector._user_id = str(body["userId"])  # noqa: SLF001
+        connector._user_id = str(user_id)  # noqa: SLF001
         location = body.get("location")
         if not location:
             return False
@@ -222,7 +230,7 @@ class XiaomiCloud:
                     self._device.country,
                     self._device.device_id,
                 )
-            except (XiaomiCloudError, ValueError) as exc:
+            except XiaomiCloudError as exc:
                 LOGGER.debug("Failed to fetch fault texts: %s", exc)
                 return None
             self._fault_texts.update(texts)
@@ -238,4 +246,10 @@ class XiaomiCloud:
             )
         except requests.RequestException as exception:
             msg = f"Cannot reach the Xiaomi cloud: {_sanitized_error_text(exception)}"
+            raise XiaomiCloudConnectionError(msg) from exception
+        except ValueError as exception:
+            # A 200 response whose body is not decodable/parsable (proxy or
+            # captive-portal page, truncated body, session desync) surfaces as
+            # base64/JSON ValueErrors — infrastructure trouble, not a bug.
+            msg = f"Malformed response from the Xiaomi cloud: {exception}"
             raise XiaomiCloudConnectionError(msg) from exception
