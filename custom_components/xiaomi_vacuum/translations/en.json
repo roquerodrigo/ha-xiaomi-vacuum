@@ -207,6 +207,9 @@
     "exceptions": {
         "mop_mode_requires_pad": {
             "message": "Cannot select a mop mode: no mop pad detected. Attach the mop pad to the vacuum and try again."
+        },
+        "unknown_send_command": {
+            "message": "Unknown command '{command}'. Valid commands: {valid_commands}."
         }
     }
 }

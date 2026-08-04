@@ -172,9 +172,14 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         send_commands = self.spec.send_commands
         action = send_commands.get(command)
         if action is None:
-            valid = ", ".join(send_commands)
-            msg = f"Unknown command '{command}'. Valid commands: {valid}"
-            raise ServiceValidationError(msg)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="unknown_send_command",
+                translation_placeholders={
+                    "command": command,
+                    "valid_commands": ", ".join(send_commands),
+                },
+            )
         await self._client.async_call_action(action["siid"], action["aiid"])
         self._schedule_refresh()
 
