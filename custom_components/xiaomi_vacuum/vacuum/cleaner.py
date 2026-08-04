@@ -20,7 +20,7 @@ from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 if TYPE_CHECKING:
     from ..api import XiaomiVacuumApiClient  # noqa: TID252
-    from ..data import JsonValue  # noqa: TID252
+    from ..data import JsonValue, VacuumState  # noqa: TID252
     from ..spec import ModelSpec  # noqa: TID252
 
 
@@ -187,7 +187,11 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
 
     async def async_get_segments(self) -> list[Segment]:
         """Return the rooms reported by the vacuum (for HA's area mapping UI)."""
-        raw = self.coordinator.data.get("room_information")
+        # Reached through the vacuum/get_segments websocket command, which does
+        # not check availability — data is None while the robot has been
+        # offline since startup (offline-tolerant setup).
+        data: VacuumState | None = self.coordinator.data
+        raw = data.get("room_information") if data else None
         return _parse_segments(raw)
 
     async def async_clean_segments(
