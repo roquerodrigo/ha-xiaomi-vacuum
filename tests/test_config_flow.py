@@ -340,6 +340,22 @@ async def test_reconfigure_reuses_session_and_discovers(hass):
     assert result == {"type": "form"}
 
 
+async def test_discover_routes_to_qr_when_session_rejected(hass):
+    """An expired session must request a fresh login, not tell the user to retry."""
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
+
+    handler = _handler(hass)
+    cloud = MagicMock()
+    cloud.async_list_devices = AsyncMock(side_effect=XiaomiCloudAuthError("401"))
+    handler._cloud = cloud
+    with patch.object(
+        handler, "async_step_qr", AsyncMock(return_value={"type": "qr"})
+    ) as step_qr:
+        result = await handler.async_step_discover()
+    step_qr.assert_awaited_once()
+    assert result == {"type": "qr"}
+
+
 async def test_finalize_updates_entry_on_reconfigure(hass):
     handler = _handler(hass)
     entry = MagicMock()

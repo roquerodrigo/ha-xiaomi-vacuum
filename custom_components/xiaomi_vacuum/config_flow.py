@@ -220,28 +220,9 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     ) -> config_entries.ConfigFlowResult:
         """List vacuums in the account; auto-pick if there's exactly one."""
         if not self._devices:
-            if self._cloud is None:
-                return self.async_abort(reason="cloud_list_failed")
-            try:
-                # Fetch every device first (unfiltered) so we can give the user a
-                # useful hint when the vacuum they expect is missing — usually a
-                # wrong cloud region, or a device whose model does not match the
-                # `xiaomi.vacuum.` prefix this integration recognises.
-                all_devices = await self._cloud.async_list_devices()
-            except XiaomiCloudError as exc:
-                LOGGER.warning("Failed to list devices: %s", exc)
-                return self.async_abort(reason="cloud_list_failed")
-            LOGGER.debug(
-                "Cloud returned %d device(s): %s",
-                len(all_devices),
-                {d.model for d in all_devices},
-            )
-            self._devices = [
-                d for d in all_devices if d.model.startswith(VACUUM_MODEL_PREFIX)
-            ]
-            if not self._devices:
-                reason = self._missing_vacuum_reason(all_devices)
-                return self.async_abort(reason=reason)
+            failure = await self._async_load_devices()
+            if failure is not None:
+                return failure
 
         if len(self._devices) == 1:
             return await self._finalize(self._devices[0])
@@ -262,6 +243,39 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="discover",
             data_schema=vol.Schema({vol.Required(_DEVICE_PICK): vol.In(options)}),
         )
+
+    async def _async_load_devices(self) -> config_entries.ConfigFlowResult | None:
+        """Populate the vacuum list from the account; a result means failure."""
+        if self._cloud is None:
+            return self.async_abort(reason="cloud_list_failed")
+        try:
+            # Fetch every device first (unfiltered) so we can give the user a
+            # useful hint when the vacuum they expect is missing — usually a
+            # wrong cloud region, or a device whose model does not match the
+            # `xiaomi.vacuum.` prefix this integration recognises.
+            all_devices = await self._cloud.async_list_devices()
+        except XiaomiCloudAuthError:
+            # A rejected session (reconfigure reusing an expired one) is not
+            # fixed by "try again later" — get a fresh login instead.
+            LOGGER.warning(
+                "Cloud session rejected while listing devices; "
+                "requesting a fresh QR login"
+            )
+            return await self.async_step_qr()
+        except XiaomiCloudError as exc:
+            LOGGER.warning("Failed to list devices: %s", exc)
+            return self.async_abort(reason="cloud_list_failed")
+        LOGGER.debug(
+            "Cloud returned %d device(s): %s",
+            len(all_devices),
+            {d.model for d in all_devices},
+        )
+        self._devices = [
+            d for d in all_devices if d.model.startswith(VACUUM_MODEL_PREFIX)
+        ]
+        if not self._devices:
+            return self.async_abort(reason=self._missing_vacuum_reason(all_devices))
+        return None
 
     @staticmethod
     def _missing_vacuum_reason(all_devices: list[XiaomiDeviceInfo]) -> str:
