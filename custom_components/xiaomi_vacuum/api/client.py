@@ -178,13 +178,7 @@ class XiaomiVacuumApiClient:
         if fan_speed not in speeds:
             msg = f"Unknown fan speed: {fan_speed}"
             raise XiaomiVacuumApiClientError(msg)
-        prop = self._spec.property_mapping[Property.FAN_SPEED]
-        await self._run(
-            self._device.set_property_by,
-            prop["siid"],
-            prop["piid"],
-            speeds[fan_speed],
-        )
+        await self.async_set_property(Property.FAN_SPEED, speeds[fan_speed])
 
     async def async_set_sweep_mop_type(self, mode: str) -> None:
         """Set sweep/mop mode (sweep / mop / sweep_mop / sweep_before_mopping)."""
