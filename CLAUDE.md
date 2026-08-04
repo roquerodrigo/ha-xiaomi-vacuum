@@ -61,9 +61,8 @@ here.
   committed, `[tool.uv] package = false`).
 - Dependency groups in `pyproject.toml`: `dev` (HA test harness, pytest,
   `python-miio`, `vacuum-map-parser-xiaomi`) and `lint` (`ruff`, `mypy`).
-- `scripts/setup` is stale and broken — it installs `requirements.txt`,
-  which was removed when CI migrated to `uv` (dependencies now live in
-  `pyproject.toml`). Use `uv sync` for local dev instead.
+- Local dev setup is `uv sync` (there is no setup script; dependencies live
+  in `pyproject.toml`).
 - `scripts/develop` — runs a real local HA instance against this
   integration (`config/` dir, symlink-free via `PYTHONPATH`).
 - `scripts/qr_test.py` — standalone CLI to exercise the Xiaomi cloud QR-login
