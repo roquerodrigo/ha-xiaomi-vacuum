@@ -178,7 +178,6 @@ async def async_setup_entry(
         await map_coordinator.async_refresh()
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     return True
 
@@ -198,11 +197,3 @@ async def async_remove_entry(
     """Delete the per-entry repair issues when the entry itself is deleted."""
     async_clear_cannot_connect(hass, entry)
     async_clear_unsupported_model(hass, entry)
-
-
-async def async_reload_entry(
-    hass: HomeAssistant,
-    entry: XiaomiVacuumConfigEntry,
-) -> None:
-    """Reload config entry."""
-    await hass.config_entries.async_reload(entry.entry_id)
