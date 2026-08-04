@@ -32,9 +32,8 @@ class XiaomiVacuumBatterySensor(XiaomiVacuumEntity, SensorEntity):
         charging_state = self.coordinator.data.get("charging_state")
         if charging_state is None:
             return None
+        slug = self.coordinator.spec.charging_state_slugs.get(charging_state)
         return {
-            "charging": charging_state == 1,
-            "charging_state": self.coordinator.spec.charging_state_slugs.get(
-                charging_state
-            ),
+            "charging": slug == "charging",
+            "charging_state": slug,
         }

@@ -26,4 +26,7 @@ class XiaomiVacuumBatteryChargingSensor(XiaomiVacuumEntity, BinarySensorEntity):
     def is_on(self) -> bool | None:
         """Return True while charging, None when the state is unknown."""
         charging_state = self.coordinator.data.get("charging_state")
-        return charging_state == 1 if charging_state is not None else None
+        if charging_state is None:
+            return None
+        slugs = self.coordinator.spec.charging_state_slugs
+        return slugs.get(charging_state) == "charging"
