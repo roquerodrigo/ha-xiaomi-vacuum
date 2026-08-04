@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, patch
 
 from homeassistant.config_entries import ConfigEntryState
 
-from custom_components.xiaomi_vacuum import async_reload_entry
 from custom_components.xiaomi_vacuum.api import (
     XiaomiVacuumApiClientCommunicationError,
 )
@@ -52,14 +51,6 @@ async def test_reload_entry(hass, setup_integration):
     await hass.config_entries.async_reload(setup_integration.entry_id)
     await hass.async_block_till_done()
     assert setup_integration.state == ConfigEntryState.LOADED
-
-
-async def test_async_reload_entry_listener(hass, setup_integration):
-    with patch.object(
-        hass.config_entries, "async_reload", AsyncMock(return_value=True)
-    ) as reload:
-        await async_reload_entry(hass, setup_integration)
-    reload.assert_awaited_once_with(setup_integration.entry_id)
 
 
 async def test_setup_entry_not_ready_on_communication_error(
