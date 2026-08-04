@@ -319,6 +319,18 @@ async def test_async_get_segments_via_entity(hass, setup_integration):
     assert len(segs) == 2
 
 
+async def test_async_get_segments_empty_while_offline_since_startup(
+    hass, setup_integration
+):
+    """The get_segments websocket path must not crash when data is None."""
+    coord = setup_integration.runtime_data.coordinator
+    from custom_components.xiaomi_vacuum.vacuum import XiaomiVacuum
+
+    entity = XiaomiVacuum(coordinator=coord)
+    coord.data = None
+    assert await entity.async_get_segments() == []
+
+
 async def test_async_clean_segments_via_entity(
     hass, setup_integration, mock_miot_device
 ):
