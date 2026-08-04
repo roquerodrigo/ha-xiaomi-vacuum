@@ -370,6 +370,46 @@ async def test_async_resolve_device_maps_network_failure(hass):
         await cloud.async_resolve_device("abc")
 
 
+async def test_run_maps_malformed_response_to_connection_error(hass):
+    """A 200 body that fails base64/JSON decoding surfaces as a typed error."""
+    cloud = XiaomiCloud(hass, "us")
+    with (
+        patch.object(
+            cloud._connector,
+            "find_device",
+            side_effect=json.JSONDecodeError("Expecting value", "<html>", 0),
+        ),
+        pytest.raises(XiaomiCloudConnectionError, match="Malformed response"),
+    ):
+        await cloud.async_resolve_device("abc")
+
+
+def test_start_qr_login_raises_on_http_error():
+    from custom_components.xiaomi_vacuum.cloud.errors import (
+        XiaomiCloudConnectionError as ConnectionErr,
+    )
+
+    sess = MagicMock()
+    sess.get.return_value = _resp(status=503, text="busy")
+    c = _connector_with_session(sess)
+    with pytest.raises(ConnectionErr, match="HTTP 503"):
+        c.start_qr_login()
+
+
+def test_start_qr_login_raises_on_unexpected_payload():
+    sess = MagicMock()
+    sess.get.return_value = _resp(status=200, text='{"unexpected": true}')
+    c = _connector_with_session(sess)
+    with pytest.raises(XiaomiCloudError, match="unexpected payload"):
+        c.start_qr_login()
+
+
+async def test_async_poll_qr_login_returns_false_on_non_json_body(hass):
+    cloud = XiaomiCloud(hass, "us")
+    with _patch_aiohttp(_aio_resp(text="<html>maintenance</html>")):
+        assert await cloud._async_poll_qr_login("https://lp", 1) is False
+
+
 async def test_async_call_action_maps_network_failure(hass):
     cloud = XiaomiCloud(hass, "us")
     cloud._logged_in = True

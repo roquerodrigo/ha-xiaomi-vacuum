@@ -71,9 +71,21 @@ class _XiaomiCloudConnector:
             params=params,
             timeout=10,
         )
-        body = cast("QrInit", self._to_json(response.text))
-        qr_bytes = self._session.get(body["qr"], timeout=10).content
-        return qr_bytes, body["lp"], body.get("timeout", 60)
+        if response.status_code != _HTTP_OK:
+            msg = f"QR login start failed with HTTP {response.status_code}"
+            raise XiaomiCloudConnectionError(msg)
+        raw_body = self._to_json(response.text)
+        if not isinstance(raw_body, dict):
+            msg = "QR login start returned an unexpected payload"
+            raise XiaomiCloudError(msg)
+        body = cast("QrInit", raw_body)
+        qr_url = body.get("qr")
+        long_polling_url = body.get("lp")
+        if not qr_url or not long_polling_url:
+            msg = "QR login start returned an unexpected payload"
+            raise XiaomiCloudError(msg)
+        qr_bytes = self._session.get(qr_url, timeout=10).content
+        return qr_bytes, long_polling_url, body.get("timeout", 60)
 
     def poll_qr_login(self, long_polling_url: str, timeout: int) -> bool:
         """
