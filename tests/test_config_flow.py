@@ -118,6 +118,21 @@ async def test_refresh_qr_handles_start_failure(hass):
     assert handler._qr_image is None
 
 
+async def test_refresh_qr_clears_stale_state_on_failure(hass):
+    """A failed refresh must not leave an expired QR image/long-poll URL behind."""
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudError
+
+    handler = _handler(hass)
+    cloud = MagicMock()
+    cloud.async_qr_start = AsyncMock(side_effect=XiaomiCloudError("nope"))
+    handler._cloud = cloud
+    handler._qr_image = b"EXPIRED"
+    handler._qr_lp_url = "https://expired-lp"
+    await handler._refresh_qr()
+    assert handler._qr_image is None
+    assert handler._qr_lp_url is None
+
+
 async def test_refresh_qr_populates_state_on_success(hass):
     handler = _handler(hass)
     cloud = MagicMock()
