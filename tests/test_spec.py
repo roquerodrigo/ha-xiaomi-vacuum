@@ -69,9 +69,9 @@ def test_d109_has_dock_only_capabilities():
     assert Capability.OBSTACLE_AVOIDANCE in caps
 
 
-def test_b108_mop_water_levels_include_off():
+def test_mop_water_levels_include_off_on_both_models():
     assert B108GL.mop_water_levels["off"] == 0
-    assert "off" not in D109GL.mop_water_levels
+    assert D109GL.mop_water_levels["off"] == 0
 
 
 def test_b108_return_home_and_continue_use_different_services():

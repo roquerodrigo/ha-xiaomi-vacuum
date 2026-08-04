@@ -104,7 +104,6 @@ B108GL = ModelSpec(
     fan_speeds=dict(FAN_SPEEDS),
     sweep_mop_types=dict(SWEEP_MOP_TYPES),
     clean_times=dict(CLEAN_TIMES),
-    # The S20+ exposes an explicit "off" level the X20 Max does not have.
     mop_water_levels={
         "off": 0,
         "level_1": 1,
