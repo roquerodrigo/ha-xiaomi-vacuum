@@ -14,5 +14,5 @@
     "vacuum-map-parser-xiaomi>=0.1.4,<0.2",
     "pycryptodome>=3.20"
   ],
-  "version": "2.1.0"
+  "version": "2.1.1"
 }

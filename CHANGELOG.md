@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.1.0...v2.1.1) (2026-08-07)
+
+
+### Miscellaneous Chores
+
+* add an editorconfig with the shared formatting rules ([b69efd8](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/b69efd86d1a148ac25295c7c2ea1d0e92fe9d42c))
+
 ## [2.1.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.0.1...v2.1.0) (2026-08-07)
 
 
