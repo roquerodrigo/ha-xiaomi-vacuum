@@ -54,6 +54,27 @@ class _XiaomiCloudConnector:
         self._user_id: str | None = None
         self._service_token: str | None = None
 
+    @property
+    def ssecurity(self) -> str | None:
+        """The session's signing secret, or None before login."""
+        return self._ssecurity
+
+    @property
+    def user_id(self) -> str | None:
+        """The logged-in Xiaomi account id, or None before login."""
+        return self._user_id
+
+    @property
+    def service_token(self) -> str | None:
+        """The session's service token, or None before login."""
+        return self._service_token
+
+    def restore_session(self, ssecurity: str, user_id: str, service_token: str) -> None:
+        """Adopt previously issued session tokens instead of a fresh QR login."""
+        self._ssecurity = ssecurity
+        self._user_id = user_id
+        self._service_token = service_token
+
     def start_qr_login(self) -> tuple[bytes, str, int]:
         """Request a fresh QR code; returns (png_bytes, long_polling_url, timeout_s)."""
         params = {
@@ -134,12 +155,13 @@ class _XiaomiCloudConnector:
 
     def find_device(self, token: str, country: str) -> XiaomiDeviceInfo | None:
         """Locate a device by miIO token in the given country."""
-        for device in self._iter_devices(country):
+        for device in self.iter_devices(country):
             if device.token.casefold() == token.casefold():
                 return device
         return None
 
-    def _iter_devices(self, country: str) -> Iterator[XiaomiDeviceInfo]:
+    def iter_devices(self, country: str) -> Iterator[XiaomiDeviceInfo]:
+        """Yield every device of every home (own and shared) in the country."""
         for home in self._iter_homes(country):
             yield from self._iter_home_devices(
                 country, int(home["id"]), int(home["uid"])

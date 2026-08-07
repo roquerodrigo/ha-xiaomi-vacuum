@@ -147,14 +147,14 @@ def test_find_device_returns_match():
         token="abc",
         country="cn",
     )
-    with patch.object(c, "_iter_devices", return_value=iter([target])):
+    with patch.object(c, "iter_devices", return_value=iter([target])):
         result = c.find_device("ABC", "cn")
     assert result is target
 
 
 def test_find_device_returns_none_when_no_match():
     c = _XiaomiCloudConnector()
-    with patch.object(c, "_iter_devices", return_value=iter([])):
+    with patch.object(c, "iter_devices", return_value=iter([])):
         assert c.find_device("nope", "cn") is None
 
 
@@ -312,7 +312,8 @@ async def test_async_poll_qr_login_returns_false_when_location_missing(hass):
     body = '&&&START&&&{"ssecurity":"S","userId":42}'
     with _patch_aiohttp(_aio_resp(text=body)):
         assert await cloud._async_poll_qr_login("https://lp", 1) is False
-    assert cloud._connector._ssecurity == "S"
+    # An incomplete login must not leave partial tokens on the connector.
+    assert cloud._connector.ssecurity is None
 
 
 async def test_async_poll_qr_login_returns_false_when_token_fetch_non_200(hass):
@@ -572,14 +573,14 @@ def test_iter_home_devices_empty_when_no_result():
         assert list(c._iter_home_devices("us", 1, 10)) == []
 
 
-def test_iter_devices_walks_homes_then_devices():
+def testiter_devices_walks_homes_then_devices():
     c = _XiaomiCloudConnector()
     target = XiaomiDeviceInfo("d", "x", "m", "abc", "us")
     with (
         patch.object(c, "_iter_homes", return_value=iter([{"id": 1, "uid": 10}])),
         patch.object(c, "_iter_home_devices", return_value=iter([target])) as ihd,
     ):
-        devices = list(c._iter_devices("us"))
+        devices = list(c.iter_devices("us"))
     assert devices == [target]
     ihd.assert_called_once_with("us", 1, 10)
 
@@ -719,7 +720,7 @@ async def test_async_list_devices_filters_by_model_prefix(hass):
     vacuum = XiaomiDeviceInfo("d", "x", "xiaomi.vacuum.d109gl", "abc", "us")
     lamp = XiaomiDeviceInfo("l", "lamp", "yeelink.light.1", "def", "us")
     with patch.object(
-        cloud._connector, "_iter_devices", return_value=iter([vacuum, lamp])
+        cloud._connector, "iter_devices", return_value=iter([vacuum, lamp])
     ):
         devices = await cloud.async_list_devices(model_prefix="xiaomi.vacuum.")
     assert devices == [vacuum]
@@ -730,9 +731,7 @@ async def test_async_list_devices_prefix_matches_b108gl(hass):
     cloud = XiaomiCloud(hass, "us")
     x20 = XiaomiDeviceInfo("d2", "x20", "xiaomi.vacuum.b108gl", "abc", "us")
     lamp = XiaomiDeviceInfo("l", "lamp", "yeelink.light.1", "def", "us")
-    with patch.object(
-        cloud._connector, "_iter_devices", return_value=iter([x20, lamp])
-    ):
+    with patch.object(cloud._connector, "iter_devices", return_value=iter([x20, lamp])):
         devices = await cloud.async_list_devices(model_prefix="xiaomi.vacuum.")
     assert devices == [x20]
 
@@ -742,7 +741,7 @@ async def test_async_list_devices_returns_all_without_prefix(hass):
     vacuum = XiaomiDeviceInfo("d", "x", "xiaomi.vacuum.d109gl", "abc", "us")
     lamp = XiaomiDeviceInfo("l", "lamp", "yeelink.light.1", "def", "us")
     with patch.object(
-        cloud._connector, "_iter_devices", return_value=iter([vacuum, lamp])
+        cloud._connector, "iter_devices", return_value=iter([vacuum, lamp])
     ):
         devices = await cloud.async_list_devices()
     assert devices == [vacuum, lamp]
