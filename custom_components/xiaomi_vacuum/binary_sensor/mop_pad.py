@@ -8,7 +8,7 @@ from homeassistant.const import EntityCategory
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 
-class XiaomiVacuumMopPadSensor(XiaomiVacuumEntity, BinarySensorEntity):
+class XiaomiVacuumMopPadBinarySensor(XiaomiVacuumEntity, BinarySensorEntity):
     """
     Whether the mop pad is physically attached to the vacuum.
 

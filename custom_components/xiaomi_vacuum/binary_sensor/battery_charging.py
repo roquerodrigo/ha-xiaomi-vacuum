@@ -11,7 +11,7 @@ from homeassistant.const import EntityCategory
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 
-class XiaomiVacuumBatteryChargingSensor(XiaomiVacuumEntity, BinarySensorEntity):
+class XiaomiVacuumBatteryChargingBinarySensor(XiaomiVacuumEntity, BinarySensorEntity):
     """Whether the vacuum battery is currently charging."""
 
     _attr_device_class = BinarySensorDeviceClass.BATTERY_CHARGING
