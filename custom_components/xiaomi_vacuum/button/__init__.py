@@ -12,10 +12,11 @@ if TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
     from ..data import XiaomiVacuumConfigEntry  # noqa: TID252
+    from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 __all__ = ["XiaomiVacuumDustArrestButton"]
 
-_BUTTON_CLASSES: dict[EntityKey, type] = {
+_BUTTON_CLASSES: dict[EntityKey, type[XiaomiVacuumEntity]] = {
     EntityKey.DUST_ARREST_BUTTON: XiaomiVacuumDustArrestButton,
 }
 

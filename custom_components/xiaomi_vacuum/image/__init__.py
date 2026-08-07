@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 __all__ = ["XiaomiVacuumMap"]
 
-_IMAGE_CLASSES: dict[EntityKey, type] = {
+_IMAGE_CLASSES: dict[EntityKey, type[XiaomiVacuumMap]] = {
     EntityKey.MAP_IMAGE: XiaomiVacuumMap,
 }
 
