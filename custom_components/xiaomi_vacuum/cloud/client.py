@@ -66,9 +66,11 @@ class XiaomiCloud:
     ) -> XiaomiCloud:
         """Build a logged-in client from previously saved session tokens."""
         instance = cls(hass, country)
-        instance._connector._ssecurity = ssecurity  # noqa: SLF001
-        instance._connector._service_token = service_token  # noqa: SLF001
-        instance._connector._user_id = user_id  # noqa: SLF001
+        instance._connector.restore_session(
+            ssecurity=ssecurity,
+            user_id=user_id,
+            service_token=service_token,
+        )
         instance._logged_in = True
         return instance
 
@@ -80,9 +82,9 @@ class XiaomiCloud:
     def session_tokens(self) -> CloudSessionTokens:
         """Expose the active session tokens for persistence in the config entry."""
         return {
-            "ssecurity": self._connector._ssecurity,  # noqa: SLF001
-            "service_token": self._connector._service_token,  # noqa: SLF001
-            "user_id": self._connector._user_id,  # noqa: SLF001
+            "ssecurity": self._connector.ssecurity,
+            "service_token": self._connector.service_token,
+            "user_id": self._connector.user_id,
         }
 
     async def async_qr_start(self) -> tuple[bytes, str, int]:
@@ -152,9 +154,6 @@ class XiaomiCloud:
         if user_id is None:
             LOGGER.debug("QR long-poll returned without userId: %s", body)
             return False
-        connector = self._connector
-        connector._ssecurity = body["ssecurity"]  # noqa: SLF001
-        connector._user_id = str(user_id)  # noqa: SLF001
         location = body.get("location")
         if not location:
             return False
@@ -171,7 +170,11 @@ class XiaomiCloud:
             return False
         if not token_cookie:
             return False
-        connector._service_token = token_cookie.value  # noqa: SLF001
+        self._connector.restore_session(
+            ssecurity=body["ssecurity"],
+            user_id=str(user_id),
+            service_token=token_cookie.value,
+        )
         return True
 
     async def async_resolve_device(self, token: str) -> XiaomiDeviceInfo:
@@ -193,7 +196,7 @@ class XiaomiCloud:
     ) -> list[XiaomiDeviceInfo]:
         """Enumerate every device in the account whose model starts with prefix."""
         devices = await self._run(
-            lambda: list(self._connector._iter_devices(self._country))  # noqa: SLF001
+            lambda: list(self._connector.iter_devices(self._country))
         )
         if not model_prefix:
             return devices

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# ruff: noqa: T201, S108, SLF001, D103
+# ruff: noqa: T201, S108, D103
 """
 Standalone QR-login tester for the Xiaomi cloud connector.
 
@@ -58,12 +58,12 @@ def main() -> int:
         return 1
 
     print("[3/3] Success! Session tokens:")
-    print(f"      ssecurity:     {connector._ssecurity}")
-    print(f"      service_token: {connector._service_token[:24]}…")
-    print(f"      user_id:       {connector._user_id}")
+    print(f"      ssecurity:     {connector.ssecurity}")
+    print(f"      service_token: {connector.service_token[:24]}…")
+    print(f"      user_id:       {connector.user_id}")
 
     print("\nOptionally: device list lookup")
-    devices = list(connector._iter_devices(country))
+    devices = list(connector.iter_devices(country))
     print(f"  found {len(devices)} device(s) in country={country}:")
     for d in devices:
         print(f"   - {d.name!r} model={d.model} did={d.device_id} token={d.token[:6]}…")
