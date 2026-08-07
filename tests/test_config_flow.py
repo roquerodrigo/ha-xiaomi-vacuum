@@ -356,6 +356,29 @@ async def test_discover_routes_to_qr_when_session_rejected(hass):
     assert result == {"type": "qr"}
 
 
+async def test_discover_session_rejection_drops_finished_qr_task(hass):
+    """
+    The done task of the previous login must not satisfy the fresh QR step.
+
+    After a successful scan the finished task stays on the handler; if the
+    cloud then rejects the session while listing devices, `async_step_qr`
+    would read that stale task as "already scanned" and bounce straight back
+    to discover forever instead of showing a new QR code.
+    """
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
+
+    handler = _handler(hass)
+    cloud = MagicMock()
+    cloud.async_list_devices = AsyncMock(side_effect=XiaomiCloudAuthError("401"))
+    handler._cloud = cloud
+    finished_task = MagicMock()
+    finished_task.done = MagicMock(return_value=True)
+    handler._qr_task = finished_task
+    with patch.object(handler, "async_step_qr", AsyncMock(return_value={"type": "qr"})):
+        await handler.async_step_discover()
+    assert handler._qr_task is None
+
+
 async def test_finalize_updates_entry_on_reconfigure(hass):
     handler = _handler(hass)
     entry = MagicMock()

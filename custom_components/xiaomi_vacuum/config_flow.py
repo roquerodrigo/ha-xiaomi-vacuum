@@ -256,11 +256,15 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             all_devices = await self._cloud.async_list_devices()
         except XiaomiCloudAuthError:
             # A rejected session (reconfigure reusing an expired one) is not
-            # fixed by "try again later" — get a fresh login instead.
+            # fixed by "try again later" — get a fresh login instead. The
+            # finished task of the previous login must be dropped first:
+            # `async_step_qr` treats a done task as a completed scan and would
+            # bounce straight back to discover in an endless loop.
             LOGGER.warning(
                 "Cloud session rejected while listing devices; "
                 "requesting a fresh QR login"
             )
+            self._qr_task = None
             return await self.async_step_qr()
         except XiaomiCloudError as exc:
             LOGGER.warning("Failed to list devices: %s", exc)
