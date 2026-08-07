@@ -5,19 +5,19 @@ from homeassistant.const import PERCENTAGE
 
 
 async def test_battery_sensor_state(hass, setup_integration):
-    state = hass.states.get("sensor.aspirador_battery")
+    state = hass.states.get("sensor.vacuum_battery")
     assert state is not None
     assert state.state == "99"
 
 
 async def test_battery_sensor_attributes(hass, setup_integration):
-    state = hass.states.get("sensor.aspirador_battery")
+    state = hass.states.get("sensor.vacuum_battery")
     assert state.attributes["unit_of_measurement"] == PERCENTAGE
     assert state.attributes["device_class"] == SensorDeviceClass.BATTERY
 
 
 async def test_battery_sensor_charging_attribute(hass, setup_integration):
-    state = hass.states.get("sensor.aspirador_battery")
+    state = hass.states.get("sensor.vacuum_battery")
     # SAMPLE_STATE has charging_state:1 -> charging
     assert state.attributes["charging"] is True
     assert state.attributes["charging_state"] == "charging"
@@ -27,7 +27,7 @@ async def test_battery_sensor_not_charging(hass, setup_integration):
     coordinator = setup_integration.runtime_data.coordinator
     coordinator.async_set_updated_data({**coordinator.data, "charging_state": 2})
     await hass.async_block_till_done()
-    state = hass.states.get("sensor.aspirador_battery")
+    state = hass.states.get("sensor.vacuum_battery")
     assert state.attributes["charging"] is False
     assert state.attributes["charging_state"] == "not_charging"
 
@@ -38,13 +38,13 @@ async def test_battery_sensor_charging_unknown(hass, setup_integration):
     data.pop("charging_state", None)
     coordinator.async_set_updated_data(data)
     await hass.async_block_till_done()
-    state = hass.states.get("sensor.aspirador_battery")
+    state = hass.states.get("sensor.vacuum_battery")
     # no charging_state -> attributes omitted
     assert "charging" not in state.attributes
 
 
 async def test_error_sensor_ok_when_no_fault(hass, setup_integration):
-    state = hass.states.get("sensor.aspirador_error")
+    state = hass.states.get("sensor.vacuum_error")
     assert state is not None
     # sample_state has fault == 0 -> healthy
     assert state.state == "OK"
@@ -59,7 +59,7 @@ async def test_error_sensor_shows_localized_cloud_text(hass, setup_integration):
     coordinator.async_set_updated_data(data)
     await hass.async_block_till_done()
 
-    state = hass.states.get("sensor.aspirador_error")
+    state = hass.states.get("sensor.vacuum_error")
     assert state.state == "Não foi possível voltar à base para carregar."
     assert state.attributes["fault_code"] == 210009
 
@@ -72,7 +72,7 @@ async def test_error_sensor_falls_back_to_code(hass, setup_integration):
     coordinator.async_set_updated_data(data)
     await hass.async_block_till_done()
 
-    state = hass.states.get("sensor.aspirador_error")
+    state = hass.states.get("sensor.vacuum_error")
     assert state.state == "Error 210009"
 
 
@@ -83,7 +83,7 @@ async def test_error_sensor_unknown_when_fault_missing(hass, setup_integration):
     coordinator.async_set_updated_data(data)
     await hass.async_block_till_done()
 
-    state = hass.states.get("sensor.aspirador_error")
+    state = hass.states.get("sensor.vacuum_error")
     # native_value is None -> HA reports "unknown"
     assert state.state == "unknown"
     assert state.attributes["fault_code"] is None
@@ -91,10 +91,10 @@ async def test_error_sensor_unknown_when_fault_missing(hass, setup_integration):
 
 async def test_consumable_life_sensors(hass, setup_integration):
     for eid, expected in (
-        ("sensor.aspirador_mop_life", "85"),
-        ("sensor.aspirador_main_brush_life", "71"),
-        ("sensor.aspirador_side_brush_life", "90"),
-        ("sensor.aspirador_filter_life", "70"),
+        ("sensor.vacuum_mop_life", "85"),
+        ("sensor.vacuum_main_brush_life", "71"),
+        ("sensor.vacuum_side_brush_life", "90"),
+        ("sensor.vacuum_filter_life", "70"),
     ):
         state = hass.states.get(eid)
         assert state is not None, eid
@@ -103,7 +103,7 @@ async def test_consumable_life_sensors(hass, setup_integration):
 
 
 async def test_status_sensor(hass, setup_integration):
-    state = hass.states.get("sensor.aspirador_status")
+    state = hass.states.get("sensor.vacuum_status")
     assert state is not None
     # SAMPLE_STATE has status:2 -> "charging"
     assert state.state == "charging"
@@ -113,7 +113,7 @@ async def test_status_sensor(hass, setup_integration):
     coordinator = setup_integration.runtime_data.coordinator
     coordinator.async_set_updated_data({**coordinator.data, "status": 5})
     await hass.async_block_till_done()
-    assert hass.states.get("sensor.aspirador_status").state == "paused"
+    assert hass.states.get("sensor.vacuum_status").state == "paused"
 
 
 async def test_status_sensor_unknown_code(hass, setup_integration):
@@ -121,7 +121,7 @@ async def test_status_sensor_unknown_code(hass, setup_integration):
     # an unmapped status code -> None (HA reports "unknown")
     coordinator.async_set_updated_data({**coordinator.data, "status": 999})
     await hass.async_block_till_done()
-    assert hass.states.get("sensor.aspirador_status").state in (
+    assert hass.states.get("sensor.vacuum_status").state in (
         "unknown",
         "unavailable",
     )
@@ -129,11 +129,11 @@ async def test_status_sensor_unknown_code(hass, setup_integration):
 
 async def test_error_code_sensor(hass, setup_integration):
     # healthy -> 0
-    state = hass.states.get("sensor.aspirador_error_code")
+    state = hass.states.get("sensor.vacuum_error_code")
     assert state is not None
     assert state.state == "0"
 
     coordinator = setup_integration.runtime_data.coordinator
     coordinator.async_set_updated_data({**coordinator.data, "fault": 210009})
     await hass.async_block_till_done()
-    assert hass.states.get("sensor.aspirador_error_code").state == "210009"
+    assert hass.states.get("sensor.vacuum_error_code").state == "210009"

@@ -63,7 +63,7 @@ async def test_setup_entry_not_ready_on_communication_error(
         data={
             CONF_HOST: "192.168.1.50",
             CONF_TOKEN: "0" * 32,
-            CONF_NAME: "Aspirador",
+            CONF_NAME: "Vacuum",
         },
         unique_id="AA:BB:CC:DD:EE:FF",
     )
@@ -96,7 +96,7 @@ async def test_setup_offline_with_cached_info_loads(
         data={
             CONF_HOST: "192.168.1.50",
             CONF_TOKEN: "0" * 32,
-            CONF_NAME: "Aspirador",
+            CONF_NAME: "Vacuum",
             CONF_DEVICE_INFO: {
                 "model": "xiaomi.vacuum.d109gl",
                 "mac_address": "AA:BB:CC:DD:EE:FF",
@@ -148,7 +148,7 @@ async def test_remove_entry_clears_repair_issues(
         data={
             CONF_HOST: "192.168.1.50",
             CONF_TOKEN: "0" * 32,
-            CONF_NAME: "Aspirador",
+            CONF_NAME: "Vacuum",
             CONF_DEVICE_INFO: {
                 "model": "xiaomi.vacuum.d109gl",
                 "mac_address": "AA:BB:CC:DD:EE:FF",
@@ -199,7 +199,7 @@ async def test_setup_entry_warns_when_cloud_session_invalid(
         data={
             CONF_HOST: "192.168.1.50",
             CONF_TOKEN: "0" * 32,
-            CONF_NAME: "Aspirador",
+            CONF_NAME: "Vacuum",
             CONF_CLOUD_COUNTRY: "cn",
             CONF_CLOUD_SSECURITY: "ssec",
             CONF_CLOUD_SERVICE_TOKEN: "tok",
@@ -237,7 +237,7 @@ async def test_setup_entry_starts_reauth_when_cloud_session_invalid(
         data={
             CONF_HOST: "192.168.1.50",
             CONF_TOKEN: "0" * 32,
-            CONF_NAME: "Aspirador",
+            CONF_NAME: "Vacuum",
             CONF_CLOUD_COUNTRY: "cn",
             CONF_CLOUD_SSECURITY: "ssec",
             CONF_CLOUD_SERVICE_TOKEN: "tok",
@@ -280,7 +280,7 @@ async def test_setup_entry_retries_when_cloud_unreachable(
         data={
             CONF_HOST: "192.168.1.50",
             CONF_TOKEN: "0" * 32,
-            CONF_NAME: "Aspirador",
+            CONF_NAME: "Vacuum",
             CONF_CLOUD_COUNTRY: "us",
             CONF_CLOUD_SSECURITY: "ssec",
             CONF_CLOUD_SERVICE_TOKEN: "tok",

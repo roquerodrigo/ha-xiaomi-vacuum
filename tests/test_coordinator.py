@@ -33,7 +33,7 @@ def _fake_entry(client_mock=None, spec=D109GL):
             "runtime_data": runtime,
             "async_on_unload": lambda *_: None,
             "entry_id": "test-entry",
-            "title": "Aspirador",
+            "title": "Vacuum",
             "data": {CONF_HOST: "192.168.1.50"},
         },
     )()

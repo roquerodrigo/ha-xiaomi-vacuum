@@ -17,7 +17,7 @@ def _fake_entry():
         (),
         {
             "entry_id": "repair-entry",
-            "title": "Aspirador",
+            "title": "Vacuum",
             "data": {CONF_HOST: "192.168.1.50"},
         },
     )()
@@ -31,7 +31,7 @@ async def test_raise_creates_issue_with_placeholders(hass):
     assert issue.severity == ir.IssueSeverity.WARNING
     assert issue.is_fixable is False
     assert issue.translation_placeholders == {
-        "name": "Aspirador",
+        "name": "Vacuum",
         "host": "192.168.1.50",
     }
 
@@ -56,7 +56,7 @@ async def test_raise_unsupported_model_creates_issue_with_model(hass):
     assert issue.severity == ir.IssueSeverity.WARNING
     assert issue.is_fixable is False
     assert issue.translation_placeholders == {
-        "name": "Aspirador",
+        "name": "Vacuum",
         "model": "xiaomi.vacuum.zzzzz",
     }
 

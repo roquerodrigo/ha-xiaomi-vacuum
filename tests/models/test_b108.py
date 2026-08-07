@@ -44,7 +44,7 @@ async def test_b108_has_no_dust_arrest_button(hass, setup_integration_b108):
 
 async def test_b108_mop_water_exposes_off_option(hass, setup_integration_b108):
     """S20+ exposes an explicit 'off' (0) mop-water level that the X20 Max lacks."""
-    select = hass.states.get("select.sala_s20_mop_water_level")
+    select = hass.states.get("select.s20_living_room_mop_water_level")
     assert select is not None
     assert "off" in select.attributes["options"]
 
@@ -56,7 +56,7 @@ async def test_b108_return_home_uses_battery_service(
     await hass.services.async_call(
         "vacuum",
         "return_to_base",
-        {"entity_id": "vacuum.sala_s20"},
+        {"entity_id": "vacuum.s20_living_room"},
         blocking=True,
     )
     # S20+ return-home = battery.start-charge = SIID 3 / aiid 1.

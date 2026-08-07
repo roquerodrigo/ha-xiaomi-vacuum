@@ -18,20 +18,20 @@ def test_status_to_activity_mapping(status_code, expected):
 
 
 async def test_vacuum_activity_docked(hass, setup_integration):
-    state = hass.states.get("vacuum.aspirador")
+    state = hass.states.get("vacuum.vacuum")
     assert state is not None
     # status:2 (Charging) -> DOCKED
     assert state.state == "docked"
 
 
 async def test_vacuum_fan_speed(hass, setup_integration):
-    state = hass.states.get("vacuum.aspirador")
+    state = hass.states.get("vacuum.vacuum")
     # fan_speed:2 -> "basic"
     assert state.attributes["fan_speed"] == "basic"
 
 
 async def test_vacuum_extra_attributes(hass, setup_integration):
-    state = hass.states.get("vacuum.aspirador")
+    state = hass.states.get("vacuum.vacuum")
     extras = state.attributes[DOMAIN]
     assert extras["status"] == "charging"
     assert extras["charging_state"] == "charging"
@@ -43,7 +43,7 @@ async def test_vacuum_activity_error_when_fault_active(hass, setup_integration):
     # status:2 would be DOCKED, but an active fault must force ERROR
     coord.async_set_updated_data({**coord.data, "status": 2, "fault": 210009})
     await hass.async_block_till_done()
-    state = hass.states.get("vacuum.aspirador")
+    state = hass.states.get("vacuum.vacuum")
     assert state.state == "error"
 
 
@@ -52,17 +52,17 @@ async def test_vacuum_break_status_without_fault_is_not_error(hass, setup_integr
     # status 19 (GoChargeBreak) with no active fault must NOT show error
     coord.async_set_updated_data({**coord.data, "status": 19, "fault": 0})
     await hass.async_block_till_done()
-    state = hass.states.get("vacuum.aspirador")
+    state = hass.states.get("vacuum.vacuum")
     assert state.state == "paused"
 
 
 async def test_vacuum_unknown_activity_when_no_status(hass, setup_integration):
-    state = hass.states.get("vacuum.aspirador")
+    state = hass.states.get("vacuum.vacuum")
     # current parsed state has status=2, force a new state without it
     coord = setup_integration.runtime_data.coordinator
     coord.async_set_updated_data({**coord.data, "status": None})
     await hass.async_block_till_done()
-    state = hass.states.get("vacuum.aspirador")
+    state = hass.states.get("vacuum.vacuum")
     assert state.state in ("unknown", "unavailable")
 
 
@@ -71,7 +71,7 @@ async def test_vacuum_start_calls_api(hass, setup_integration, mock_miot_device)
     await hass.services.async_call(
         "vacuum",
         "start",
-        {"entity_id": "vacuum.aspirador"},
+        {"entity_id": "vacuum.vacuum"},
         blocking=True,
     )
     # default state is status:2 (docked) -> fresh start (siid 2, aiid 1)
@@ -89,10 +89,10 @@ async def test_vacuum_start_patches_activity_to_cleaning(
     await hass.services.async_call(
         "vacuum",
         "start",
-        {"entity_id": "vacuum.aspirador"},
+        {"entity_id": "vacuum.vacuum"},
         blocking=True,
     )
-    state = hass.states.get("vacuum.aspirador")
+    state = hass.states.get("vacuum.vacuum")
     assert state.state == "cleaning"
 
 
@@ -110,7 +110,7 @@ async def test_vacuum_start_resumes_unless_parked(
     await hass.async_block_till_done()
     mock_miot_device.call_action_by.reset_mock()
     await hass.services.async_call(
-        "vacuum", "start", {"entity_id": "vacuum.aspirador"}, blocking=True
+        "vacuum", "start", {"entity_id": "vacuum.vacuum"}, blocking=True
     )
     mock_miot_device.call_action_by.assert_any_call(2, 8)
     assert all(
@@ -129,7 +129,7 @@ async def test_vacuum_start_fresh_when_idle(
     await hass.async_block_till_done()
     mock_miot_device.call_action_by.reset_mock()
     await hass.services.async_call(
-        "vacuum", "start", {"entity_id": "vacuum.aspirador"}, blocking=True
+        "vacuum", "start", {"entity_id": "vacuum.vacuum"}, blocking=True
     )
     mock_miot_device.call_action_by.assert_any_call(2, 1)
     assert all(
@@ -141,22 +141,22 @@ async def test_vacuum_start_fresh_when_idle(
 async def test_vacuum_stop_calls_api(hass, setup_integration, mock_miot_device):
     mock_miot_device.call_action_by.reset_mock()
     await hass.services.async_call(
-        "vacuum", "stop", {"entity_id": "vacuum.aspirador"}, blocking=True
+        "vacuum", "stop", {"entity_id": "vacuum.vacuum"}, blocking=True
     )
     assert mock_miot_device.call_action_by.called
     # Optimistic UI patch: stop reports IDLE immediately.
-    state = hass.states.get("vacuum.aspirador")
+    state = hass.states.get("vacuum.vacuum")
     assert state.state == "idle"
 
 
 async def test_vacuum_pause_calls_api(hass, setup_integration, mock_miot_device):
     mock_miot_device.call_action_by.reset_mock()
     await hass.services.async_call(
-        "vacuum", "pause", {"entity_id": "vacuum.aspirador"}, blocking=True
+        "vacuum", "pause", {"entity_id": "vacuum.vacuum"}, blocking=True
     )
     assert mock_miot_device.call_action_by.called
     # Optimistic UI patch: pause reports PAUSED immediately.
-    state = hass.states.get("vacuum.aspirador")
+    state = hass.states.get("vacuum.vacuum")
     assert state.state == "paused"
 
 
@@ -167,7 +167,7 @@ async def test_vacuum_send_command_invokes_action(
     await hass.services.async_call(
         "vacuum",
         "send_command",
-        {"entity_id": "vacuum.aspirador", "command": "start_mop"},
+        {"entity_id": "vacuum.vacuum", "command": "start_mop"},
         blocking=True,
     )
     # start_mop -> siid 2, aiid 5
@@ -183,7 +183,7 @@ async def test_vacuum_send_command_rejects_params(hass, setup_integration):
             "vacuum",
             "send_command",
             {
-                "entity_id": "vacuum.aspirador",
+                "entity_id": "vacuum.vacuum",
                 "command": "start_mop",
                 "params": {"ignored": True},
             },
@@ -198,7 +198,7 @@ async def test_vacuum_send_command_unknown_raises(hass, setup_integration):
         await hass.services.async_call(
             "vacuum",
             "send_command",
-            {"entity_id": "vacuum.aspirador", "command": "does_not_exist"},
+            {"entity_id": "vacuum.vacuum", "command": "does_not_exist"},
             blocking=True,
         )
 
@@ -206,18 +206,18 @@ async def test_vacuum_send_command_unknown_raises(hass, setup_integration):
 async def test_vacuum_return_to_base(hass, setup_integration, mock_miot_device):
     mock_miot_device.call_action_by.reset_mock()
     await hass.services.async_call(
-        "vacuum", "return_to_base", {"entity_id": "vacuum.aspirador"}, blocking=True
+        "vacuum", "return_to_base", {"entity_id": "vacuum.vacuum"}, blocking=True
     )
     assert mock_miot_device.call_action_by.called
     # Optimistic UI patch: return-home reports RETURNING immediately.
-    state = hass.states.get("vacuum.aspirador")
+    state = hass.states.get("vacuum.vacuum")
     assert state.state == "returning"
 
 
 async def test_vacuum_locate(hass, setup_integration, mock_miot_device):
     mock_miot_device.call_action_by.reset_mock()
     await hass.services.async_call(
-        "vacuum", "locate", {"entity_id": "vacuum.aspirador"}, blocking=True
+        "vacuum", "locate", {"entity_id": "vacuum.vacuum"}, blocking=True
     )
     assert mock_miot_device.call_action_by.called
 
@@ -227,7 +227,7 @@ async def test_vacuum_set_fan_speed(hass, setup_integration, mock_miot_device):
     await hass.services.async_call(
         "vacuum",
         "set_fan_speed",
-        {"entity_id": "vacuum.aspirador", "fan_speed": "strong"},
+        {"entity_id": "vacuum.vacuum", "fan_speed": "strong"},
         blocking=True,
     )
     assert mock_miot_device.set_property_by.called
@@ -262,11 +262,11 @@ def test_parse_segments_skips_entries_missing_id_or_name():
 
 
 def test_parse_segments_alt_key_names():
-    raw = json.dumps([{"roomId": 5, "roomName": "Quarto"}])
+    raw = json.dumps([{"roomId": 5, "roomName": "Bedroom"}])
     segs = _parse_segments(raw)
     assert len(segs) == 1
     assert segs[0].id == "5"
-    assert segs[0].name == "Quarto"
+    assert segs[0].name == "Bedroom"
 
 
 def test_parse_segments_warns_when_all_entries_skipped():

@@ -16,8 +16,8 @@ pytest_plugins = "pytest_homeassistant_custom_component"
 SAMPLE_ROOM_INFO = json.dumps(
     {
         "rooms": [
-            {"id": 10, "name": "Escritório"},
-            {"id": 28, "name": "Sala"},
+            {"id": 10, "name": "Office"},
+            {"id": 28, "name": "Living room"},
         ],
         "map_uid": 5,
     }
@@ -180,7 +180,7 @@ async def setup_integration(hass, mock_miot_device, enable_custom_integrations):
         data={
             CONF_HOST: "192.168.1.50",
             CONF_TOKEN: "0" * 32,
-            CONF_NAME: "Aspirador",
+            CONF_NAME: "Vacuum",
         },
         unique_id="AA:BB:CC:DD:EE:FF",
     )
@@ -209,7 +209,7 @@ async def setup_integration_b108(
         data={
             CONF_HOST: "192.168.1.51",
             CONF_TOKEN: "0" * 32,
-            CONF_NAME: "Sala S20",
+            CONF_NAME: "S20 Living Room",
         },
         unique_id="AA:BB:CC:DD:EE:01",
     )
@@ -266,7 +266,7 @@ async def setup_integration_with_cloud(
             data={
                 CONF_HOST: "192.168.1.50",
                 CONF_TOKEN: "0" * 32,
-                CONF_NAME: "Aspirador",
+                CONF_NAME: "Vacuum",
                 CONF_CLOUD_COUNTRY: "cn",
                 CONF_CLOUD_SSECURITY: "ssecurity_value",
                 CONF_CLOUD_SERVICE_TOKEN: "service_token_value",

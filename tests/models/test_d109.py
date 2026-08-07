@@ -41,8 +41,8 @@ async def test_d109_creates_all_five_selects(hass, setup_integration):
     states = hass.states.async_all("select")
     entity_ids = {s.entity_id for s in states}
     assert len(states) == 5
-    assert "select.aspirador_sweep_route" in entity_ids
-    assert "select.aspirador_obstacle_avoidance" in entity_ids
+    assert "select.vacuum_sweep_route" in entity_ids
+    assert "select.vacuum_obstacle_avoidance" in entity_ids
 
 
 async def test_d109_creates_dust_arrest_button(hass, setup_integration):
@@ -50,12 +50,12 @@ async def test_d109_creates_dust_arrest_button(hass, setup_integration):
     buttons = hass.states.async_all("button")
     entity_ids = {s.entity_id for s in buttons}
     assert len(buttons) == 1
-    assert "button.aspirador_collect_dust" in entity_ids
+    assert "button.vacuum_collect_dust" in entity_ids
 
 
 async def test_d109_mop_water_level_includes_off_option(hass, setup_integration):
     """X20 Max publishes 0 = Off for mop-water level (spec v2, siid 2 / piid 10)."""
-    select = hass.states.get("select.aspirador_mop_water_level")
+    select = hass.states.get("select.vacuum_mop_water_level")
     assert select is not None
     assert "off" in select.attributes["options"]
 
@@ -68,7 +68,7 @@ async def test_d109_return_home_uses_vacuum_service(
     await hass.services.async_call(
         "vacuum",
         "return_to_base",
-        {"entity_id": "vacuum.aspirador"},
+        {"entity_id": "vacuum.vacuum"},
         blocking=True,
     )
     mock_miot_device.call_action_by.assert_any_call(2, 3)
@@ -86,7 +86,7 @@ async def test_d109_continue_uses_vacuum_service(
     await hass.services.async_call(
         "vacuum",
         "start",
-        {"entity_id": "vacuum.aspirador"},
+        {"entity_id": "vacuum.vacuum"},
         blocking=True,
     )
     mock_miot_device.call_action_by.assert_any_call(2, 8)
@@ -116,7 +116,7 @@ async def test_d109_dust_arrest_button_hits_action(
     await hass.services.async_call(
         "button",
         "press",
-        {"entity_id": "button.aspirador_collect_dust"},
+        {"entity_id": "button.vacuum_collect_dust"},
         blocking=True,
     )
     mock_miot_device.call_action_by.assert_any_call(2, 18)
