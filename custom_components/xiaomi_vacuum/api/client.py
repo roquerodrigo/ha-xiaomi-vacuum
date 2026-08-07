@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
     from ..cloud import XiaomiCloud  # noqa: TID252
-    from ..data import DeviceInfoLike, VacuumState  # noqa: TID252
+    from ..data import DeviceInfoLike, JsonObject, VacuumState  # noqa: TID252
     from ..spec import ModelSpec  # noqa: TID252
 
 
@@ -364,7 +364,7 @@ _ROOM_ATTR_HEADERS = (
 
 def _build_room_clean_config(
     room_information: str | None, segment_ids: list[str]
-) -> list[dict[str, object]]:
+) -> list[JsonObject]:
     """
     Build the S20+ ``set-room-clean-configs`` payload.
 
@@ -400,8 +400,8 @@ def _build_room_clean_config(
     # Requested sequence as an ordered lookup: position decides emit order.
     wanted_order = [str(s) for s in segment_ids]
     wanted = set(wanted_order)
-    selected: list[dict[str, object]] = []
-    others: list[dict[str, object]] = []
+    selected: list[JsonObject] = []
+    others: list[JsonObject] = []
     for row in matrix[1:]:
         if not isinstance(row, list):
             continue

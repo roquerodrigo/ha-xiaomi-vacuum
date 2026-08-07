@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
     from ..data import XiaomiVacuumConfigEntry  # noqa: TID252
+    from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 __all__ = [
     "XiaomiVacuumBatterySensor",
@@ -31,7 +32,7 @@ __all__ = [
     "XiaomiVacuumStatusSensor",
 ]
 
-_SENSOR_CLASSES: dict[EntityKey, type] = {
+_SENSOR_CLASSES: dict[EntityKey, type[XiaomiVacuumEntity]] = {
     EntityKey.BATTERY_SENSOR: XiaomiVacuumBatterySensor,
     EntityKey.STATUS_SENSOR: XiaomiVacuumStatusSensor,
     EntityKey.ERROR_SENSOR: XiaomiVacuumErrorSensor,

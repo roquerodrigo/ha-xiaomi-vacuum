@@ -165,7 +165,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
     async def async_send_command(
         self,
         command: str,
-        params: dict[str, object] | list[object] | None = None,
+        params: dict[str, JsonValue] | list[JsonValue] | None = None,
         **kwargs: object,  # noqa: ARG002
     ) -> None:
         """Invoke a whitelisted MIoT action by name (see spec.send_commands)."""

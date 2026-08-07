@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
     from ..data import XiaomiVacuumConfigEntry  # noqa: TID252
+    from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 __all__ = [
     "XiaomiVacuumCleanTimesSelect",
@@ -25,7 +26,7 @@ __all__ = [
     "XiaomiVacuumSweepRouteSelect",
 ]
 
-_SELECT_CLASSES: dict[EntityKey, type] = {
+_SELECT_CLASSES: dict[EntityKey, type[XiaomiVacuumEntity]] = {
     EntityKey.SWEEP_MOP_TYPE_SELECT: XiaomiVacuumSweepMopTypeSelect,
     EntityKey.CLEAN_TIMES_SELECT: XiaomiVacuumCleanTimesSelect,
     EntityKey.MOP_WATER_LEVEL_SELECT: XiaomiVacuumMopWaterLevelSelect,

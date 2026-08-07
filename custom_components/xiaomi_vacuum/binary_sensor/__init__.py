@@ -5,23 +5,24 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..spec import EntityKey  # noqa: TID252
-from .battery_charging import XiaomiVacuumBatteryChargingSensor
-from .mop_pad import XiaomiVacuumMopPadSensor
+from .battery_charging import XiaomiVacuumBatteryChargingBinarySensor
+from .mop_pad import XiaomiVacuumMopPadBinarySensor
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
     from ..data import XiaomiVacuumConfigEntry  # noqa: TID252
+    from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 __all__ = [
-    "XiaomiVacuumBatteryChargingSensor",
-    "XiaomiVacuumMopPadSensor",
+    "XiaomiVacuumBatteryChargingBinarySensor",
+    "XiaomiVacuumMopPadBinarySensor",
 ]
 
-_BINARY_SENSOR_CLASSES: dict[EntityKey, type] = {
-    EntityKey.BATTERY_CHARGING_SENSOR: XiaomiVacuumBatteryChargingSensor,
-    EntityKey.MOP_PAD_SENSOR: XiaomiVacuumMopPadSensor,
+_BINARY_SENSOR_CLASSES: dict[EntityKey, type[XiaomiVacuumEntity]] = {
+    EntityKey.BATTERY_CHARGING_SENSOR: XiaomiVacuumBatteryChargingBinarySensor,
+    EntityKey.MOP_PAD_SENSOR: XiaomiVacuumMopPadBinarySensor,
 }
 
 

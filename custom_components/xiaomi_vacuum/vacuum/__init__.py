@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 __all__ = ["XiaomiVacuum"]
 
-_VACUUM_CLASSES: dict[EntityKey, type] = {
+_VACUUM_CLASSES: dict[EntityKey, type[XiaomiVacuum]] = {
     EntityKey.VACUUM: XiaomiVacuum,
 }
 
