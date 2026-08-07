@@ -21,16 +21,16 @@ async def test_image_entity_serves_map_coordinator_data(
     await hass.async_block_till_done()
     from homeassistant.components.image import async_get_image
 
-    img = await async_get_image(hass, "image.aspirador_map")
+    img = await async_get_image(hass, "image.vacuum_map")
     assert img.content == b"NEWPNG"
 
 
 async def test_image_handle_new_map_updates_state(hass, setup_integration_with_cloud):
-    state_before = hass.states.get("image.aspirador_map")
+    state_before = hass.states.get("image.vacuum_map")
     coord = setup_integration_with_cloud.runtime_data.map_coordinator
     coord.async_set_updated_data(b"AGAIN")
     await hass.async_block_till_done()
-    state_after = hass.states.get("image.aspirador_map")
+    state_after = hass.states.get("image.vacuum_map")
     assert state_after.state != state_before.state
 
 
@@ -40,18 +40,18 @@ async def test_image_handle_new_map_ignores_identical_blob(
     coord = setup_integration_with_cloud.runtime_data.map_coordinator
     coord.async_set_updated_data(b"DUPLICATE")
     await hass.async_block_till_done()
-    state_first = hass.states.get("image.aspirador_map")
+    state_first = hass.states.get("image.vacuum_map")
 
     # Pushing the same bytes again must be a no-op (no new last_updated).
     coord.async_set_updated_data(b"DUPLICATE")
     await hass.async_block_till_done()
-    state_second = hass.states.get("image.aspirador_map")
+    state_second = hass.states.get("image.vacuum_map")
     assert state_second.last_updated == state_first.last_updated
 
 
 async def test_image_unavailable_before_any_map(hass, setup_integration_with_cloud):
     # SAMPLE_STATE has no map_obj_name, so no map was ever rendered.
-    state = hass.states.get("image.aspirador_map")
+    state = hass.states.get("image.vacuum_map")
     assert state.state == "unavailable"
 
 
@@ -67,8 +67,8 @@ async def test_image_stays_available_when_robot_goes_offline(
     rt.coordinator.async_set_update_error(TimeoutError("robot off"))
     await hass.async_block_till_done()
 
-    assert hass.states.get("vacuum.aspirador").state == "unavailable"
-    assert hass.states.get("image.aspirador_map").state != "unavailable"
+    assert hass.states.get("vacuum.vacuum").state == "unavailable"
+    assert hass.states.get("image.vacuum_map").state != "unavailable"
 
 
 async def test_image_restored_from_disk_cache_on_startup(
@@ -94,7 +94,7 @@ async def test_image_restored_from_disk_cache_on_startup(
         data={
             CONF_HOST: "192.168.1.50",
             CONF_TOKEN: "0" * 32,
-            CONF_NAME: "Aspirador",
+            CONF_NAME: "Vacuum",
             CONF_CLOUD_COUNTRY: "cn",
             CONF_CLOUD_SSECURITY: "ssec",
             CONF_CLOUD_SERVICE_TOKEN: "tok",
@@ -113,9 +113,9 @@ async def test_image_restored_from_disk_cache_on_startup(
 
     from homeassistant.components.image import async_get_image
 
-    state = hass.states.get("image.aspirador_map")
+    state = hass.states.get("image.vacuum_map")
     assert state.state != "unavailable"
-    assert (await async_get_image(hass, "image.aspirador_map")).content == b"DISKPNG"
+    assert (await async_get_image(hass, "image.vacuum_map")).content == b"DISKPNG"
 
 
 async def test_async_image_keeps_last_when_coordinator_clears(
@@ -126,9 +126,9 @@ async def test_async_image_keeps_last_when_coordinator_clears(
     coord = setup_integration_with_cloud.runtime_data.map_coordinator
     coord.async_set_updated_data(b"KEPT")
     await hass.async_block_till_done()
-    assert (await async_get_image(hass, "image.aspirador_map")).content == b"KEPT"
+    assert (await async_get_image(hass, "image.vacuum_map")).content == b"KEPT"
 
     coord.async_set_updated_data(None)
     await hass.async_block_till_done()
-    assert (await async_get_image(hass, "image.aspirador_map")).content == b"KEPT"
-    assert hass.states.get("image.aspirador_map").state != "unavailable"
+    assert (await async_get_image(hass, "image.vacuum_map")).content == b"KEPT"
+    assert hass.states.get("image.vacuum_map").state != "unavailable"

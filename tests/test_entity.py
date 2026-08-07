@@ -30,8 +30,8 @@ def _coord(
 
 
 def test_device_info_uses_custom_name():
-    e = XiaomiVacuumEntity(coordinator=_coord(name="Aspirador"))
-    assert e.device_info["name"] == "Aspirador"
+    e = XiaomiVacuumEntity(coordinator=_coord(name="Vacuum"))
+    assert e.device_info["name"] == "Vacuum"
 
 
 def test_device_info_falls_back_to_model_name():
