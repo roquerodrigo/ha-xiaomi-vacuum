@@ -1,5 +1,47 @@
 # Changelog
 
+## [2.1.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.0.1...v2.1.0) (2026-08-07)
+
+
+### Features
+
+* add config entry diagnostics with credential redaction ([34d72bb](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/34d72bb12bf0ca36c1258e79389d8c51b76c59b1))
+
+
+### Bug Fixes
+
+* drop the finished QR task before requesting a fresh login ([d7856f1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/d7856f10841cbb8768bd427fec9d6433f32417fb))
+
+
+### Code Refactoring
+
+* expose a public session API on the cloud connector ([33cec18](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/33cec1894516c4812fa4670c2c8a69d4deb2738c))
+* make icons.json the single source of entity icons ([f9a280a](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/f9a280a7423f8d1eb3f70eb4580f3cfcf19e5edf))
+* name binary sensor classes after their platform ([27ee7c0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/27ee7c02fe18c616cf9975874ec71ec6a8d5f49e))
+* replace bare type and object annotations with precise types ([70398b8](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/70398b8fef7d9c9811db47e5a380927d726288e0))
+
+
+### Documentation
+
+* describe the reauth flow and the uv-based pre-commit hooks ([d9539fa](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/d9539fa9492bc5e9c1be6a0083c0a585e503f00c))
+
+
+### Continuous Integration
+
+* run checks on pull requests targeting any branch ([aa813d9](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/aa813d96fe818f7db3cb5517aabb46f32bb62602))
+* run code scanning on pull requests targeting any branch ([68256c0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/68256c0035aff94a87de723bfa5bf3e61c012da9))
+
+
+### Tests
+
+* enforce translation parity across locales and entities ([c0e9bc7](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/c0e9bc704fc02913e0a2c721776e6fa0a53dd1e8))
+* use English fixture and entity names ([ba367d2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/ba367d285014c594cc6f204533c684de25236119))
+
+
+### Miscellaneous Chores
+
+* run pre-commit through uv and refresh the lock file ([1f3cd72](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/1f3cd7227a21c63c066ee33790a5e1c899a71492))
+
 ## [2.0.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.0.0...v2.0.1) (2026-08-04)
 
 
