@@ -22,6 +22,28 @@
             "main_brush_life": {
                 "default": "mdi:broom"
             }
+        },
+        "select": {
+            "sweep_mop_type": {
+                "default": "mdi:broom"
+            },
+            "clean_times": {
+                "default": "mdi:repeat"
+            },
+            "mop_water_level": {
+                "default": "mdi:water"
+            },
+            "sweep_route": {
+                "default": "mdi:map-marker-path"
+            },
+            "obstacle_avoidance_strategy": {
+                "default": "mdi:shield-car"
+            }
+        },
+        "button": {
+            "dust_arrest": {
+                "default": "mdi:delete-empty"
+            }
         }
     }
 }

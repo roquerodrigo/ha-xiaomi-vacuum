@@ -11,7 +11,6 @@ class XiaomiVacuumDustArrestButton(XiaomiVacuumEntity, ButtonEntity):
     """Triggers the dock to empty the vacuum's dust bin."""
 
     _attr_translation_key = "dust_arrest"
-    _attr_icon = "mdi:delete-empty"
 
     @property
     def unique_id(self) -> str:

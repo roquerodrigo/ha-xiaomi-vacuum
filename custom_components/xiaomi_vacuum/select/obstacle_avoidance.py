@@ -16,7 +16,6 @@ class XiaomiVacuumObstacleAvoidanceSelect(_XiaomiVacuumSelect):
     """
 
     _attr_translation_key = "obstacle_avoidance_strategy"
-    _attr_icon = "mdi:shield-car"
 
     _property_name = Property.OBSTACLE_AVOIDANCE_STRATEGY
 
