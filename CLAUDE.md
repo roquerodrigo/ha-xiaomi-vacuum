@@ -45,8 +45,9 @@ here.
 - **`map_coordinator.py`** — separate coordinator for the cloud-rendered map
   image, decoupled from local polling.
 - **`cached_device_info.py`** — persists device info discovered during setup.
-- **`config_flow.py`** — QR-login config flow plus a reconfigure flow for
-  changing the Xiaomi cloud region.
+- **`config_flow.py`** — QR-login config flow plus reauth (fresh QR scan when
+  the stored cloud session expires) and a reconfigure flow for changing the
+  Xiaomi cloud region.
 - **`repairs.py`** — per-entry repair issues, each cleared automatically once
   the condition resolves: `cannot_connect` when the vacuum is unreachable
   (setup tolerates this and still serves the map) and `unsupported_model` when
@@ -86,8 +87,10 @@ uv run pytest
   files get relaxed rules (see `[tool.ruff.lint.per-file-ignores]`).
 - `mypy` is strict: no `Any`, no bare generics, `disallow_untyped_defs` —
   relaxed only for `tests/*`.
-- `pre-commit install` wires `ruff-check --fix` + `ruff-format` plus standard
-  hygiene hooks (trailing whitespace, YAML/JSON/TOML checks, LF line endings).
+- `pre-commit install` wires local `uv run` hooks (`ruff format`,
+  `ruff check --fix`, `mypy`) — always the versions pinned in
+  `pyproject.toml` — plus standard hygiene hooks (trailing whitespace,
+  YAML/JSON/TOML checks, LF line endings).
 
 ## CI (`.github/workflows/`, one file per concern)
 
