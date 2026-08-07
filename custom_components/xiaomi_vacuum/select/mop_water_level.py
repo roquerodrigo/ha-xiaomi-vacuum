@@ -15,7 +15,6 @@ class XiaomiVacuumMopWaterLevelSelect(_XiaomiVacuumSelect):
     """
 
     _attr_translation_key = "mop_water_level"
-    _attr_icon = "mdi:water"
 
     _property_name = Property.MOP_WATER_LEVEL
 

@@ -15,7 +15,6 @@ class XiaomiVacuumSweepRouteSelect(_XiaomiVacuumSelect):
     """
 
     _attr_translation_key = "sweep_route"
-    _attr_icon = "mdi:map-marker-path"
 
     _property_name = Property.SWEEP_ROUTE
 
