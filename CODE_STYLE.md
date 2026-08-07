@@ -170,6 +170,11 @@ explaining the deliberate narrowing.
 - `config_flow.py` carries `user`, `qr`, `qr_failed` and `discover` steps. Setup
   is QR-based: the user scans a Xiaomi-cloud QR code to authenticate, then the
   flow lists the account's vacuums and auto-picks when there is exactly one.
+- Two more entry points reuse those steps: **reauth**
+  (`reauth` → `reauth_confirm` → `qr` → `reauth_finish`) refreshes an expired
+  cloud session with a fresh QR scan, and **reconfigure** switches the cloud
+  region of an existing entry, reusing its stored session and falling back to
+  a fresh QR login when that session is rejected.
 
 ## Translations
 
@@ -181,8 +186,10 @@ explaining the deliberate narrowing.
 ## Pre-commit hooks
 
 `pre-commit` is a dev dependency (the `dev` group in `pyproject.toml`) and
-`.pre-commit-config.yaml` mirrors the lint commands (ruff format, ruff check,
-mypy). Install once per clone:
+`.pre-commit-config.yaml` runs the lint commands as **local hooks through
+`uv run`** (ruff format, ruff check, mypy), so the hook always uses the exact
+tool versions pinned in `pyproject.toml` — no separately pinned hook revision
+to drift. Install once per clone:
 
 ```bash
 pre-commit install
