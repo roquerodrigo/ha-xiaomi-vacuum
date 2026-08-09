@@ -9,7 +9,6 @@ import pytest
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from custom_components.xiaomi_vacuum.spec import ModelSpec
 
 pytest_plugins = "pytest_homeassistant_custom_component"
 
@@ -89,7 +88,7 @@ def enable_custom_integrations(hass) -> None:
 
 
 def _make_miot_instance(model: str):
-    """Build a mocked MiotDevice instance for a given model string."""
+    """Build a mocked xiaomi-vacuum-sdk MiotClient instance for a model string."""
     from custom_components.xiaomi_vacuum.spec import get_spec
 
     spec = get_spec(model)
@@ -106,16 +105,17 @@ def _make_miot_instance(model: str):
     info.firmware_version = "1.0.0"
     info.hardware_version = "rev1"
     info.raw = {"model": model, "mac": mac}
-    instance.info = MagicMock(return_value=info)
-    instance.set_property_by = MagicMock(return_value=None)
-    instance.call_action_by = MagicMock(return_value=None)
+    instance.info = AsyncMock(return_value=info)
+    instance.set_property = AsyncMock(return_value=None)
+    instance.call_action = AsyncMock(return_value=None)
+    instance.close = AsyncMock(return_value=None)
     state = (
         _SAMPLE_STATE_D109
         if model.startswith("xiaomi.vacuum.d")
         else _SAMPLE_STATE_B108
     )
-    instance.get_properties_for_mapping = MagicMock(
-        return_value=_state_to_rows(state, spec=spec)
+    instance.get_properties = AsyncMock(
+        side_effect=lambda mapping, **_: {name: state.get(name) for name in mapping}
     )
     instance._spec = spec  # exposed for tests that assert on the spec
     return instance
@@ -123,44 +123,18 @@ def _make_miot_instance(model: str):
 
 @pytest.fixture
 def mock_miot_device() -> Generator:
-    """Patch miio.MiotDevice everywhere it's imported (default: X20 Max d109gl)."""
-    with patch("custom_components.xiaomi_vacuum.api.client.MiotDevice") as cls:
+    """Patch the SDK MiotClient everywhere it's imported (default: X20 Max d109gl)."""
+    with patch("custom_components.xiaomi_vacuum.api.client.MiotClient") as cls:
         cls.return_value = _make_miot_instance("xiaomi.vacuum.d109gl")
         yield cls.return_value
 
 
 @pytest.fixture
 def mock_miot_device_b108() -> Generator:
-    """Patch miio.MiotDevice for the S20+ (b108gl) model."""
-    with patch("custom_components.xiaomi_vacuum.api.client.MiotDevice") as cls:
+    """Patch the SDK MiotClient for the S20+ (b108gl) model."""
+    with patch("custom_components.xiaomi_vacuum.api.client.MiotClient") as cls:
         cls.return_value = _make_miot_instance("xiaomi.vacuum.b108gl")
         yield cls.return_value
-
-
-def _state_to_rows(
-    state: dict[str, Any], spec: ModelSpec | None = None
-) -> list[dict[str, Any]]:
-    """Build raw MIoT rows from a parsed state dict (mimics device echoing did)."""
-    if spec is None:
-        from custom_components.xiaomi_vacuum.spec import D109GL
-
-        spec = D109GL
-
-    rows = []
-    for name, value in state.items():
-        prop = spec.property_mapping.get(name)
-        if prop is None:
-            continue
-        rows.append(
-            {
-                "did": "1234567890",
-                "siid": prop["siid"],
-                "piid": prop["piid"],
-                "code": 0,
-                "value": value,
-            }
-        )
-    return rows
 
 
 @pytest.fixture
@@ -251,15 +225,9 @@ async def setup_integration_with_cloud(
     )
 
     with patch(
-        "custom_components.xiaomi_vacuum.map_coordinator.XiaomiMapDataParser"
-    ) as parser_cls:
-        parser = parser_cls.return_value
-        map_data = MagicMock()
-        image_obj = MagicMock()
-        image_obj.data.save = MagicMock()
-        map_data.image = image_obj
-        parser.parse = MagicMock(return_value=map_data)
-        parser.unpack_map = MagicMock(return_value="{}")
+        "custom_components.xiaomi_vacuum.map_coordinator.MapRenderer"
+    ) as renderer_cls:
+        renderer_cls.return_value.render = MagicMock(return_value=b"png-bytes")
 
         entry = MockConfigEntry(
             domain=DOMAIN,

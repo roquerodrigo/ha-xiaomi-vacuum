@@ -1,27 +1,21 @@
-"""Coordinator that periodically downloads & parses the vacuum map (cloud-only)."""
+"""Coordinator that periodically downloads & renders the vacuum map (cloud-only)."""
 
 from __future__ import annotations
 
 import base64
 import contextlib
-import io
 import json
 from datetime import timedelta
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from vacuum_map_parser_base.config.color import ColorsPalette, SupportedColor
-from vacuum_map_parser_base.config.drawable import Drawable
-from vacuum_map_parser_base.config.image_config import ImageConfig
-from vacuum_map_parser_base.config.size import Size, Sizes
-from vacuum_map_parser_xiaomi.map_data_parser import XiaomiMapDataParser
+from xiaomi_vacuum_sdk import MapParseError, MapRenderer
 
 from .const import DOMAIN, LOGGER
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
-    from vacuum_map_parser_base.map_data import MapData
 
     from .cloud import XiaomiCloud
     from .coordinator import XiaomiVacuumDataUpdateCoordinator
@@ -29,89 +23,6 @@ if TYPE_CHECKING:
 
 MAP_UPDATE_INTERVAL = timedelta(seconds=60)
 MAP_STORAGE_VERSION = 1
-DEFAULT_DRAWABLES: list[Drawable] = [
-    Drawable.CHARGER,
-    Drawable.PATH,
-    Drawable.PREDICTED_PATH,
-    Drawable.VACUUM_POSITION,
-    Drawable.NO_GO_AREAS,
-    Drawable.NO_MOPPING_AREAS,
-    Drawable.VIRTUAL_WALLS,
-    Drawable.ZONES,
-]
-DEFAULT_PALETTE = ColorsPalette(
-    colors_dict={
-        SupportedColor.MAP_OUTSIDE: (250, 249, 246, 0),
-        SupportedColor.MAP_INSIDE: (92, 110, 84),
-        SupportedColor.MAP_WALL: (92, 110, 84),
-        SupportedColor.MAP_WALL_V2: (92, 110, 84),
-        SupportedColor.GREY_WALL: (92, 110, 84),
-        SupportedColor.PATH: (92, 110, 84),
-        SupportedColor.PREDICTED_PATH: (92, 110, 84, 160),
-        SupportedColor.GOTO_PATH: (92, 110, 84),
-        SupportedColor.ZONES: (164, 172, 134, 100),
-        SupportedColor.ZONES_OUTLINE: (45, 74, 43),
-        SupportedColor.VIRTUAL_WALLS: (161, 68, 68),
-        SupportedColor.NO_GO_ZONES: (161, 68, 68, 127),
-        SupportedColor.NO_GO_ZONES_OUTLINE: (161, 68, 68),
-        SupportedColor.NO_MOPPING_ZONES: (90, 117, 149, 127),
-        SupportedColor.NO_MOPPING_ZONES_OUTLINE: (90, 117, 149),
-        SupportedColor.CHARGER: (45, 74, 43, 220),
-        SupportedColor.CHARGER_OUTLINE: (20, 34, 20),
-        SupportedColor.ROBO: (255, 254, 250),
-        SupportedColor.ROBO_OUTLINE: (20, 34, 20),
-        SupportedColor.ROOM_NAMES: (20, 34, 20),
-        SupportedColor.NEW_DISCOVERED_AREA: (210, 214, 188),
-        SupportedColor.SCAN: (224, 227, 200),
-        SupportedColor.CLEANED_AREA: (45, 74, 43, 80),
-        SupportedColor.CARPETS: (170, 186, 170),
-        SupportedColor.NO_CARPET_ZONES: (192, 133, 64, 127),
-        SupportedColor.NO_CARPET_ZONES_OUTLINE: (192, 133, 64),
-        SupportedColor.MOP_PATH: (255, 254, 250, 72),
-    },
-    room_colors={
-        "1": (214, 196, 168),
-        "2": (180, 198, 210),
-        "3": (196, 202, 164),
-        "4": (204, 192, 210),
-        "5": (220, 204, 170),
-        "6": (186, 210, 206),
-        "7": (212, 194, 196),
-        "8": (190, 200, 216),
-        "9": (200, 190, 174),
-        "10": (186, 210, 206),
-        "11": (214, 196, 168),
-        "12": (196, 202, 164),
-        "13": (204, 192, 210),
-        "14": (220, 204, 170),
-        "15": (180, 198, 210),
-        "16": (212, 194, 196),
-        "17": (190, 200, 216),
-        "18": (200, 190, 174),
-        "19": (186, 210, 206),
-        "20": (196, 202, 164),
-        "21": (214, 196, 168),
-        "22": (204, 192, 210),
-        "23": (220, 204, 170),
-        "24": (180, 198, 210),
-        "25": (212, 194, 196),
-        "26": (200, 190, 174),
-        "27": (196, 202, 164),
-        "28": (186, 210, 206),
-        "29": (214, 196, 168),
-        "30": (204, 192, 210),
-        "31": (220, 204, 170),
-        "32": (180, 198, 210),
-    },
-)
-DEFAULT_IMAGE_CONFIG = ImageConfig(scale=8.0)
-DEFAULT_SIZES = Sizes(
-    sizes={
-        Size.VACUUM_RADIUS: 18,
-        Size.PATH_WIDTH: 2,
-        Size.CHARGER_RADIUS: 10,
-    }
-)
 
 
 class XiaomiVacuumMapCoordinator(DataUpdateCoordinator[bytes | None]):
@@ -141,13 +52,10 @@ class XiaomiVacuumMapCoordinator(DataUpdateCoordinator[bytes | None]):
             MAP_STORAGE_VERSION,
             f"{DOMAIN}.map_{state_coordinator.config_entry.entry_id}",
         )
-        self._parser = XiaomiMapDataParser(
-            palette=DEFAULT_PALETTE,
-            sizes=DEFAULT_SIZES,
-            drawables=DEFAULT_DRAWABLES,
-            image_config=DEFAULT_IMAGE_CONFIG,
-            texts=[],
-        )
+        # The SDK's default RenderOptions carry this integration's palette,
+        # scale and element sizes; only the 12 px breathing border is added
+        # on top of the legacy render.
+        self._renderer = MapRenderer()
 
     async def async_load_cached(self) -> None:
         """Restore the last rendered map PNG from disk so it survives restarts."""
@@ -179,41 +87,31 @@ class XiaomiVacuumMapCoordinator(DataUpdateCoordinator[bytes | None]):
             if raw == self._last_raw:
                 # Same blob as last poll — skip the (expensive) parse + render.
                 return self.data
-            map_data = await self.hass.async_add_executor_job(
-                self._parse_blob, raw, device.model, device.device_id
+            png = await self.hass.async_add_executor_job(
+                self._render_blob, raw, device.model, str(device.device_id)
             )
-            if (
-                map_data is None
-                or map_data.image is None
-                or map_data.image.data is None
-            ):
-                LOGGER.debug("Parser returned no image for obj=%s", obj_name)
+            if png is None:
+                LOGGER.debug("Renderer returned no image for obj=%s", obj_name)
                 return self.data
-            buf = io.BytesIO()
-            map_data.image.data.save(buf, format="PNG")
             # Marked as seen only after a successful render, so a transient
             # parse/render failure is retried on the next poll instead of the
             # blob being skipped as a duplicate.
             self._last_raw = raw
         except Exception as exception:
             raise UpdateFailed(exception) from exception
-        png = buf.getvalue()
         LOGGER.debug("Rendered PNG: %s bytes", len(png))
         await self._store.async_save({"png_b64": base64.b64encode(png).decode()})
         return png
 
-    def _parse_blob(self, raw: bytes, model: str, device_id: str) -> MapData:
-        """Decrypt the binary map then parse the JSON it produces."""
-        # Older firmwares wrap the binary in {"data": "<base64>"}.
-        with contextlib.suppress(json.JSONDecodeError, KeyError, UnicodeDecodeError):
-            raw = base64.decodebytes(json.loads(raw)["data"].encode("latin1"))
-        # The decryptor uses the model string as a 16-byte AES key
-        # (`xiaomi.vacuum.d109gl` → `mi.vacuum.d109gl`) and expects hex input.
-        model_key = model.replace("xiaomi", "mi")
-        decoded = self._parser.unpack_map(
-            raw.hex(), model=model_key, device_id=str(device_id)
-        )
-        return cast("MapData", self._parser.parse(decoded))
+    def _render_blob(self, raw: bytes, model: str, device_id: str) -> bytes | None:
+        """Decrypt and render the map blob to PNG (CPU-bound, runs in the executor)."""
+        try:
+            return self._renderer.render(raw, model=model, device_id=device_id)
+        except MapParseError as exception:
+            # The device published a payload without a drawable map (e.g. a
+            # fresh map still being built) — keep serving the previous image.
+            LOGGER.debug("Map payload not drawable: %s", exception)
+            return None
 
     @staticmethod
     def _extract_obj_name(raw_field: str | None) -> str | None:

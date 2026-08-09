@@ -43,14 +43,8 @@ async def test_update_returns_data_when_state_data_is_none(hass):
 async def test_update_persists_png_to_store(hass, hass_storage):
     cloud = _cloud()
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
-    map_data = MagicMock()
-
-    def fake_save(buf, format):  # noqa: A002
-        buf.write(b"FAKEPNG")
-
-    map_data.image.data.save = fake_save
-    coord._parser = MagicMock()
-    coord._parser.parse = MagicMock(return_value=map_data)
+    coord._renderer = MagicMock()
+    coord._renderer.render = MagicMock(return_value=b"FAKEPNG")
     assert await coord._async_update_data() == b"FAKEPNG"
 
     import base64
@@ -108,18 +102,20 @@ async def test_update_skips_parse_when_blob_unchanged(hass):
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
     coord.data = b"RENDERED"
     coord._last_raw = b"BIN"
-    coord._parser = MagicMock()
+    coord._renderer = MagicMock()
     result = await coord._async_update_data()
     assert result == b"RENDERED"
-    coord._parser.parse.assert_not_called()
+    coord._renderer.render.assert_not_called()
 
 
-async def test_update_returns_data_when_parser_returns_no_image(hass):
+async def test_update_returns_data_when_payload_has_no_image(hass):
+    from xiaomi_vacuum_sdk import MapParseError
+
     cloud = _cloud()
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
     coord.data = b"OLD"
-    coord._parser = MagicMock()
-    coord._parser.parse = MagicMock(return_value=None)
+    coord._renderer = MagicMock()
+    coord._renderer.render = MagicMock(side_effect=MapParseError("no map image"))
     result = await coord._async_update_data()
     assert result == b"OLD"
 
@@ -127,14 +123,8 @@ async def test_update_returns_data_when_parser_returns_no_image(hass):
 async def test_update_returns_png_bytes_on_success(hass):
     cloud = _cloud()
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
-    map_data = MagicMock()
-
-    def fake_save(buf, format):  # noqa: A002
-        buf.write(b"FAKEPNG")
-
-    map_data.image.data.save = fake_save
-    coord._parser = MagicMock()
-    coord._parser.parse = MagicMock(return_value=map_data)
+    coord._renderer = MagicMock()
+    coord._renderer.render = MagicMock(return_value=b"FAKEPNG")
     result = await coord._async_update_data()
     assert result == b"FAKEPNG"
 
@@ -143,13 +133,13 @@ async def test_update_retries_parse_after_failure_with_same_blob(hass):
     """A failed parse must not mark the blob as seen — the next poll retries."""
     cloud = _cloud(map_bytes=b"BIN")
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
-    coord._parser = MagicMock()
-    coord._parser.unpack_map = MagicMock(side_effect=RuntimeError("bad blob"))
+    coord._renderer = MagicMock()
+    coord._renderer.render = MagicMock(side_effect=RuntimeError("bad blob"))
     with pytest.raises(UpdateFailed):
         await coord._async_update_data()
     with pytest.raises(UpdateFailed):
         await coord._async_update_data()
-    assert coord._parser.unpack_map.call_count == 2
+    assert coord._renderer.render.call_count == 2
     assert coord._last_raw is None
 
 
@@ -184,28 +174,24 @@ async def test_update_skips_when_no_device_resolved(hass):
     assert await coord._async_update_data() == b"OLD"
 
 
-def test_parse_blob_normalizes_model_key(hass):
+def test_render_blob_passes_model_and_device_id(hass):
     cloud = _cloud()
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
-    coord._parser = MagicMock()
-    coord._parser.unpack_map = MagicMock(return_value="{}")
-    coord._parser.parse = MagicMock(return_value=MagicMock())
-    coord._parse_blob(b"raw", "xiaomi.vacuum.d109gl", "1234")
-    # model_key should be `mi.vacuum.d109gl` (16 chars, AES key length)
-    assert coord._parser.unpack_map.call_args.kwargs["model"] == "mi.vacuum.d109gl"
-    assert coord._parser.unpack_map.call_args.kwargs["device_id"] == "1234"
+    coord._renderer = MagicMock()
+    coord._renderer.render = MagicMock(return_value=b"P")
+    coord._render_blob(b"raw", "xiaomi.vacuum.d109gl", "1234")
+    # The SDK owns the `xiaomi.` -> `mi.` key normalization; the coordinator
+    # hands over the full model string and the blob untouched.
+    coord._renderer.render.assert_called_once_with(
+        b"raw", model="xiaomi.vacuum.d109gl", device_id="1234"
+    )
 
 
-def test_parse_blob_unwraps_base64_envelope(hass):
-    import base64
+def test_render_blob_returns_none_when_payload_not_drawable(hass):
+    from xiaomi_vacuum_sdk import MapParseError
 
     cloud = _cloud()
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
-    coord._parser = MagicMock()
-    coord._parser.unpack_map = MagicMock(return_value="{}")
-    coord._parser.parse = MagicMock(return_value=MagicMock())
-    inner = b"INNER"
-    wrapped = b'{"data":"' + base64.encodebytes(inner).strip() + b'"}'
-    coord._parse_blob(wrapped, "xiaomi.vacuum.d109gl", "1")
-    # After unwrapping, hex of inner bytes should be passed to unpack_map
-    assert coord._parser.unpack_map.call_args.args[0] == inner.hex()
+    coord._renderer = MagicMock()
+    coord._renderer.render = MagicMock(side_effect=MapParseError("no map image"))
+    assert coord._render_blob(b"raw", "xiaomi.vacuum.d109gl", "1") is None

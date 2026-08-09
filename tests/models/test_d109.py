@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 
 from homeassistant.config_entries import ConfigEntryState
+from xiaomi_vacuum_sdk import ActionAddress
 
 # Top-level import triggers custom-component loading in the HA pytest harness;
 # without it `from custom_components.xiaomi_vacuum...` inside tests fails with
@@ -64,14 +65,14 @@ async def test_d109_return_home_uses_vacuum_service(
     hass, setup_integration, mock_miot_device
 ):
     """X20 Max return-home is vacuum.return-to-charge (SIID 2 / aiid 3)."""
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     await hass.services.async_call(
         "vacuum",
         "return_to_base",
         {"entity_id": "vacuum.vacuum"},
         blocking=True,
     )
-    mock_miot_device.call_action_by.assert_any_call(2, 3)
+    mock_miot_device.call_action.assert_any_call(ActionAddress(siid=2, aiid=3))
 
 
 async def test_d109_continue_uses_vacuum_service(
@@ -82,14 +83,14 @@ async def test_d109_continue_uses_vacuum_service(
     # status=4 (sweeping, not parked) -> 'start' triggers continue, not fresh start.
     coord.async_set_updated_data({**coord.data, "status": 4, "fault": 0})
     await hass.async_block_till_done()
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     await hass.services.async_call(
         "vacuum",
         "start",
         {"entity_id": "vacuum.vacuum"},
         blocking=True,
     )
-    mock_miot_device.call_action_by.assert_any_call(2, 8)
+    mock_miot_device.call_action.assert_any_call(ActionAddress(siid=2, aiid=8))
 
 
 async def test_d109_send_command_exposes_mop_wash_and_dry(hass, setup_integration):
@@ -112,14 +113,14 @@ async def test_d109_dust_arrest_button_hits_action(
     hass, setup_integration, mock_miot_device
 ):
     """Pressing the dust-arrest button targets the dock's start-dust-arrest action."""
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     await hass.services.async_call(
         "button",
         "press",
         {"entity_id": "button.vacuum_collect_dust"},
         blocking=True,
     )
-    mock_miot_device.call_action_by.assert_any_call(2, 18)
+    mock_miot_device.call_action.assert_any_call(ActionAddress(siid=2, aiid=18))
 
 
 async def test_d109_clean_segments_uses_direct_strategy(
@@ -127,10 +128,10 @@ async def test_d109_clean_segments_uses_direct_strategy(
 ):
     """X20 Max room-clean fires start-vacuum-room-sweep directly (no cloud detour)."""
     client = setup_integration.runtime_data.client
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     await client.async_clean_segments(["10", "28"])
-    mock_miot_device.call_action_by.assert_any_call(
-        2, 16, [{"piid": 15, "value": "10,28"}]
+    mock_miot_device.call_action.assert_any_call(
+        ActionAddress(siid=2, aiid=16), [{"piid": 15, "value": "10,28"}]
     )
 
 

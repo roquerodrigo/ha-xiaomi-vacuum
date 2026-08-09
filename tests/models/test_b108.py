@@ -9,6 +9,7 @@ must target the battery.start-charge action instead of the vacuum service.
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntryState
+from xiaomi_vacuum_sdk import ActionAddress
 
 from custom_components.xiaomi_vacuum.spec import Capability
 
@@ -52,7 +53,7 @@ async def test_b108_mop_water_exposes_off_option(hass, setup_integration_b108):
 async def test_b108_return_home_uses_battery_service(
     hass, setup_integration_b108, mock_miot_device_b108
 ):
-    mock_miot_device_b108.call_action_by.reset_mock()
+    mock_miot_device_b108.call_action.reset_mock()
     await hass.services.async_call(
         "vacuum",
         "return_to_base",
@@ -60,7 +61,7 @@ async def test_b108_return_home_uses_battery_service(
         blocking=True,
     )
     # S20+ return-home = battery.start-charge = SIID 3 / aiid 1.
-    mock_miot_device_b108.call_action_by.assert_any_call(3, 1)
+    mock_miot_device_b108.call_action.assert_any_call(ActionAddress(siid=3, aiid=1))
 
 
 async def test_b108_send_command_has_no_mop_wash_commands(hass, setup_integration_b108):

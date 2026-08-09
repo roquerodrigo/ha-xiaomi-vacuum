@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from xiaomi_vacuum_sdk import ActionAddress
+
 from custom_components.xiaomi_vacuum.spec import D109GL
 
 
@@ -11,7 +13,7 @@ async def test_button_entity_exists(hass, setup_integration):
 async def test_button_press_calls_dust_arrest(
     hass, setup_integration, mock_miot_device
 ):
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     await hass.services.async_call(
         "button",
         "press",
@@ -19,7 +21,9 @@ async def test_button_press_calls_dust_arrest(
         blocking=True,
     )
     a = D109GL.actions.start_dust_arrest
-    mock_miot_device.call_action_by.assert_called_with(a["siid"], a["aiid"])
+    mock_miot_device.call_action.assert_called_with(
+        ActionAddress(siid=a["siid"], aiid=a["aiid"])
+    )
 
 
 def test_button_has_icon_and_no_category(hass, setup_integration):
@@ -48,9 +52,9 @@ def test_button_has_icon_and_no_category(hass, setup_integration):
 async def test_api_client_async_start_dust_arrest(hass, mock_miot_device):
     from custom_components.xiaomi_vacuum.api import XiaomiVacuumApiClient
 
-    client = XiaomiVacuumApiClient(
-        hass=hass, host="1.2.3.4", token="t" * 32, spec=D109GL
-    )
+    client = XiaomiVacuumApiClient(host="1.2.3.4", token="t" * 32, spec=D109GL)
     await client.async_start_dust_arrest()
     a = D109GL.actions.start_dust_arrest
-    mock_miot_device.call_action_by.assert_called_with(a["siid"], a["aiid"])
+    mock_miot_device.call_action.assert_called_with(
+        ActionAddress(siid=a["siid"], aiid=a["aiid"])
+    )

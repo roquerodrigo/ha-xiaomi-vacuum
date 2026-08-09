@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import json
-from functools import partial
 from typing import TYPE_CHECKING, cast
 
-from miio import DeviceException, MiotDevice
-from miio.exceptions import DeviceError
+from xiaomi_vacuum_sdk import (
+    ActionAddress,
+    MiotAckTimeoutError,
+    MiotClient,
+    MiotError,
+    PropertyAddress,
+)
 
 from ..cloud.errors import (  # noqa: TID252
     XiaomiCloudAuthError,
@@ -22,47 +26,37 @@ from .errors import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from homeassistant.core import HomeAssistant
+    from collections.abc import Awaitable
 
     from ..cloud import XiaomiCloud  # noqa: TID252
-    from ..data import DeviceInfoLike, JsonObject, VacuumState  # noqa: TID252
+    from ..data import (  # noqa: TID252
+        DeviceInfoLike,
+        JsonObject,
+        JsonValue,
+        VacuumState,
+    )
     from ..spec import ModelSpec  # noqa: TID252
+    from ..spec.addresses import MiotActionAddress  # noqa: TID252
+
+# Xiaomi vacuums routinely take >5 s to ack action commands (start / pause /
+# room-sweep) — the device is busy spinning up and misses the default read
+# window, surfacing as `-9999 user ack timeout`. 10 s is a forgiving middle
+# ground that avoids most spurious failures without making a genuinely-offline
+# device feel unresponsive.
+_DEVICE_TIMEOUT_SECONDS = 10.0
 
 
 class XiaomiVacuumApiClient:
-    """Local MIoT client wrapping python-miio's MiotDevice for one model."""
+    """Local MIoT client backed by ``xiaomi-vacuum-sdk`` for one model."""
 
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        host: str,
-        token: str,
-        spec: ModelSpec,
-    ) -> None:
+    def __init__(self, host: str, token: str, spec: ModelSpec) -> None:
         """Initialize with the model's spec (property + action mapping)."""
-        self._hass = hass
         self._spec = spec
-        # Xiaomi vacuums routinely take >5 s to ack action commands (start /
-        # pause / room-sweep) — the device is busy spinning up and misses the
-        # default miio read window, surfacing as `-9999 user ack timeout`.
-        # 10 s is a forgiving middle ground that avoids most spurious failures
-        # without making a genuinely-offline device feel unresponsive.
-        self._device = MiotDevice(
-            ip=host,
-            token=token,
-            # ``property_mapping`` is a ``MappingProxyType`` (read-only view) so the
-            # spec's shared state can't be mutated through ``MiotDevice``.
-            # ``python-miio`` only reads the mapping (``.items()`` in
-            # ``get_properties_for_mapping``, ``[key]`` in ``call_action_by`` /
-            # ``set_property_by``) — verified against miio 0.5.12 — so a read-only
-            # view is safe to hand it. The ``type: ignore`` is for the key/value
-            # types (StrEnum + TypedDict vs miio's plain ``dict[str, Any]``), not
-            # for the mapping vs ``mappingproxy`` distinction.
-            mapping=spec.property_mapping,  # type: ignore[arg-type]
-            timeout=10,
-        )
+        self._client = MiotClient(host, token, timeout=_DEVICE_TIMEOUT_SECONDS)
+        self._properties: dict[str, PropertyAddress] = {
+            name: PropertyAddress(siid=address["siid"], piid=address["piid"])
+            for name, address in spec.property_mapping.items()
+        }
         # Cloud client, set by the integration after the cloud session resolves.
         # When present, multi-step flows that local UDP mishandles (e.g. the S20+
         # room-clean) are routed through the cloud for reliability — matching
@@ -73,24 +67,18 @@ class XiaomiVacuumApiClient:
         """Attach (or detach) the Xiaomi cloud client for cloud-routed actions."""
         self._cloud = cloud
 
-    async def _run[T, **P](
-        self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs
-    ) -> T:
-        """Run a sync python-miio call in the executor, normalizing errors."""
+    async def _run[T](self, operation: Awaitable[T]) -> T:
+        """Await one SDK call, normalizing errors to the integration types."""
         try:
-            return await self._hass.async_add_executor_job(
-                partial(func, *args, **kwargs)
-            )
-        except DeviceException as exception:
+            return await operation
+        except MiotError as exception:
             msg = f"Device error: {exception}"
             raise XiaomiVacuumApiClientCommunicationError(msg) from exception
         except Exception as exception:  # pylint: disable=broad-except
             msg = f"Unexpected error: {exception}"
             raise XiaomiVacuumApiClientError(msg) from exception
 
-    async def _run_action[T, **P](
-        self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs
-    ) -> T:
+    async def _run_action(self, operation: Awaitable[JsonValue]) -> None:
         """
         Run an MIoT action, tolerating the flaky ``-9999 user ack timeout``.
 
@@ -102,75 +90,78 @@ class XiaomiVacuumApiClient:
         real state. Any other device error still raises.
         """
         try:
-            return await self._run(func, *args, **kwargs)
-        except XiaomiVacuumApiClientCommunicationError as exception:
-            if _is_ack_timeout(exception):
-                LOGGER.warning(
-                    "Device did not ack the action in time (-9999); assuming it "
-                    "was accepted. State will be confirmed on the next refresh."
-                )
-                return None  # type: ignore[return-value]
-            raise
+            await operation
+        except MiotAckTimeoutError:
+            LOGGER.warning(
+                "Device did not ack the action in time (-9999); assuming it "
+                "was accepted. State will be confirmed on the next refresh."
+            )
+        except MiotError as exception:
+            msg = f"Device error: {exception}"
+            raise XiaomiVacuumApiClientCommunicationError(msg) from exception
+        except Exception as exception:  # pylint: disable=broad-except
+            msg = f"Unexpected error: {exception}"
+            raise XiaomiVacuumApiClientError(msg) from exception
 
     async def async_get_info(self) -> DeviceInfoLike:
-        """Handshake — returns python-miio DeviceInfo (model, mac, fw)."""
-        return cast("DeviceInfoLike", await self._run(self._device.info))
+        """Handshake — returns the device identity (model, mac, fw)."""
+        return await self._run(self._client.info())
 
     async def async_get_state(self) -> VacuumState:
-        """Read all mapped properties (indexed by siid+piid)."""
-        rows = await self._run(self._device.get_properties_for_mapping)
-        LOGGER.debug("Raw MIoT rows: %s", rows)
-        by_key = {
-            (r["siid"], r["piid"]): r["value"] for r in rows if r.get("code") == 0
-        }
-        mapping = self._spec.property_mapping
-        parsed = {
-            name: by_key.get((p["siid"], p["piid"])) for name, p in mapping.items()
-        }
-        LOGGER.debug("Parsed state: %s", parsed)
-        return cast("VacuumState", parsed)
+        """Read all mapped properties, keyed by the spec's property names."""
+        values = await self._run(self._client.get_properties(self._properties))
+        LOGGER.debug("Parsed state: %s", values)
+        return cast("VacuumState", values)
 
     async def async_start(self) -> None:
         """Start sweeping."""
-        a = self._spec.actions.start_sweep
-        await self._run_action(self._device.call_action_by, a["siid"], a["aiid"])
+        await self._run_action(
+            self._client.call_action(_address(self._spec.actions.start_sweep))
+        )
 
     async def async_continue(self) -> None:
         """Resume a paused job (keeps the current task instead of restarting)."""
-        a = self._spec.actions.continue_sweep
-        await self._run_action(self._device.call_action_by, a["siid"], a["aiid"])
+        await self._run_action(
+            self._client.call_action(_address(self._spec.actions.continue_sweep))
+        )
 
     async def async_pause(self) -> None:
         """Pause current job."""
-        a = self._spec.actions.pause_sweeping
-        await self._run_action(self._device.call_action_by, a["siid"], a["aiid"])
+        await self._run_action(
+            self._client.call_action(_address(self._spec.actions.pause_sweeping))
+        )
 
     async def async_stop(self) -> None:
         """Stop current job."""
-        a = self._spec.actions.stop_sweeping
-        await self._run_action(self._device.call_action_by, a["siid"], a["aiid"])
+        await self._run_action(
+            self._client.call_action(_address(self._spec.actions.stop_sweeping))
+        )
 
     async def async_return_home(self) -> None:
         """Stop and return to dock."""
-        a = self._spec.actions.return_home
-        await self._run_action(self._device.call_action_by, a["siid"], a["aiid"])
+        await self._run_action(
+            self._client.call_action(_address(self._spec.actions.return_home))
+        )
 
     async def async_locate(self) -> None:
         """Identify (beep + light)."""
-        a = self._spec.actions.identify
-        await self._run_action(self._device.call_action_by, a["siid"], a["aiid"])
+        await self._run_action(
+            self._client.call_action(_address(self._spec.actions.identify))
+        )
 
     async def async_call_action(self, siid: int, aiid: int) -> None:
         """Invoke an arbitrary MIoT action (backs the send_command service)."""
-        await self._run_action(self._device.call_action_by, siid, aiid)
+        await self._run_action(
+            self._client.call_action(ActionAddress(siid=siid, aiid=aiid))
+        )
 
     async def async_start_dust_arrest(self) -> None:
         """Trigger dock to empty the vacuum's dust bin (X20 Max only)."""
-        a = self._spec.actions.start_dust_arrest
-        if a is None:
+        action = self._spec.actions.start_dust_arrest
+        if action is None:
             msg = "This model has no dust-arrest dock"
             raise XiaomiVacuumApiClientError(msg)
-        await self._run_action(self._device.call_action_by, a["siid"], a["aiid"])
+        await self._run_action(self._client.call_action(_address(action)))
 
     async def async_set_fan_speed(self, fan_speed: str) -> None:
         """Set fan speed by label (Silent/Basic/Strong/Full Speed)."""
@@ -190,11 +181,11 @@ class XiaomiVacuumApiClient:
 
     async def async_set_property(self, name: Property, value: int) -> None:
         """Set a MIoT property by mapping name (raw integer value)."""
-        prop = self._spec.property_mapping.get(name)
-        if prop is None:
+        address = self._properties.get(name)
+        if address is None:
             msg = f"Unknown property: {name}"
             raise XiaomiVacuumApiClientError(msg)
-        await self._run(self._device.set_property_by, prop["siid"], prop["piid"], value)
+        await self._run(self._client.set_property(address, value))
 
     async def async_clean_segments(
         self, segment_ids: list[str], room_information: str | None = None
@@ -219,17 +210,15 @@ class XiaomiVacuumApiClient:
             if actions.start_room_sweep is None:
                 msg = "direct room-clean strategy but no start_room_sweep action"
                 raise XiaomiVacuumApiClientError(msg)
-            a = actions.start_room_sweep
-            payload = [
+            action = actions.start_room_sweep
+            payload: list[JsonValue] = [
                 {
-                    "piid": a["in_piid"],
+                    "piid": action["in_piid"],
                     "value": ",".join(str(r) for r in segment_ids),
                 }
             ]
             LOGGER.debug("Calling start-vacuum-room-sweep with payload: %s", payload)
-            await self._run_action(
-                self._device.call_action_by, a["siid"], a["aiid"], payload
-            )
+            await self._run_action(self._client.call_action(_address(action), payload))
             return
 
         # config_then_custom (S20+)
@@ -278,7 +267,7 @@ class XiaomiVacuumApiClient:
         mishandles on flaky Wi-Fi — multi-step flows like the S20+ room-clean,
         where a single ``-9999`` on the first step would otherwise leave the
         second step running uselessly. When no cloud session is configured we
-        fall back to the local miio path (with its ack-timeout tolerance).
+        fall back to the local path (with its ack-timeout tolerance).
         """
         if self._cloud is not None:
             try:
@@ -323,28 +312,16 @@ class XiaomiVacuumApiClient:
                         )
                         raise XiaomiVacuumApiClientError(msg)
                 return
-        await self._run_action(self._device.call_action_by, siid, aiid, params)
+        await self._run_action(
+            self._client.call_action(
+                ActionAddress(siid=siid, aiid=aiid), cast("list[JsonValue]", params)
+            )
+        )
 
 
-_ACK_TIMEOUT_CODE = -9999
-
-
-def _is_ack_timeout(exception: BaseException) -> bool:
-    """
-    Return True if the error chain carries a ``-9999 user ack timeout`` from miio.
-
-    python-miio exhausts its retries and raises a generic
-    ``DeviceException("Unable to recover failed command")`` whose ``__cause__``
-    is the last ``RecoverableError`` — a ``DeviceError`` subclass carrying the
-    original ``code``/``message``. We walk that chain rather than grepping the
-    message so the check survives wording changes across miio versions.
-    """
-    cause: BaseException | None = exception
-    while cause is not None:
-        if isinstance(cause, DeviceError) and cause.code == _ACK_TIMEOUT_CODE:
-            return True
-        cause = cause.__cause__ or cause.__context__
-    return False
+def _address(action: MiotActionAddress) -> ActionAddress:
+    """Convert a spec action mapping entry to the SDK's address type."""
+    return ActionAddress(siid=action["siid"], aiid=action["aiid"])
 
 
 # Columns published by the S20+ `room-info` property (SIID 6 / piid 10) and

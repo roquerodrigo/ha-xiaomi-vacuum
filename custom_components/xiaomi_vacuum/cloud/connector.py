@@ -12,7 +12,8 @@ from http import HTTPStatus
 from typing import TYPE_CHECKING, cast
 
 import requests
-from Crypto.Cipher import ARC4
+from cryptography.hazmat.decrepit.ciphers.algorithms import ARC4
+from cryptography.hazmat.primitives.ciphers import Cipher
 
 from ..const import LOGGER  # noqa: TID252
 from .device_info import XiaomiDeviceInfo
@@ -20,6 +21,8 @@ from .errors import XiaomiCloudAuthError, XiaomiCloudConnectionError, XiaomiClou
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+
+    from cryptography.hazmat.primitives.ciphers import CipherContext
 
     from ..data import JsonObject, JsonValue  # noqa: TID252
     from .responses import (
@@ -410,16 +413,21 @@ class _XiaomiCloudConnector:
 
     @staticmethod
     def _encrypt_rc4(password: str, payload: str) -> str:
-        r = ARC4.new(base64.b64decode(password))
-        r.encrypt(bytes(1024))
-        return base64.b64encode(r.encrypt(payload.encode())).decode()
+        r = _rc4_stream(password)
+        return base64.b64encode(r.update(payload.encode())).decode()
 
     @staticmethod
     def _decrypt_rc4(password: str, payload: str) -> bytes:
-        r = ARC4.new(base64.b64decode(password))
-        r.encrypt(bytes(1024))
-        return r.encrypt(base64.b64decode(payload))
+        r = _rc4_stream(password)
+        return r.update(base64.b64decode(payload))
 
     @staticmethod
     def _to_json(text: str) -> JsonValue:
         return cast("JsonValue", json.loads(text.replace("&&&START&&&", "")))
+
+
+def _rc4_stream(password: str) -> CipherContext:
+    """RC4 keystream primed like the Mi Home app: the first 1024 bytes are discarded."""
+    stream = Cipher(ARC4(base64.b64decode(password)), mode=None).encryptor()
+    stream.update(bytes(1024))
+    return stream
