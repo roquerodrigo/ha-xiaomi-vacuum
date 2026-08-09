@@ -15,7 +15,7 @@ here.
 ## Architecture
 
 - **Local control, cloud-assisted setup.** Day-to-day polling/control is
-  `iot_class: local_polling` over MIoT via `python-miio`. The Xiaomi cloud
+  `iot_class: local_polling` over MIoT via `xiaomi-vacuum-sdk`. The Xiaomi cloud
   (`custom_components/xiaomi_vacuum/cloud/`) is used only for the QR-login
   setup flow, the map image, and localized error text.
 - **Entity platforms**, each its own subpackage under
@@ -61,7 +61,7 @@ here.
 - Python **>= 3.14.2**, dependency management via **`uv`** (`uv.lock`
   committed, `[tool.uv] package = false`).
 - Dependency groups in `pyproject.toml`: `dev` (HA test harness, pytest,
-  `python-miio`, `vacuum-map-parser-xiaomi`) and `lint` (`ruff`, `mypy`).
+  `xiaomi-vacuum-sdk`) and `lint` (`ruff`, `mypy`).
 - Local dev setup is `uv sync` (there is no setup script; dependencies live
   in `pyproject.toml`).
 - `scripts/develop` — runs a real local HA instance against this

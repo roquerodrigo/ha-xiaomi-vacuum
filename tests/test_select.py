@@ -52,14 +52,14 @@ async def test_select_entity_category_is_config(hass, setup_integration):
 async def test_select_option_calls_set_property(
     hass, setup_integration, mock_miot_device
 ):
-    mock_miot_device.set_property_by.reset_mock()
+    mock_miot_device.set_property.reset_mock()
     await hass.services.async_call(
         "select",
         "select_option",
         {"entity_id": "select.vacuum_clean_times", "option": "two_times"},
         blocking=True,
     )
-    assert mock_miot_device.set_property_by.called
+    assert mock_miot_device.set_property.called
 
 
 async def test_select_option_optimistic_update(
@@ -82,14 +82,14 @@ async def test_sweep_mop_type_sweep_allowed_without_mop_pad(
     coord = setup_integration.runtime_data.coordinator
     coord.async_set_updated_data({**coord.data, "mop_status": False})
     await hass.async_block_till_done()
-    mock_miot_device.set_property_by.reset_mock()
+    mock_miot_device.set_property.reset_mock()
     await hass.services.async_call(
         "select",
         "select_option",
         {"entity_id": "select.vacuum_mode", "option": "sweep"},
         blocking=True,
     )
-    assert mock_miot_device.set_property_by.called
+    assert mock_miot_device.set_property.called
 
 
 async def test_sweep_mop_type_mop_rejected_without_mop_pad(
@@ -101,7 +101,7 @@ async def test_sweep_mop_type_mop_rejected_without_mop_pad(
     coord = setup_integration.runtime_data.coordinator
     coord.async_set_updated_data({**coord.data, "mop_status": False})
     await hass.async_block_till_done()
-    mock_miot_device.set_property_by.reset_mock()
+    mock_miot_device.set_property.reset_mock()
     with pytest.raises(ServiceValidationError, match="no mop pad detected"):
         await hass.services.async_call(
             "select",
@@ -110,7 +110,7 @@ async def test_sweep_mop_type_mop_rejected_without_mop_pad(
             blocking=True,
         )
     # The write must not have been sent to the device.
-    mock_miot_device.set_property_by.assert_not_called()
+    mock_miot_device.set_property.assert_not_called()
 
 
 @pytest.mark.parametrize("detached", [False, 0])
@@ -123,7 +123,7 @@ async def test_sweep_mop_type_mop_rejected_when_pad_reported_as_int(
     coord = setup_integration.runtime_data.coordinator
     coord.async_set_updated_data({**coord.data, "mop_status": detached})
     await hass.async_block_till_done()
-    mock_miot_device.set_property_by.reset_mock()
+    mock_miot_device.set_property.reset_mock()
     with pytest.raises(ServiceValidationError, match="no mop pad detected"):
         await hass.services.async_call(
             "select",
@@ -131,7 +131,7 @@ async def test_sweep_mop_type_mop_rejected_when_pad_reported_as_int(
             {"entity_id": "select.vacuum_mode", "option": "mop"},
             blocking=True,
         )
-    mock_miot_device.set_property_by.assert_not_called()
+    mock_miot_device.set_property.assert_not_called()
 
 
 async def test_sweep_mop_type_mop_allowed_when_pad_state_unknown(
@@ -141,28 +141,28 @@ async def test_sweep_mop_type_mop_allowed_when_pad_state_unknown(
     coord = setup_integration.runtime_data.coordinator
     coord.async_set_updated_data({**coord.data, "mop_status": None})
     await hass.async_block_till_done()
-    mock_miot_device.set_property_by.reset_mock()
+    mock_miot_device.set_property.reset_mock()
     await hass.services.async_call(
         "select",
         "select_option",
         {"entity_id": "select.vacuum_mode", "option": "sweep_mop"},
         blocking=True,
     )
-    assert mock_miot_device.set_property_by.called
+    assert mock_miot_device.set_property.called
 
 
 async def test_sweep_mop_type_mop_allowed_with_mop_pad(
     hass, setup_integration, mock_miot_device
 ):
     """Mop modes work fine when the mop pad is attached (default mock state)."""
-    mock_miot_device.set_property_by.reset_mock()
+    mock_miot_device.set_property.reset_mock()
     await hass.services.async_call(
         "select",
         "select_option",
         {"entity_id": "select.vacuum_mode", "option": "sweep_mop"},
         blocking=True,
     )
-    assert mock_miot_device.set_property_by.called
+    assert mock_miot_device.set_property.called
 
 
 def test_every_select_has_an_authored_icon():

@@ -4,6 +4,7 @@ import json
 
 import pytest
 from homeassistant.components.vacuum.const import VacuumActivity
+from xiaomi_vacuum_sdk import ActionAddress
 
 from custom_components.xiaomi_vacuum.const import DOMAIN
 from custom_components.xiaomi_vacuum.spec import D109GL
@@ -67,7 +68,7 @@ async def test_vacuum_unknown_activity_when_no_status(hass, setup_integration):
 
 
 async def test_vacuum_start_calls_api(hass, setup_integration, mock_miot_device):
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     await hass.services.async_call(
         "vacuum",
         "start",
@@ -75,7 +76,7 @@ async def test_vacuum_start_calls_api(hass, setup_integration, mock_miot_device)
         blocking=True,
     )
     # default state is status:2 (docked) -> fresh start (siid 2, aiid 1)
-    mock_miot_device.call_action_by.assert_any_call(2, 1)
+    mock_miot_device.call_action.assert_any_call(ActionAddress(siid=2, aiid=1))
 
 
 async def test_vacuum_start_patches_activity_to_cleaning(
@@ -108,14 +109,13 @@ async def test_vacuum_start_resumes_unless_parked(
     coord = setup_integration.runtime_data.coordinator
     coord.async_set_updated_data({**coord.data, "status": status, "fault": 0})
     await hass.async_block_till_done()
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     await hass.services.async_call(
         "vacuum", "start", {"entity_id": "vacuum.vacuum"}, blocking=True
     )
-    mock_miot_device.call_action_by.assert_any_call(2, 8)
+    mock_miot_device.call_action.assert_any_call(ActionAddress(siid=2, aiid=8))
     assert all(
-        call.args[:2] != (2, 1)
-        for call in mock_miot_device.call_action_by.call_args_list
+        call.args[:2] != (2, 1) for call in mock_miot_device.call_action.call_args_list
     )
 
 
@@ -127,34 +127,33 @@ async def test_vacuum_start_fresh_when_idle(
     coord = setup_integration.runtime_data.coordinator
     coord.async_set_updated_data({**coord.data, "status": status, "fault": 0})
     await hass.async_block_till_done()
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     await hass.services.async_call(
         "vacuum", "start", {"entity_id": "vacuum.vacuum"}, blocking=True
     )
-    mock_miot_device.call_action_by.assert_any_call(2, 1)
+    mock_miot_device.call_action.assert_any_call(ActionAddress(siid=2, aiid=1))
     assert all(
-        call.args[:2] != (2, 8)
-        for call in mock_miot_device.call_action_by.call_args_list
+        call.args[:2] != (2, 8) for call in mock_miot_device.call_action.call_args_list
     )
 
 
 async def test_vacuum_stop_calls_api(hass, setup_integration, mock_miot_device):
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     await hass.services.async_call(
         "vacuum", "stop", {"entity_id": "vacuum.vacuum"}, blocking=True
     )
-    assert mock_miot_device.call_action_by.called
+    assert mock_miot_device.call_action.called
     # Optimistic UI patch: stop reports IDLE immediately.
     state = hass.states.get("vacuum.vacuum")
     assert state.state == "idle"
 
 
 async def test_vacuum_pause_calls_api(hass, setup_integration, mock_miot_device):
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     await hass.services.async_call(
         "vacuum", "pause", {"entity_id": "vacuum.vacuum"}, blocking=True
     )
-    assert mock_miot_device.call_action_by.called
+    assert mock_miot_device.call_action.called
     # Optimistic UI patch: pause reports PAUSED immediately.
     state = hass.states.get("vacuum.vacuum")
     assert state.state == "paused"
@@ -163,7 +162,7 @@ async def test_vacuum_pause_calls_api(hass, setup_integration, mock_miot_device)
 async def test_vacuum_send_command_invokes_action(
     hass, setup_integration, mock_miot_device
 ):
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     await hass.services.async_call(
         "vacuum",
         "send_command",
@@ -171,7 +170,7 @@ async def test_vacuum_send_command_invokes_action(
         blocking=True,
     )
     # start_mop -> siid 2, aiid 5
-    mock_miot_device.call_action_by.assert_any_call(2, 5)
+    mock_miot_device.call_action.assert_any_call(ActionAddress(siid=2, aiid=5))
 
 
 async def test_vacuum_send_command_rejects_params(hass, setup_integration):
@@ -204,33 +203,33 @@ async def test_vacuum_send_command_unknown_raises(hass, setup_integration):
 
 
 async def test_vacuum_return_to_base(hass, setup_integration, mock_miot_device):
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     await hass.services.async_call(
         "vacuum", "return_to_base", {"entity_id": "vacuum.vacuum"}, blocking=True
     )
-    assert mock_miot_device.call_action_by.called
+    assert mock_miot_device.call_action.called
     # Optimistic UI patch: return-home reports RETURNING immediately.
     state = hass.states.get("vacuum.vacuum")
     assert state.state == "returning"
 
 
 async def test_vacuum_locate(hass, setup_integration, mock_miot_device):
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     await hass.services.async_call(
         "vacuum", "locate", {"entity_id": "vacuum.vacuum"}, blocking=True
     )
-    assert mock_miot_device.call_action_by.called
+    assert mock_miot_device.call_action.called
 
 
 async def test_vacuum_set_fan_speed(hass, setup_integration, mock_miot_device):
-    mock_miot_device.set_property_by.reset_mock()
+    mock_miot_device.set_property.reset_mock()
     await hass.services.async_call(
         "vacuum",
         "set_fan_speed",
         {"entity_id": "vacuum.vacuum", "fan_speed": "strong"},
         blocking=True,
     )
-    assert mock_miot_device.set_property_by.called
+    assert mock_miot_device.set_property.called
 
 
 async def test_parse_segments_with_rooms_dict(sample_room_info):
@@ -351,11 +350,11 @@ async def test_async_get_segments_empty_while_offline_since_startup(
 async def test_async_clean_segments_via_entity(
     hass, setup_integration, mock_miot_device
 ):
-    mock_miot_device.call_action_by.reset_mock()
+    mock_miot_device.call_action.reset_mock()
     coord = setup_integration.runtime_data.coordinator
     from custom_components.xiaomi_vacuum.vacuum import XiaomiVacuum
 
     entity = XiaomiVacuum(coordinator=coord)
     entity.hass = hass
     await entity.async_clean_segments(["10", "28"])
-    assert mock_miot_device.call_action_by.called
+    assert mock_miot_device.call_action.called

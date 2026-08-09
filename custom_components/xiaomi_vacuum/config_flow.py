@@ -311,7 +311,6 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="no_local_ip")
 
         client = XiaomiVacuumApiClient(
-            hass=self.hass,
             host=device.local_ip,
             token=device.token,
             spec=get_spec(device.model),

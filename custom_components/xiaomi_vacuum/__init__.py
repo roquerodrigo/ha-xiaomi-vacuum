@@ -109,7 +109,6 @@ async def async_setup_entry(
     cached_model = stored_info.get("model") if isinstance(stored_info, dict) else None
     provisional_spec = get_spec(cached_model or DEFAULT_MODEL)
     client = XiaomiVacuumApiClient(
-        hass=hass,
         host=entry.data[CONF_HOST],
         token=entry.data[CONF_TOKEN],
         spec=provisional_spec,
@@ -149,7 +148,6 @@ async def async_setup_entry(
         async_clear_unsupported_model(hass, entry)
     if spec is not provisional_spec:
         client = XiaomiVacuumApiClient(
-            hass=hass,
             host=entry.data[CONF_HOST],
             token=entry.data[CONF_TOKEN],
             spec=spec,
