@@ -1,5 +1,7 @@
 {
     "name": "Xiaomi Vacuum",
+    "zip_release": true,
+    "filename": "xiaomi_vacuum.zip",
     "homeassistant": "2026.4.4",
     "hacs": "2.0.5"
 }
