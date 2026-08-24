@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.3.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.2.0...v2.3.0) (2026-08-24)
+
+
+### Features
+
+* **hacs:** ship the install zip with every release ([98ae49a](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/98ae49a9d866fcd3a3be4e97fb2eec5a600106b2))
+
+
+### Development Dependencies
+
+* **deps-dev:** bump the python-development group across 1 directory with 3 updates ([2d4aca8](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/2d4aca845af3b9da869a9a8772ca396e386d7c47))
+
 ## [2.2.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.1.0...v2.2.0) (2026-08-09)
 
 
