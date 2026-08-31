@@ -91,10 +91,6 @@ class DeviceInfoLike(Protocol):
     def hardware_version(self) -> str | None:
         """Hardware revision string, if reported."""
 
-    @property
-    def raw(self) -> JsonObject:
-        """Raw handshake payload, logged for diagnostics."""
-
 
 @dataclass
 class XiaomiVacuumData:

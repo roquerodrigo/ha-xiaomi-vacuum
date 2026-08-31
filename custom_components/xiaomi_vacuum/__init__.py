@@ -134,9 +134,10 @@ async def async_setup_entry(
                 entry, data={**entry.data, CONF_DEVICE_INFO: stored_info_obj}
             )
     LOGGER.debug(
-        "Device info: model=%s raw=%s",
+        "Device info: model=%s firmware=%s hardware=%s",
         getattr(info, "model", None),
-        getattr(info, "raw", None),
+        getattr(info, "firmware_version", None),
+        getattr(info, "hardware_version", None),
     )
     # Resolve the real spec from the (now-known) model and rebuild the client if
     # the handshake revealed a different model than the cached/default one.

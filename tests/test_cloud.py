@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -13,6 +14,7 @@ from custom_components.xiaomi_vacuum.cloud import (
     XiaomiDeviceInfo,
     _XiaomiCloudConnector,
 )
+from custom_components.xiaomi_vacuum.cloud.redaction import response_key_names
 
 
 def _resp(status=200, text="", cookies=None, content=b""):
@@ -268,6 +270,26 @@ async def test_async_poll_qr_login_returns_false_when_body_missing_ssecurity(has
         assert await cloud._async_poll_qr_login("https://lp", 1) is False
 
 
+async def test_async_poll_qr_login_logs_key_names_when_ssecurity_missing(hass, caplog):
+    """A body without ssecurity may still carry a pass token — log key names only."""
+    cloud = XiaomiCloud(hass, "us")
+    body = '&&&START&&&{"passToken":"SUPERSECRET","location":"https://loc"}'
+    with _patch_aiohttp(_aio_resp(text=body)), caplog.at_level(logging.DEBUG):
+        assert await cloud._async_poll_qr_login("https://lp", 1) is False
+    assert "SUPERSECRET" not in caplog.text
+    assert "keys: location, passToken" in caplog.text
+
+
+async def test_async_poll_qr_login_logs_key_names_when_user_id_missing(hass, caplog):
+    """The ssecurity session secret must never reach the log, not even on error."""
+    cloud = XiaomiCloud(hass, "us")
+    body = '&&&START&&&{"ssecurity":"SUPERSECRET","location":"https://loc"}'
+    with _patch_aiohttp(_aio_resp(text=body)), caplog.at_level(logging.DEBUG):
+        assert await cloud._async_poll_qr_login("https://lp", 1) is False
+    assert "SUPERSECRET" not in caplog.text
+    assert "keys: location, ssecurity" in caplog.text
+
+
 async def test_async_poll_qr_login_returns_false_when_service_token_missing(hass):
     cloud = XiaomiCloud(hass, "us")
     body = '&&&START&&&{"ssecurity":"S","userId":42,"location":"https://loc"}'
@@ -340,9 +362,10 @@ async def test_async_resolve_device_not_found_raises(hass):
     cloud = XiaomiCloud(hass, "us")
     with (
         patch.object(cloud._connector, "find_device", return_value=None),
-        pytest.raises(XiaomiCloudError, match="not found"),
+        pytest.raises(XiaomiCloudError, match="No device matching") as raised,
     ):
         await cloud.async_resolve_device("abc")
+    assert "abc" not in str(raised.value)
 
 
 async def test_connection_error_text_redacts_url_query_string(hass):
@@ -925,3 +948,12 @@ def test_every_model_action_round_trips_through_call_action(model):
     assert set(seen) == expected
     # Each action called exactly once (no model-specific short-circuit / dedupe).
     assert len(seen) == len(expected)
+
+
+def test_response_key_names_lists_keys_without_values():
+    assert response_key_names({"ssecurity": "S", "userId": 42}) == "ssecurity, userId"
+
+
+def test_response_key_names_describes_empty_and_non_mapping_bodies():
+    assert response_key_names({}) == "<empty>"
+    assert response_key_names(["ssecurity"]) == "<list>"
