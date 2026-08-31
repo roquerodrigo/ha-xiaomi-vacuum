@@ -18,6 +18,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher
 from ..const import LOGGER  # noqa: TID252
 from .device_info import XiaomiDeviceInfo
 from .errors import XiaomiCloudAuthError, XiaomiCloudConnectionError, XiaomiCloudError
+from .redaction import response_key_names
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -126,14 +127,15 @@ class _XiaomiCloudConnector:
             LOGGER.debug("QR long-poll failed: %s", exc)
             return False
         if response.status_code != _HTTP_OK:
-            LOGGER.debug(
-                "QR long-poll status %s: %s", response.status_code, response.text[:200]
-            )
+            LOGGER.debug("QR long-poll status %s", response.status_code)
             return False
         body = cast("QrPoll", self._to_json(response.text))
         ssecurity = body.get("ssecurity")
         if ssecurity is None:
-            LOGGER.debug("QR long-poll returned without ssecurity: %s", body)
+            LOGGER.debug(
+                "QR long-poll returned without ssecurity; keys: %s",
+                response_key_names(body),
+            )
             return False
         self._ssecurity = ssecurity
         self._user_id = str(body["userId"])

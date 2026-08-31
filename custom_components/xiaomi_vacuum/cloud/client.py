@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import re
 from functools import partial
 from typing import TYPE_CHECKING
 
@@ -18,6 +17,7 @@ from .errors import (
     XiaomiCloudConnectionError,
     XiaomiCloudError,
 )
+from .redaction import response_key_names, sanitized_error_text
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -26,20 +26,6 @@ if TYPE_CHECKING:
 
     from ..data import CloudSessionTokens, JsonValue  # noqa: TID252
     from .device_info import XiaomiDeviceInfo
-
-_URL_QUERY_STRING = re.compile(r"\?\S*")
-
-
-def _sanitized_error_text(exception: Exception) -> str:
-    """
-    Strip URL query strings from upstream error text before it can be logged.
-
-    requests/urllib3 embed the full request URL in their exception messages,
-    and the signed cloud calls carry the plaintext ``ssecurity`` session secret
-    as a query parameter — without this, a routine connection failure would
-    write the credential into Home Assistant's log.
-    """
-    return _URL_QUERY_STRING.sub("?<redacted>", str(exception))
 
 
 class XiaomiCloud:
@@ -148,11 +134,17 @@ class XiaomiCloud:
             LOGGER.debug("QR long-poll returned a non-JSON body")
             return False
         if not isinstance(body, dict) or "ssecurity" not in body:
-            LOGGER.debug("QR long-poll returned without ssecurity: %s", body)
+            LOGGER.debug(
+                "QR long-poll returned without ssecurity; keys: %s",
+                response_key_names(body),
+            )
             return False
         user_id = body.get("userId")
         if user_id is None:
-            LOGGER.debug("QR long-poll returned without userId: %s", body)
+            LOGGER.debug(
+                "QR long-poll returned without userId; keys: %s",
+                response_key_names(body),
+            )
             return False
         location = body.get("location")
         if not location:
@@ -181,7 +173,7 @@ class XiaomiCloud:
         """Find the vacuum in the cloud account and cache it on this client."""
         device = await self._run(self._connector.find_device, token, self._country)
         if device is None:
-            msg = f"Device with token {token[:6]}… not found in cloud"
+            msg = "No device matching the configured token found in the cloud account"
             raise XiaomiCloudError(msg)
         self._device = device
         LOGGER.debug(
@@ -272,7 +264,7 @@ class XiaomiCloud:
                 partial(func, *args, **kwargs)
             )
         except requests.RequestException as exception:
-            msg = f"Cannot reach the Xiaomi cloud: {_sanitized_error_text(exception)}"
+            msg = f"Cannot reach the Xiaomi cloud: {sanitized_error_text(exception)}"
             raise XiaomiCloudConnectionError(msg) from exception
         except ValueError as exception:
             # A 200 response whose body is not decodable/parsable (proxy or

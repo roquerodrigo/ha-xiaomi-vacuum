@@ -18,7 +18,6 @@ def test_to_stored_then_from_stored_roundtrip():
     assert cached.mac_address == "AA:BB:CC:DD:EE:FF"
     assert cached.firmware_version == "1.0.0"
     assert cached.hardware_version == "rev1"
-    assert cached.raw == {}
 
 
 def test_from_stored_falls_back_on_missing_or_invalid_fields():

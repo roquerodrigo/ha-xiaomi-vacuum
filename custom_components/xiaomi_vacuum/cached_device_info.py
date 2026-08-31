@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from .spec import DEFAULT_MODEL
@@ -30,7 +30,6 @@ class CachedDeviceInfo:
     mac_address: str | None
     firmware_version: str | None
     hardware_version: str | None
-    raw: JsonObject = field(default_factory=dict)
 
     @classmethod
     def from_stored(cls, stored: JsonObject) -> CachedDeviceInfo:
