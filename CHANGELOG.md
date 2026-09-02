@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.3.1...v2.3.2) (2026-09-02)
+
+
+### Documentation
+
+* add GitHub Sponsors button and support section ([b62015a](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/b62015a8ffa46d10680a982068fad273a63b551d))
+
 ## [2.3.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.3.0...v2.3.1) (2026-08-31)
 
 
