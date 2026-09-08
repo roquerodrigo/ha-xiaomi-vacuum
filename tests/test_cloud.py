@@ -674,7 +674,7 @@ def test_encrypted_call_returns_none_on_non_200():
     assert c._encrypted_call("https://api.io.mi.com/app/v2/x", {"data": "{}"}) is None
 
 
-@pytest.mark.parametrize("status", [401, 403])
+@pytest.mark.parametrize("status", [401, 403, 426])
 def test_encrypted_call_raises_auth_error_on_auth_status(status):
     from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
 
@@ -682,6 +682,32 @@ def test_encrypted_call_raises_auth_error_on_auth_status(status):
     c._session = MagicMock()
     c._session.post.return_value = _resp(status=status)
     with pytest.raises(XiaomiCloudAuthError, match="rejected the session"):
+        c._encrypted_call("https://api.io.mi.com/app/v2/x", {"data": "{}"})
+
+
+def test_encrypted_call_expired_service_token_is_auth_error_even_when_strict():
+    """Xiaomi reports an expired serviceToken as HTTP 426 with a plain JSON body."""
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
+
+    c = _signed_connector()
+    c._session = MagicMock()
+    c._session.post.return_value = _resp(
+        status=426, text='{"code":0,"message":"SERVICETOKEN_EXPIRED"}'
+    )
+    with pytest.raises(XiaomiCloudAuthError, match="HTTP 426: SERVICETOKEN_EXPIRED"):
+        c._encrypted_call(
+            "https://api.io.mi.com/app/v2/x", {"data": "{}"}, raise_for_status=True
+        )
+
+
+@pytest.mark.parametrize("text", ["", "not json", '{"code":0}', '["x"]'])
+def test_encrypted_call_auth_error_omits_reason_when_body_has_no_message(text):
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
+
+    c = _signed_connector()
+    c._session = MagicMock()
+    c._session.post.return_value = _resp(status=401, text=text)
+    with pytest.raises(XiaomiCloudAuthError, match=r"\(HTTP 401\)$"):
         c._encrypted_call("https://api.io.mi.com/app/v2/x", {"data": "{}"})
 
 

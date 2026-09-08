@@ -263,6 +263,51 @@ async def test_setup_entry_starts_reauth_when_cloud_session_invalid(
     assert len(hass.states.async_all("vacuum")) == 1
 
 
+async def test_setup_entry_loads_and_starts_reauth_when_service_token_expired(
+    hass, mock_miot_device, enable_custom_integrations
+):
+    """An expired serviceToken must prompt reauth, never hold the entry in retry."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
+
+    cloud = AsyncMock()
+    cloud.async_resolve_device = AsyncMock(
+        side_effect=XiaomiCloudAuthError(
+            "Xiaomi cloud rejected the session (HTTP 426: SERVICETOKEN_EXPIRED)"
+        )
+    )
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_HOST: "192.168.1.50",
+            CONF_TOKEN: "0" * 32,
+            CONF_NAME: "Vacuum",
+            CONF_CLOUD_COUNTRY: "us",
+            CONF_CLOUD_SSECURITY: "ssec",
+            CONF_CLOUD_SERVICE_TOKEN: "tok",
+            CONF_CLOUD_USER_ID: "uid",
+        },
+        unique_id="AA:BB:CC:DD:EE:FF",
+    )
+    entry.add_to_hass(hass)
+    with (
+        patch(
+            "custom_components.xiaomi_vacuum.XiaomiCloud.from_session",
+            return_value=cloud,
+        ),
+        patch.object(MockConfigEntry, "async_start_reauth") as start_reauth,
+    ):
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert entry.state == ConfigEntryState.LOADED
+    assert entry.runtime_data.map_coordinator is None
+    assert len(hass.states.async_all("vacuum")) == 1
+    start_reauth.assert_called_once()
+
+
 async def test_setup_entry_retries_when_cloud_unreachable(
     hass, mock_miot_device, enable_custom_integrations
 ):

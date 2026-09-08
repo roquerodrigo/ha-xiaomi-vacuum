@@ -151,6 +151,21 @@ async def test_update_raises_update_failed_on_exception(hass):
         await coord._async_update_data()
 
 
+async def test_update_starts_reauth_and_keeps_map_when_session_expired(hass):
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
+
+    cloud = _cloud()
+    cloud.async_get_map_bytes = AsyncMock(
+        side_effect=XiaomiCloudAuthError("HTTP 426: SERVICETOKEN_EXPIRED")
+    )
+    state_coord = _state_coord()
+    coord = XiaomiVacuumMapCoordinator(hass, cloud, state_coord)
+    coord.data = b"CACHED"
+    result = await coord._async_update_data()
+    assert result == b"CACHED"
+    state_coord.config_entry.async_start_reauth.assert_called_once_with(hass)
+
+
 def test_extract_obj_name_from_json_envelope():
     raw = '{"index":123,"obj_name":"a/b/c"}'
     assert XiaomiVacuumMapCoordinator._extract_obj_name(raw) == "a/b/c"
