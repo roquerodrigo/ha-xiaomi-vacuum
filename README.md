@@ -86,8 +86,9 @@ Setup is cloud-assisted — there is **no token to copy by hand**:
 1. **Settings → Devices & services → Add Integration → Xiaomi Vacuum**.
 2. Pick the **Xiaomi cloud region** your Mi Home account is registered in
    (Europe and the UK use the Germany server).
-3. A **QR code** appears. Open the **Mi Home** app and scan it to authorize the
-   login to your Xiaomi account.
+3. A **QR code** appears. Scan it with your **phone camera** (or any QR
+   scanner app) — **not** the Mi Home app, which does not recognize it — and
+   sign in on the Xiaomi page that opens to authorize the login.
 4. The integration lists the vacuums on the account and lets you pick one (it
    auto-selects if there's only one).
 5. It pulls the device's **local IP and token** from the cloud, verifies the

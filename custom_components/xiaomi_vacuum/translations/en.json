@@ -12,8 +12,8 @@
                 }
             },
             "qr": {
-                "title": "Scan with the Mi Home app",
-                "description": "![QR]({qr_image})\n\nOpen the Mi Home app, tap the QR scanner (top-right corner), and scan the code. The dialog will advance automatically once you confirm on the phone."
+                "title": "Scan the QR code with your phone camera",
+                "description": "![QR]({qr_image})\n\n**Do not scan this code with the Mi Home app — it will not recognize it.** Point your phone's regular camera (or any QR scanner app) at the code and open the link: it takes you to the Xiaomi sign-in page. If the code is hard to read, zoom the browser page. The dialog will advance automatically once you finish signing in on the phone."
             },
             "qr_failed": {
                 "title": "QR not scanned in time",
@@ -42,7 +42,7 @@
             }
         },
         "progress": {
-            "waiting_for_scan": "![QR]({qr_image})\n\nOpen the Mi Home app, tap the QR scanner (top-right corner), and scan the code. The dialog will advance automatically once you confirm on the phone."
+            "waiting_for_scan": "![QR]({qr_image})\n\n**Do not scan this code with the Mi Home app — it will not recognize it.** Point your phone's regular camera (or any QR scanner app) at the code and open the link: it takes you to the Xiaomi sign-in page. If the code is hard to read, zoom the browser page. The dialog will advance automatically once you finish signing in on the phone."
         },
         "error": {
             "qr_not_scanned": "QR was not scanned in time. A new code is shown — try again."
