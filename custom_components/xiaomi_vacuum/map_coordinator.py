@@ -12,6 +12,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from xiaomi_vacuum_sdk import MapParseError, MapRenderer
 
+from .cloud import XiaomiCloudAuthError
 from .const import DOMAIN, LOGGER
 
 if TYPE_CHECKING:
@@ -97,6 +98,12 @@ class XiaomiVacuumMapCoordinator(DataUpdateCoordinator[bytes | None]):
             # parse/render failure is retried on the next poll instead of the
             # blob being skipped as a duplicate.
             self._last_raw = raw
+        except XiaomiCloudAuthError as exception:
+            # The stored session expired: prompt reauth (HA dedupes concurrent
+            # flows) and keep serving the last rendered map meanwhile.
+            LOGGER.warning("Cloud session rejected; starting reauth: %s", exception)
+            self.config_entry.async_start_reauth(self.hass)
+            return self.data
         except Exception as exception:
             raise UpdateFailed(exception) from exception
         LOGGER.debug("Rendered PNG: %s bytes", len(png))

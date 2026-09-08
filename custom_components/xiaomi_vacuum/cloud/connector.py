@@ -37,8 +37,14 @@ if TYPE_CHECKING:
     )
 
 _HTTP_OK = int(HTTPStatus.OK)
+# Xiaomi answers an expired ``serviceToken`` with 426 and a plain-text
+# ``{"code":0,"message":"SERVICETOKEN_EXPIRED"}`` body — not 401/403.
 _HTTP_AUTH_STATUSES = frozenset(
-    {int(HTTPStatus.UNAUTHORIZED), int(HTTPStatus.FORBIDDEN)}
+    {
+        int(HTTPStatus.UNAUTHORIZED),
+        int(HTTPStatus.FORBIDDEN),
+        int(HTTPStatus.UPGRADE_REQUIRED),
+    }
 )
 _QR_DEFAULT_LOCALE = "en_US"
 
@@ -346,7 +352,10 @@ class _XiaomiCloudConnector:
             url, headers=headers, cookies=cookies, params=fields, timeout=10
         )
         if response.status_code in _HTTP_AUTH_STATUSES:
-            msg = f"Xiaomi cloud rejected the session (HTTP {response.status_code})"
+            msg = (
+                "Xiaomi cloud rejected the session "
+                f"(HTTP {response.status_code}{self._rejection_reason(response)})"
+            )
             raise XiaomiCloudAuthError(msg)
         if response.status_code != _HTTP_OK:
             if raise_for_status:
@@ -355,6 +364,15 @@ class _XiaomiCloudConnector:
             return None
         decoded = self._decrypt_rc4(self._signed_nonce(fields["_nonce"]), response.text)
         return cast("JsonObject", json.loads(decoded))
+
+    @staticmethod
+    def _rejection_reason(response: requests.Response) -> str:
+        try:
+            body = json.loads(response.text)
+        except ValueError:
+            return ""
+        message = body.get("message") if isinstance(body, dict) else None
+        return f": {message}" if isinstance(message, str) and message else ""
 
     def _signed_nonce(self, nonce: str) -> str:
         if self._ssecurity is None:
