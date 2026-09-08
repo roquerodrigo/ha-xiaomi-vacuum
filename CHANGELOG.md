@@ -1,5 +1,28 @@
 # Changelog
 
+## [2.3.2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.3.1...v2.3.2) (2026-09-08)
+
+
+### Bug Fixes
+
+* prompt reauth when the Xiaomi cloud reports an expired session ([3c5dae2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/3c5dae2f22db48b223730cd9485d51e5ee18214f))
+
+
+### Dependencies
+
+* **deps:** bump pip from 26.1.1 to 26.2 ([5a2fb84](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/5a2fb847bd3c104548b28f38ef8cc16afde79591))
+
+
+### Development Dependencies
+
+* **deps-dev:** bump ruff ([912a656](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/912a65601890dabb606d20491717ec0d8e9f7f24))
+
+
+### Documentation
+
+* add GitHub Sponsors button and support section ([b62015a](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/b62015a8ffa46d10680a982068fad273a63b551d))
+* tell users to scan the login QR code with the phone camera ([4980ad0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/4980ad0ab1e93c57048b4bf462485cb52e2e1dda))
+
 ## [2.3.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.3.0...v2.3.1) (2026-08-31)
 
 
