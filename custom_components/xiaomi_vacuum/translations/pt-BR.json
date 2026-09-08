@@ -12,8 +12,8 @@
                 }
             },
             "qr": {
-                "title": "Escaneie com o app Mi Home",
-                "description": "![QR]({qr_image})\n\nAbra o app Mi Home, toque no leitor de QR (canto superior direito) e escaneie o código. A janela avança sozinha quando você confirmar no celular."
+                "title": "Escaneie o QR code com a câmera do celular",
+                "description": "![QR]({qr_image})\n\n**Não escaneie este código com o app Mi Home — ele não vai reconhecer.** Aponte a câmera normal do celular (ou qualquer leitor de QR) para o código e abra o link: ele leva à página de login da Xiaomi. Se o código estiver difícil de ler, dê zoom na página do navegador. A janela avança sozinha quando você concluir o login no celular."
             },
             "qr_failed": {
                 "title": "QR não escaneado a tempo",
@@ -42,7 +42,7 @@
             }
         },
         "progress": {
-            "waiting_for_scan": "![QR]({qr_image})\n\nAbra o app Mi Home, toque no leitor de QR (canto superior direito) e escaneie o código. A janela avança sozinha quando você confirmar no celular."
+            "waiting_for_scan": "![QR]({qr_image})\n\n**Não escaneie este código com o app Mi Home — ele não vai reconhecer.** Aponte a câmera normal do celular (ou qualquer leitor de QR) para o código e abra o link: ele leva à página de login da Xiaomi. Se o código estiver difícil de ler, dê zoom na página do navegador. A janela avança sozinha quando você concluir o login no celular."
         },
         "error": {
             "qr_not_scanned": "QR não foi escaneado a tempo. Um novo código foi gerado — tente de novo."
