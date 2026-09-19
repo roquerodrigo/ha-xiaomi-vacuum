@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.3.3](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.3.2...v2.3.3) (2026-09-19)
+
+
+### Dependencies
+
+* **deps:** bump anyio from 4.13.0 to 4.14.2 ([acae007](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/acae007bc37fc5a077d1e21b2823f5d9e8864b89))
+
+
+### Development Dependencies
+
+* **deps-dev:** bump ruff in the python-development group ([12584e9](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/12584e983b4a2b4f6c2d412b7fbd43574f19b597))
+
 ## [2.3.2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.3.1...v2.3.2) (2026-09-08)
 
 
