@@ -59,7 +59,15 @@ direct `start-vacuum-room-sweep` action exists but the robot ignores it.
 
 Create `custom_components/xiaomi_vacuum/spec/c108gl.py`, named after the model
 string. Mirror the structure of the closest sibling (`d109gl.py` for a model
-with an auto-wash dock, `b108gl.py` for one without).
+with an auto-wash dock, `ov71gl.py` for an X20-Max-shaped spec without dock
+hardware, `b108gl.py` for the S20+ layout).
+
+**Check the retail hardware, not just the spec.** Xiaomi reuses one spec
+template across a product line: the S40 Pro (`ov71gl`) publishes dust-arrest
+and mop-wash actions although it ships with a plain charging dock. Since
+`Capability.DUST_ARREST` is derived from `actions.start_dust_arrest`, wiring an
+action the hardware cannot perform creates a button that does nothing — leave
+such actions `None`.
 
 ### 3.1 Property mapping
 
@@ -146,6 +154,18 @@ Set `fault_kind`:
 Xiaomi publishes no code→text table anywhere; the localized message comes
 from the cloud message feed and is resolved by the coordinator into
 `fault_text` (see `cloud/connector.py:get_device_fault_texts`).
+
+**Phantom faults.** A firmware image is shared across a whole product family,
+so a unit sold with less hardware than the family's top model keeps running the
+checks for the parts it lacks and reports their failure permanently. The Mi
+Home app knows the hardware variant and hides those codes; the integration
+cannot infer it, so list them in `ignored_fault_codes` (a `frozenset[int]`,
+empty by default). The coordinator drops them for both `fault_kind` styles
+before the fault reaches any entity — without this the vacuum entity sits in
+`VacuumActivity.ERROR` for the device's whole life. The S40 Pro is the worked
+example: it ships with a plain charging dock and reports `100027` ("Sewage tank
+is full or not installed") forever. Only add a code once a real device is
+observed publishing it while the app reports nothing wrong.
 
 ### 3.5 Room cleaning strategy
 
@@ -244,6 +264,7 @@ from .c108gl import C108GL
 MODELS: dict[str, ModelSpec] = {
     D109GL.model: D109GL,
     B108GL.model: B108GL,
+    OV71GL.model: OV71GL,
     C108GL.model: C108GL,
 }
 ```
@@ -291,9 +312,14 @@ Add `tests/models/test_c108.py` mirroring the existing
   sample payload.
 
 You'll also need a fixture for the new model. Copy the
-`mock_miot_device_b108` fixture from
-[`tests/conftest.py`](tests/conftest.py) and adapt the sample state /
-model string.
+`mock_miot_device_ov71` / `setup_integration_ov71` fixtures from
+[`tests/conftest.py`](tests/conftest.py), add the model to the `_MODEL_MACS`
+and `_MODEL_STATES` tables there (distinct MAC so entries don't collide on
+`unique_id`), and adapt the sample state.
+
+Three tests enumerate the supported models and must list the new one:
+`tests/test_spec.py` (`SUPPORTED_MODELS` set and the `get_spec` parametrize)
+and the model parametrize in `tests/test_cloud.py`.
 
 ---
 

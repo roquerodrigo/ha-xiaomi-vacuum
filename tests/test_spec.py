@@ -10,13 +10,18 @@ from custom_components.xiaomi_vacuum.spec import (
     D109GL,
     DEFAULT_MODEL,
     MODELS,
+    OV71GL,
     SUPPORTED_MODELS,
     get_spec,
 )
 
 
-def test_registry_lists_both_supported_models():
-    assert set(SUPPORTED_MODELS) == {"xiaomi.vacuum.d109gl", "xiaomi.vacuum.b108gl"}
+def test_registry_lists_all_supported_models():
+    assert set(SUPPORTED_MODELS) == {
+        "xiaomi.vacuum.d109gl",
+        "xiaomi.vacuum.b108gl",
+        "xiaomi.vacuum.ov71gl",
+    }
     assert set(MODELS) == set(SUPPORTED_MODELS)
     assert DEFAULT_MODEL == "xiaomi.vacuum.d109gl"
 
@@ -26,6 +31,7 @@ def test_registry_lists_both_supported_models():
     [
         ("xiaomi.vacuum.d109gl", D109GL),
         ("xiaomi.vacuum.b108gl", B108GL),
+        ("xiaomi.vacuum.ov71gl", OV71GL),
     ],
 )
 def test_get_spec_returns_known_model(model, spec):

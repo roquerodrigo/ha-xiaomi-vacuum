@@ -920,8 +920,8 @@ def test_call_action_returns_response_body_on_success():
 
 @pytest.mark.parametrize(
     "model",
-    ["xiaomi.vacuum.d109gl", "xiaomi.vacuum.b108gl"],
-    ids=["x20_max_d109gl", "s20_plus_b108gl"],
+    ["xiaomi.vacuum.d109gl", "xiaomi.vacuum.b108gl", "xiaomi.vacuum.ov71gl"],
+    ids=["x20_max_d109gl", "s20_plus_b108gl", "s40_pro_ov71gl"],
 )
 def test_every_model_action_round_trips_through_call_action(model):
     """For each supported model, every spec action survives the generic cloud path."""

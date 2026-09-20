@@ -1,8 +1,9 @@
 # ha-xiaomi-vacuum
 
 Home Assistant custom integration for the **Xiaomi Robot Vacuum X20 Max**
-(`xiaomi.vacuum.d109gl`) and **Xiaomi Robot Vacuum S20+**
-(`xiaomi.vacuum.b108gl`), domain `xiaomi_vacuum`. Public repo, HACS-distributed.
+(`xiaomi.vacuum.d109gl`), **Xiaomi Robot Vacuum S20+** (`xiaomi.vacuum.b108gl`)
+and **Xiaomi Robot Vacuum S40 Pro** (`xiaomi.vacuum.ov71gl`), domain
+`xiaomi_vacuum`. Public repo, HACS-distributed.
 
 Read `README.md` for the user-facing feature list and setup flow,
 `XIAOMI_VACUUM_API.md` for the device's MIoT API reference, and
@@ -28,7 +29,8 @@ here.
 - **`spec/`** — per-model MIoT spec registry, one module per concern:
   `property.py`, `entity_key.py`, `capability.py` and `addresses.py` hold the
   vocabulary; `model_actions.py` and `model_spec.py` the two dataclasses;
-  `d109gl.py` (X20 Max) and `b108gl.py` (S20+) one `ModelSpec` instance each;
+  `d109gl.py` (X20 Max), `b108gl.py` (S20+) and `ov71gl.py` (S40 Pro) one
+  `ModelSpec` instance each;
   `registry.py` the model-string lookup. A `ModelSpec` bundles its property
   mapping, action mapping, status table, enumerations, `send_command`
   whitelist, fault representation, and room-clean strategy. Capabilities
@@ -39,8 +41,9 @@ here.
   new model is a data-only change: one module plus a `registry.py` line (see
   `ADDING_A_MODEL.md`). The spec is selected from the device model at setup and
   threaded through `runtime_data` / the coordinator. **Read the model's module
-  before touching any SIID/PIID/AIID — the two models diverge on almost all of
-  them.**
+  before touching any SIID/PIID/AIID — the S20+ diverges from the other two on
+  almost all of them, and the S40 Pro shares the X20 Max layout but has no
+  dock hardware.**
 - **`coordinator.py`** — local device state polling (`DataUpdateCoordinator`).
 - **`map_coordinator.py`** — separate coordinator for the cloud-rendered map
   image, decoupled from local polling.

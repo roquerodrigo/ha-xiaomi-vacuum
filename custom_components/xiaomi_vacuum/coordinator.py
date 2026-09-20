@@ -27,12 +27,16 @@ if TYPE_CHECKING:
 UPDATE_INTERVAL = timedelta(seconds=30)
 
 
-def _live_fault_code_ids(fault_ids_raw: str | None) -> int | None:
+def _live_fault_code_ids(
+    fault_ids_raw: str | None, ignored: frozenset[int]
+) -> int | None:
     """
     Return the current active fault code from the X20 Max `Fault Ids` property.
 
     `Fault Ids` (siid 2/piid 66) is the live fault state, shaped like
-    ``{"ts": ..., "fault": [<codes>]}`` where ``[0]`` means no active fault. The
+    ``{"ts": ..., "fault": [<codes>]}`` where ``[0]`` means no active fault.
+    Codes listed in ``ignored`` are the model's permanent phantom faults and
+    are dropped as well. The
     `Device Fault` property (piid 3) is not used — it latches the last code and
     never resets. Returns None when `Fault Ids` is missing or unparseable.
     """
@@ -42,7 +46,7 @@ def _live_fault_code_ids(fault_ids_raw: str | None) -> int | None:
         ids = json.loads(fault_ids_raw).get("fault") or []
     except ValueError, TypeError, AttributeError:
         return None
-    active = [code for code in ids if code]
+    active = [code for code in ids if code and code not in ignored]
     return active[0] if active else 0
 
 
@@ -91,12 +95,15 @@ class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[VacuumState]):
 
     def _derive_fault(self, data: VacuumState) -> int | None:
         """Extract the live fault code using the model's fault representation."""
+        ignored = self.spec.ignored_fault_codes
         if self.spec.fault_kind == "simple":
             # S20+: a plain uint32 fault property, already an int (0 == healthy).
             value = data.get("fault")
-            return int(value) if isinstance(value, int) else None
+            if not isinstance(value, int):
+                return None
+            return 0 if value in ignored else int(value)
         # X20 Max: a JSON fault-ids list.
-        return _live_fault_code_ids(data.get("fault_ids"))
+        return _live_fault_code_ids(data.get("fault_ids"), ignored)
 
     async def _enrich_fault_text(self, data: VacuumState) -> None:
         """Add the localized fault text for a non-zero fault code, if available."""

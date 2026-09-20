@@ -47,6 +47,10 @@ SAMPLE_STATE: dict[str, Any] = {
 #: Parsed-state fixture for the X20 Max (alias of SAMPLE_STATE for clarity).
 _SAMPLE_STATE_D109: dict[str, Any] = SAMPLE_STATE
 
+#: Parsed-state fixture for the S40 Pro. Same property layout as the X20 Max;
+#: status 22 is one of the station-assisted cleaning codes only this model has.
+_SAMPLE_STATE_OV71: dict[str, Any] = {**SAMPLE_STATE, "status": 22}
+
 #: Parsed-state fixture for the S20+. Uses the plain `fault` property, exposes no
 #: last_clean_time / sweep_route / obstacle_avoidance (the S20+ has none), and the
 #: room-information key maps to the S20+ SIID-6/PIID-10 property.
@@ -67,6 +71,18 @@ _SAMPLE_STATE_B108: dict[str, Any] = {
     "main_brush_life": 71,
     "side_brush_life": 90,
     "filter_life": 70,
+}
+
+_MODEL_MACS: dict[str, str] = {
+    "xiaomi.vacuum.d109gl": "AA:BB:CC:DD:EE:FF",
+    "xiaomi.vacuum.b108gl": "AA:BB:CC:DD:EE:01",
+    "xiaomi.vacuum.ov71gl": "AA:BB:CC:DD:EE:02",
+}
+
+_MODEL_STATES: dict[str, dict[str, Any]] = {
+    "xiaomi.vacuum.d109gl": _SAMPLE_STATE_D109,
+    "xiaomi.vacuum.b108gl": _SAMPLE_STATE_B108,
+    "xiaomi.vacuum.ov71gl": _SAMPLE_STATE_OV71,
 }
 
 
@@ -92,12 +108,8 @@ def _make_miot_instance(model: str):
     from custom_components.xiaomi_vacuum.spec import get_spec
 
     spec = get_spec(model)
-    # Distinct MAC per model so b108/d109 entries don't collide on unique_id.
-    mac = (
-        "AA:BB:CC:DD:EE:01"
-        if model.startswith("xiaomi.vacuum.b")
-        else "AA:BB:CC:DD:EE:FF"
-    )
+    # Distinct MAC per model so entries don't collide on unique_id.
+    mac = _MODEL_MACS[model]
     instance = MagicMock()
     info = MagicMock()
     info.model = model
@@ -109,11 +121,7 @@ def _make_miot_instance(model: str):
     instance.set_property = AsyncMock(return_value=None)
     instance.call_action = AsyncMock(return_value=None)
     instance.close = AsyncMock(return_value=None)
-    state = (
-        _SAMPLE_STATE_D109
-        if model.startswith("xiaomi.vacuum.d")
-        else _SAMPLE_STATE_B108
-    )
+    state = _MODEL_STATES[model]
     instance.get_properties = AsyncMock(
         side_effect=lambda mapping, **_: {name: state.get(name) for name in mapping}
     )
@@ -134,6 +142,14 @@ def mock_miot_device_b108() -> Generator:
     """Patch the SDK MiotClient for the S20+ (b108gl) model."""
     with patch("custom_components.xiaomi_vacuum.api.client.MiotClient") as cls:
         cls.return_value = _make_miot_instance("xiaomi.vacuum.b108gl")
+        yield cls.return_value
+
+
+@pytest.fixture
+def mock_miot_device_ov71() -> Generator:
+    """Patch the SDK MiotClient for the S40 Pro (ov71gl) model."""
+    with patch("custom_components.xiaomi_vacuum.api.client.MiotClient") as cls:
+        cls.return_value = _make_miot_instance("xiaomi.vacuum.ov71gl")
         yield cls.return_value
 
 
@@ -186,6 +202,35 @@ async def setup_integration_b108(
             CONF_NAME: "S20 Living Room",
         },
         unique_id="AA:BB:CC:DD:EE:01",
+    )
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    return entry
+
+
+@pytest.fixture
+async def setup_integration_ov71(
+    hass, mock_miot_device_ov71, enable_custom_integrations
+):
+    """Set up the integration against the S40 Pro (ov71gl) mock and return the entry."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.xiaomi_vacuum.const import (
+        CONF_HOST,
+        CONF_NAME,
+        CONF_TOKEN,
+        DOMAIN,
+    )
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_HOST: "192.168.1.52",
+            CONF_TOKEN: "0" * 32,
+            CONF_NAME: "S40 Pro",
+        },
+        unique_id="AA:BB:CC:DD:EE:02",
     )
     entry.add_to_hass(hass)
     await hass.config_entries.async_setup(entry.entry_id)

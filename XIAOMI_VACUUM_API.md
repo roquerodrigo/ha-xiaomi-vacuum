@@ -275,7 +275,28 @@ Partition · 6 Set Map Name [8] · 8 Restore Map [6]
 
 ---
 
-## 5. Fault codes and their localized text
+## 5. Spec of `xiaomi.vacuum.ov71gl` (S40 Pro, v1) relative to the X20 Max
+
+Source: `urn:miot-spec-v2:device:vacuum:0000A006:xiaomi-ov71gl:1` (the only
+published revision). The S40 Pro is an export-only product: its spec is not
+served by the Mainland China cloud, so the account must be logged into the
+region that sold the unit (Europe for EU units) for discovery to find it.
+
+Every SIID/PIID/AIID listed in section 4 that this integration reads or invokes
+is identical on the S40 Pro. Differences worth knowing:
+
+| Area | S40 Pro (`ov71gl`) |
+|------|--------------------|
+| `status` (2/2) | adds `22 StationAssistingCleaning`, `23 StationAssistingCleaned`, `24 GoChargeInStationAssistingCleaning` |
+| `sweep-type` (2/5) | adds `8 Appointment`, `9 Linkage`, `10 Fast`, `11 AI Hosting` |
+| Dock | ships with a plain charging dock; the spec still lists `start-dust-arrest` (2/18), `start-mop-wash` (2/19), `stop-mop-wash` (2/31), `stop-dry` (2/32) but there is no `start-dry` (2/20) and no hardware behind them — the integration wires none |
+| Services | no `18 Detergent Management`, no `19 Dust Bag`; adds `16 imu` (calibration action) |
+| Extra properties on SIID 2 | `41 hot-water-mop-wash`, `56 sweep-ai-object`, `63/64 cut-hair-config`, `85-90` cleaning statistics and drying progress, `96 sweep-mop-status`, `97/98` sewage / water tank status, `99 sill`, `100/101` base-station / host water tank status — not read by the integration |
+| Extra actions on SIID 2 | `10 get-zone-configs`, `22 start-call-clean`, `44 stop-cut-hair`, `49-59` station cleaning, skip / final / temporary room and zone cleaning, tank emptying, spot cleaning, `62-64` object clean and station self-cleaning |
+| Zone cleaning | `zone-ids` (2/12) is the input of both `set-zone` (2/12) and `start-zone-sweep` (2/37), as on the X20 Max. The string format is not published |
+| Faults | publishes `100027` ("Sewage tank is full or not installed") in `Fault Ids` permanently — a station check the dockless retail unit can never satisfy; listed in the spec's `ignored_fault_codes` |
+
+## 6. Fault codes and their localized text
 
 The **Device Fault** property (siid 2 / piid 3) reports a **large, device-specific
 numeric code** (e.g. `210009`), not a small enum. There is **no static code→text table**
@@ -299,6 +320,12 @@ Verified real example (account locale pt-BR):
 | `2.3` | `210009` | Não foi possível voltar à base para carregar. Mova o robô-aspirador para a base de carregamento. |
 
 (Events with an empty `value`, e.g. `"2.2"` "Limpeza concluída", are status notices, not faults.)
+
+**Known codes.** Values in the `1000xx` range are the robot/station hardware checks
+(`100027` = sewage tank full or not installed, observed permanently on the dockless
+S40 Pro); `21xxxx` are navigation failures (`210009` = could not return to the dock).
+A model that reports a code for hardware it does not have lists it in its
+`ModelSpec.ignored_fault_codes` so the coordinator drops it — see `spec/ov71gl.py`.
 
 This integration therefore resolves fault text at runtime: `cloud.XiaomiCloud.async_fault_text(code)`
 reads this feed and caches `{code: title}`; the coordinator attaches it to the fault as

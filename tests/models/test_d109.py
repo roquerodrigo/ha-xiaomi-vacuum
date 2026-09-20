@@ -141,9 +141,9 @@ async def test_d109_parses_fault_ids_json_list(hass, setup_integration):
 
     # Active fault (code 210009) at the head of the list.
     raw = json.dumps({"ts": 1700000000, "fault": [210009]})
-    assert _live_fault_code_ids(raw) == 210009
+    assert _live_fault_code_ids(raw, frozenset()) == 210009
     # [0] means no active fault.
-    assert _live_fault_code_ids(json.dumps({"fault": [0]})) == 0
+    assert _live_fault_code_ids(json.dumps({"fault": [0]}), frozenset()) == 0
     # Missing / unparseable -> None.
-    assert _live_fault_code_ids(None) is None
-    assert _live_fault_code_ids("not json") is None
+    assert _live_fault_code_ids(None, frozenset()) is None
+    assert _live_fault_code_ids("not json", frozenset()) is None

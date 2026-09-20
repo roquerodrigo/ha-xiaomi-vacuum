@@ -2,13 +2,14 @@
 Per-model MIoT spec for the supported Xiaomi vacuums.
 
 Each :class:`ModelSpec` bundles everything that differs between the supported
-models (currently the X20 Max ``d109gl`` and the S20+ ``b108gl``): the
+models (currently the X20 Max ``d109gl``, the S20+ ``b108gl`` and the S40 Pro
+``ov71gl``): the
 SIID/PIID property mapping, the SIID/AIID action mapping, the status-code
 table, the enumerations exposed as selects, the ``send_command`` whitelist,
 and a few derived capabilities (dust arrest, sweep route, obstacle avoidance)
 that decide whether some entities are created at all.
 
-The two models are siblings but their published miot-spec instances diverge
+The models are siblings but their published miot-spec instances diverge
 enough that a single shared mapping is wrong. Adding a model means adding one
 module here and registering it in :mod:`.registry` — see ``ADDING_A_MODEL.md``.
 """
@@ -32,6 +33,7 @@ from .model_spec import (
     RoomCleanStrategy,
     StatusDef,
 )
+from .ov71gl import OV71GL
 from .property import Property
 from .registry import DEFAULT_MODEL, MODELS, SUPPORTED_MODELS, get_spec
 
@@ -41,6 +43,7 @@ __all__ = [
     "DEFAULT_MODEL",
     "MAPPING_FIELDS",
     "MODELS",
+    "OV71GL",
     "SUPPORTED_MODELS",
     "Capability",
     "EntityKey",

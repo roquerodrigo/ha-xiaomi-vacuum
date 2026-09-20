@@ -107,6 +107,13 @@ class ModelSpec:
     # different value table gets its own instead of the X20 Max's.
     sweep_routes: dict[str, int] = field(default_factory=dict)
     obstacle_avoidances: dict[str, int] = field(default_factory=dict)
+    # Fault codes this model publishes permanently for hardware it does not
+    # have. The firmware image is shared across a product family, so a unit
+    # sold with a reduced dock still runs the station checks and reports their
+    # failure forever; the Mi Home app knows the dock type and hides them. They
+    # are dropped before the fault reaches the entities, otherwise the vacuum
+    # would sit in ERROR for its whole life (see S40 Pro / code 100027).
+    ignored_fault_codes: frozenset[int] = frozenset()
 
     def __post_init__(self) -> None:
         """Wrap the mutable dict fields in read-only views."""

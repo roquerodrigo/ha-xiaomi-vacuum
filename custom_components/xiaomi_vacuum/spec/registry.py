@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from ..const import LOGGER  # noqa: TID252
 from .b108gl import B108GL
 from .d109gl import D109GL
+from .ov71gl import OV71GL
 
 if TYPE_CHECKING:
     from .model_spec import ModelSpec
@@ -14,6 +15,7 @@ if TYPE_CHECKING:
 MODELS: dict[str, ModelSpec] = {
     D109GL.model: D109GL,
     B108GL.model: B108GL,
+    OV71GL.model: OV71GL,
 }
 
 #: Tuple form for documentation / discovery-side checks.

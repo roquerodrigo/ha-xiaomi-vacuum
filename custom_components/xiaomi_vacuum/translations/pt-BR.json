@@ -123,7 +123,10 @@
                     "mapping_pause": "Mapeamento pausado",
                     "go_charge_break": "Voltando p/ carregar (vai retomar)",
                     "wash_break": "Lavando o pano (vai retomar)",
-                    "go_charge_building_map": "Voltando p/ carregar (mapeando)"
+                    "go_charge_building_map": "Voltando p/ carregar (mapeando)",
+                    "station_assisting_cleaning": "Limpando com assistência da estação",
+                    "station_assisting_cleaned": "Limpeza assistida pela estação concluída",
+                    "go_charge_in_station_assisting_cleaning": "Voltando p/ carregar (limpeza assistida)"
                 }
             },
             "error": {

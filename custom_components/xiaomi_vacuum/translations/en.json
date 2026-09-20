@@ -123,7 +123,10 @@
                     "mapping_pause": "Mapping paused",
                     "go_charge_break": "Returning to charge (will resume)",
                     "wash_break": "Washing mop (will resume)",
-                    "go_charge_building_map": "Returning to charge (mapping)"
+                    "go_charge_building_map": "Returning to charge (mapping)",
+                    "station_assisting_cleaning": "Cleaning with station assistance",
+                    "station_assisting_cleaned": "Station-assisted cleaning finished",
+                    "go_charge_in_station_assisting_cleaning": "Returning to charge (station-assisted cleaning)"
                 }
             },
             "error": {

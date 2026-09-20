@@ -18,7 +18,7 @@ from custom_components.xiaomi_vacuum.coordinator import (
     _live_fault_code_ids,
 )
 from custom_components.xiaomi_vacuum.repairs import async_raise_cannot_connect
-from custom_components.xiaomi_vacuum.spec import B108GL, D109GL
+from custom_components.xiaomi_vacuum.spec import B108GL, D109GL, OV71GL
 
 
 def _fake_entry(client_mock=None, spec=D109GL):
@@ -61,19 +61,45 @@ async def test_async_update_data_returns_state(hass, sample_state):
 
 
 def test_live_fault_code_ids_zero_when_no_active_fault():
-    assert _live_fault_code_ids('{"ts": 1, "fault": [0]}') == 0
+    assert _live_fault_code_ids('{"ts": 1, "fault": [0]}', frozenset()) == 0
 
 
 def test_live_fault_code_ids_returns_active_code():
-    assert _live_fault_code_ids('{"ts": 1, "fault": [210009]}') == 210009
+    assert _live_fault_code_ids('{"ts": 1, "fault": [210009]}', frozenset()) == 210009
 
 
 def test_live_fault_code_ids_none_without_fault_ids():
-    assert _live_fault_code_ids(None) is None
+    assert _live_fault_code_ids(None, frozenset()) is None
 
 
 def test_live_fault_code_ids_none_on_bad_json():
-    assert _live_fault_code_ids("not json") is None
+    assert _live_fault_code_ids("not json", frozenset()) is None
+
+
+def test_live_fault_code_ids_skips_ignored_codes():
+    """A model's phantom fault must not be reported as an active fault."""
+    raw = '{"ts": 1, "fault": [100027]}'
+    assert _live_fault_code_ids(raw, frozenset({100027})) == 0
+
+
+def test_live_fault_code_ids_keeps_real_code_alongside_ignored_one():
+    raw = '{"ts": 1, "fault": [100027, 210009]}'
+    assert _live_fault_code_ids(raw, frozenset({100027})) == 210009
+
+
+def test_s40_pro_ignores_the_phantom_sewage_tank_fault():
+    """The S40 Pro has no sewage tank, so 100027 is never a real fault."""
+    assert 100027 in OV71GL.ignored_fault_codes
+    assert 100027 not in D109GL.ignored_fault_codes
+
+
+async def test_async_update_data_drops_phantom_fault_for_s40_pro(hass):
+    """A docked S40 Pro reporting only 100027 must not land in ERROR."""
+    state = {"status": 9, "fault_ids": '{"ts": 1, "fault": [100027]}'}
+    client = type("C", (), {"async_get_state": AsyncMock(return_value=state)})()
+    coord = _coord_with_client(hass, client, spec=OV71GL)
+    result = await coord._async_update_data()
+    assert result["fault"] == 0
 
 
 async def test_async_update_data_derives_fault_from_fault_ids(hass):
@@ -136,7 +162,7 @@ async def test_update_success_clears_repair_issue(hass, sample_state):
 
 def test_live_fault_code_ids_none_on_non_dict_json():
     # A JSON array has no `.get`, exercising the AttributeError branch.
-    assert _live_fault_code_ids("[1, 2, 3]") is None
+    assert _live_fault_code_ids("[1, 2, 3]", frozenset()) is None
 
 
 async def test_enrich_fault_text_adds_localized_text(hass):
