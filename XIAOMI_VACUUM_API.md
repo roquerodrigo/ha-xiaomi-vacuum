@@ -322,24 +322,43 @@ acknowledgement proves nothing. The same conclusion was reached independently
 on the sibling X20 Pro (`d102gl`), where writing `zone-ids` directly is
 rejected as not writable.
 
-`temporary-cleaning-zone` (2/55), which takes `common-params` (2/24) instead
-of `zone-ids`, was tried too and is equally inert. Nine payload shapes were
-sent in total across `start-zone-sweep`, `set-zone` and
-`temporary-cleaning-zone` — the captured polygon as JSON, as a bare array, as
-a comma-separated string, with and without `clean_mode` and `map_uid` — and
-the robot never moved for any of them.
+About twenty variants were tried in total and **every one was inert**:
+
+- actions: `start-zone-sweep` (2/37), `set-zone` (2/12) and
+  `temporary-cleaning-zone` (2/55, which takes `common-params` 2/24 instead of
+  `zone-ids`);
+- geometry: the captured polygon as a `{"zones": […]}` object, as a bare
+  nested array, as a comma-separated string, and as a flat list, with and
+  without `clean_mode` and `map_uid`;
+- parameter encoding: both piid-tagged (`[{"piid": 12, "value": …}]`) and
+  bare (`[…]`), since the S20+ room flow uses bare values;
+- sequencing: each start action alone, and `set-zone` followed by
+  `start-zone-sweep`, by `start-custom-sweep` (2/9) and with an empty input.
+
+Only `start-sweep` (2/1) ever reacted, and it simply began an ordinary
+whole-home clean with `sweep-type 1` and no `zones` in the config, i.e. it
+ignored the zone entirely. Beware of that false positive: on this firmware a
+status change alone does not mean the zone was accepted. The check is
+`sweep-type == 2` or a `zones` key in `current-cleaning-config`.
 
 What is left to try:
 
-- The **cloud** transport. `POST /miotspec/action` returns real parameter
-  errors (`-704040005` structure mismatch, `-704030023` not writable) where
-  the local transport answers `code: 0` regardless, so it can tell a rejected
-  payload from an ignored one. Nothing here can be concluded without it.
+- The **cloud** transport, which is what the Mi Home app uses.
+  `POST /miotspec/action` returns real parameter errors (`-704040005`
+  structure mismatch, `-704030023` not writable) where the local transport
+  answers `code: 0` regardless, so it can tell a rejected payload from an
+  ignored one. Nothing more can be concluded locally.
 - The app's saved "custom cleanup" presets, which store the same flat polygon
   under `mode_data` in `user-define-sweep-cfg` (2/42);
   `start-user-define-sweep` (2/42) then takes the preset id as a string. That
   would clean a preset the user saved in the app rather than an arbitrary
   rectangle.
+
+A **spot clean started from the app is the same mechanism**, just a smaller
+rectangle: a second capture of an app-driven spot clean reported
+`{"zones":[[-1168,25,-1168,-614,-477,-614,-477,25]],"clean_mode":2,…}`, about
+70 cm by 64 cm, again with `sweep-type 2`. So zones and spots share one code
+path on this device, and whatever unlocks one unlocks the other.
 
 ### Spot cleaning is published but inert
 
