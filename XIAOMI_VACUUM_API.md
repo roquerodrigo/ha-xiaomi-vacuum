@@ -341,6 +341,29 @@ What is left to try:
   would clean a preset the user saved in the app rather than an arbitrary
   rectangle.
 
+### Spot cleaning is published but inert
+
+`spot-cleaning` (2/59) and `start-call-clean` (2/22) both exist on the S40 Pro
+and take no parameters, but neither does anything on firmware `4.5.8_0053`.
+Each was called with the robot charging on its dock and again with the robot
+standing away from it, and the status never left the idle set. As everywhere
+else on this device, the answer was `code: 0`.
+
+That is why the vacuum entity does not advertise
+`VacuumEntityFeature.CLEAN_SPOT`: `vacuum.clean_spot` would report success
+while the robot stayed put. The Mi Home app offers whole-home, per-room,
+drawn-area and furniture cleaning for this model, but no spot or point mode,
+so these two actions look like more of the spec template's unbacked hardware,
+alongside the dock actions.
+
+### Manual driving does work
+
+`enter-remote` (2/28), `remote-control` (2/26, taking `button-type` on piid 39)
+and `exit-remote` (2/29) are honoured: sending press-forward then
+release-forward drives the robot off its dock, and the status moves from
+`2 Charging` to `1 Idle`. The integration does not expose this, but it is
+available for anyone who wants a manual-driving control.
+
 ## 6. Fault codes and their localized text
 
 The **Device Fault** property (siid 2 / piid 3) reports a **large, device-specific
