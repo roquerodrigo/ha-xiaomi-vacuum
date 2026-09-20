@@ -322,15 +322,24 @@ acknowledgement proves nothing. The same conclusion was reached independently
 on the sibling X20 Pro (`d102gl`), where writing `zone-ids` directly is
 rejected as not writable.
 
-Two untried leads, if someone wants to pick this up:
+`temporary-cleaning-zone` (2/55), which takes `common-params` (2/24) instead
+of `zone-ids`, was tried too and is equally inert. Nine payload shapes were
+sent in total across `start-zone-sweep`, `set-zone` and
+`temporary-cleaning-zone` — the captured polygon as JSON, as a bare array, as
+a comma-separated string, with and without `clean_mode` and `map_uid` — and
+the robot never moved for any of them.
 
-- `temporary-cleaning-zone` (2/55) takes `common-params` (2/24), not
-  `zone-ids`. Its room counterpart `temporary-cleaning-room` (2/54) takes
-  `vacuum-room-ids`, so the zone geometry is likely carried as JSON in the
-  generic parameter.
-- The app's saved "custom cleanup" presets store the same flat polygon under
-  `mode_data` in `user-define-sweep-cfg` (2/42); `start-user-define-sweep`
-  (2/42) then takes the preset id.
+What is left to try:
+
+- The **cloud** transport. `POST /miotspec/action` returns real parameter
+  errors (`-704040005` structure mismatch, `-704030023` not writable) where
+  the local transport answers `code: 0` regardless, so it can tell a rejected
+  payload from an ignored one. Nothing here can be concluded without it.
+- The app's saved "custom cleanup" presets, which store the same flat polygon
+  under `mode_data` in `user-define-sweep-cfg` (2/42);
+  `start-user-define-sweep` (2/42) then takes the preset id as a string. That
+  would clean a preset the user saved in the app rather than an arbitrary
+  rectangle.
 
 ## 6. Fault codes and their localized text
 
