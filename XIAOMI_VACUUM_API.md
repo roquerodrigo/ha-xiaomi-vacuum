@@ -293,8 +293,44 @@ is identical on the S40 Pro. Differences worth knowing:
 | Services | no `18 Detergent Management`, no `19 Dust Bag`; adds `16 imu` (calibration action) |
 | Extra properties on SIID 2 | `41 hot-water-mop-wash`, `56 sweep-ai-object`, `63/64 cut-hair-config`, `85-90` cleaning statistics and drying progress, `96 sweep-mop-status`, `97/98` sewage / water tank status, `99 sill`, `100/101` base-station / host water tank status — not read by the integration |
 | Extra actions on SIID 2 | `10 get-zone-configs`, `22 start-call-clean`, `44 stop-cut-hair`, `49-59` station cleaning, skip / final / temporary room and zone cleaning, tank emptying, spot cleaning, `62-64` object clean and station self-cleaning |
-| Zone cleaning | `zone-ids` (2/12) is the input of both `set-zone` (2/12) and `start-zone-sweep` (2/37), as on the X20 Max. The string format is not published |
+| Zone cleaning | not usable from this integration — see below |
 | Faults | publishes `100027` ("Sewage tank is full or not installed") in `Fault Ids` permanently — a station check the dockless retail unit can never satisfy; listed in the spec's `ignored_fault_codes` |
+
+### Zone (rectangle) cleaning is not reproducible on this firmware
+
+Captured from a physical S40 Pro on firmware `4.5.8_0053` while the Mi Home app
+cleaned a rectangle the user drew:
+
+```
+sweep-type  (2/5)  = 2            # Zone
+status      (2/2)  = 4            # Sweeping
+current-cleaning-config (2/40) =
+  {"zones":[[-1139,-380,-1139,-1731,290,-1731,290,-380]],
+   "clean_mode":2,"is_ai_cleaning":false,"dirty_cleaning":false}
+```
+
+So a zone is a **flat array of four corners** in map millimetres, ordered
+left/top, left/bottom, right/bottom, right/top — the same flat convention as
+`fb_point` in the map payload, not an `{x1, y1, x2, y2}` object.
+
+Replaying it does not work. `zone-ids` (2/12) stayed empty for the whole
+cleaning run, so it is not where the app puts the geometry, and
+`start-vacuum-zone-sweep` (2/37) was called with that exact polygon — alone,
+with `clean_mode`, and with `map_uid` — without the robot reacting at all. The
+device answers `code: 0` to every payload including malformed ones, so an
+acknowledgement proves nothing. The same conclusion was reached independently
+on the sibling X20 Pro (`d102gl`), where writing `zone-ids` directly is
+rejected as not writable.
+
+Two untried leads, if someone wants to pick this up:
+
+- `temporary-cleaning-zone` (2/55) takes `common-params` (2/24), not
+  `zone-ids`. Its room counterpart `temporary-cleaning-room` (2/54) takes
+  `vacuum-room-ids`, so the zone geometry is likely carried as JSON in the
+  generic parameter.
+- The app's saved "custom cleanup" presets store the same flat polygon under
+  `mode_data` in `user-define-sweep-cfg` (2/42); `start-user-define-sweep`
+  (2/42) then takes the preset id.
 
 ## 6. Fault codes and their localized text
 

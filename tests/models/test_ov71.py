@@ -16,6 +16,13 @@ from xiaomi_vacuum_sdk import ActionAddress
 
 from custom_components.xiaomi_vacuum.spec import OV71GL, Capability
 
+#: `room-information` (2/16) exactly as a physical S40 Pro published it
+#: (firmware 4.5.8_0053), accents and all.
+REAL_ROOM_INFORMATION = (
+    '{"rooms":[{"id":3,"name":"Salle à manger"},{"id":4,"name":"Cuisine"},'
+    '{"id":5,"name":"Salon"},{"id":6,"name":"Entrée"}],"map_uid":1}'
+)
+
 
 async def test_ov71_setup_loads(hass, setup_integration_ov71):
     assert setup_integration_ov71.state == ConfigEntryState.LOADED
@@ -148,3 +155,23 @@ async def test_ov71_reads_the_x20_max_property_addresses(hass, setup_integration
     from custom_components.xiaomi_vacuum.spec import D109GL
 
     assert dict(OV71GL.property_mapping) == dict(D109GL.property_mapping)
+
+
+async def test_ov71_parses_the_room_payload_a_real_device_publishes(
+    hass, setup_integration_ov71
+):
+    """Accented room names survive the round trip into HA segments."""
+    from homeassistant.components.vacuum import Segment
+
+    coord = setup_integration_ov71.runtime_data.coordinator
+    coord.async_set_updated_data(
+        {**coord.data, "room_information": REAL_ROOM_INFORMATION}
+    )
+    await hass.async_block_till_done()
+    entity = hass.data["entity_components"]["vacuum"].get_entity("vacuum.s40_pro")
+    assert await entity.async_get_segments() == [
+        Segment(id="3", name="Salle à manger"),
+        Segment(id="4", name="Cuisine"),
+        Segment(id="5", name="Salon"),
+        Segment(id="6", name="Entrée"),
+    ]
