@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypedDict
 
 from homeassistant.components.image import ImageEntity
 
@@ -13,7 +13,29 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
     from ..coordinator import XiaomiVacuumDataUpdateCoordinator  # noqa: TID252
+    from ..data import MapCalibration  # noqa: TID252
     from ..map_coordinator import XiaomiVacuumMapCoordinator  # noqa: TID252
+
+
+class _Point(TypedDict):
+    """A 2-D point, in image pixels or device millimetres depending on context."""
+
+    x: int
+    y: int
+
+
+class CalibrationPoint(TypedDict):
+    """One pixel ↔ device-coordinate pair, in the Xiaomi Vacuum Map Card's format."""
+
+    vacuum: _Point
+    map: _Point
+
+
+class _MapAttributes(TypedDict):
+    """Attributes letting a map card translate clicks into device coordinates."""
+
+    calibration_points: list[CalibrationPoint] | None
+    calibration: MapCalibration | None
 
 
 class XiaomiVacuumMap(XiaomiVacuumEntity, ImageEntity):
@@ -33,6 +55,7 @@ class XiaomiVacuumMap(XiaomiVacuumEntity, ImageEntity):
         ImageEntity.__init__(self, hass)
         self._map_coordinator = map_coordinator
         self._last_image: bytes | None = None
+        self._last_calibration: MapCalibration | None = None
         self._attr_image_last_updated = datetime.now(UTC)
 
     @property
@@ -51,6 +74,17 @@ class XiaomiVacuumMap(XiaomiVacuumEntity, ImageEntity):
         """
         return self._map_coordinator.data is not None or self._last_image is not None
 
+    @property
+    def extra_state_attributes(self) -> _MapAttributes:
+        """Expose the pixel ↔ millimetre calibration of the served PNG."""
+        calibration = self._last_calibration
+        return {
+            "calibration_points": (
+                calibration_points(calibration) if calibration is not None else None
+            ),
+            "calibration": calibration,
+        }
+
     async def async_added_to_hass(self) -> None:
         """Subscribe to the map coordinator for refresh on new map data."""
         await super().async_added_to_hass()
@@ -62,16 +96,56 @@ class XiaomiVacuumMap(XiaomiVacuumEntity, ImageEntity):
             self._handle_new_map()
 
     def _handle_new_map(self) -> None:
-        png = self._map_coordinator.data
-        if not png or png == self._last_image:
+        rendered = self._map_coordinator.data
+        if rendered is None or rendered["png"] == self._last_image:
             return
-        self._last_image = png
+        self._last_image = rendered["png"]
+        self._last_calibration = rendered["calibration"]
         self._attr_image_last_updated = datetime.now(UTC)
         self.async_write_ha_state()
 
     async def async_image(self) -> bytes | None:
         """Serve the freshest rendered PNG, falling back to the last known one."""
-        png = self._map_coordinator.data
-        if png is not None:
-            self._last_image = png
+        rendered = self._map_coordinator.data
+        if rendered is not None:
+            self._last_image = rendered["png"]
+            self._last_calibration = rendered["calibration"]
         return self._last_image
+
+
+def calibration_points(calibration: MapCalibration) -> list[CalibrationPoint]:
+    """
+    Three pixel ↔ millimetre pairs describing the served PNG.
+
+    Inverse of the SDK renderer's projection: the device grid is enlarged by
+    ``scale``, padded by ``border`` and flipped vertically (grid row 0 is the
+    bottom of the image). The pairs are the floor image's top-left, top-right
+    and bottom-left corners, which is the three-point form the Xiaomi Vacuum
+    Map Card accepts as a ``calibration_source``.
+    """
+    scale = calibration["scale"]
+    border = calibration["border"]
+    floor_width = calibration["width"] * scale
+    floor_height = calibration["height"] * scale
+    return [
+        _calibration_point(calibration, border, border),
+        _calibration_point(calibration, border + floor_width, border),
+        _calibration_point(calibration, border, border + floor_height),
+    ]
+
+
+def _calibration_point(
+    calibration: MapCalibration, pixel_x: float, pixel_y: float
+) -> CalibrationPoint:
+    """Project one PNG pixel back onto the device's millimetre frame."""
+    scale = calibration["scale"]
+    resolution = calibration["resolution"]
+    grid_x = (pixel_x - calibration["border"]) / scale
+    grid_y = calibration["height"] - 1 - (pixel_y - calibration["border"]) / scale
+    return {
+        "map": {"x": round(pixel_x), "y": round(pixel_y)},
+        "vacuum": {
+            "x": round(calibration["origin_x"] + grid_x * resolution),
+            "y": round(calibration["origin_y"] + grid_y * resolution),
+        },
+    }

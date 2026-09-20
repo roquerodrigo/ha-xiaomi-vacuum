@@ -135,6 +135,27 @@ text, and route the S20+ room clean through the cloud.
 The vacuum entity also exposes raw MIoT diagnostics as extra state attributes
 under the `xiaomi_vacuum` key.
 
+### Using the map with the Xiaomi Vacuum Map Card
+
+The map image entity carries a `calibration_points` attribute describing how
+pixels of the served PNG map to the vacuum's millimetre coordinates, in the
+format the [Xiaomi Vacuum Map Card](https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card)
+reads. The card resolves its map source through the entity's `entity_picture`,
+so the `image` entity can be used directly:
+
+```yaml
+type: custom:xiaomi-vacuum-map-card
+entity: vacuum.<name>
+map_source:
+  camera: image.<name>_map
+calibration_source:
+  camera: true
+vacuum_platform: default
+```
+
+The raw geometry (`origin_x`, `origin_y`, `resolution`, `width`, `height`,
+`scale`, `border`) is exposed as a `calibration` attribute for other consumers.
+
 Selecting a mop mode while no mop pad is attached is refused with a clear
 error message — the vacuum itself silently reverts such changes, so the
 integration surfaces the reason instead of letting the select snap back.

@@ -64,6 +64,32 @@ class VacuumState(TypedDict):
     fault_text: NotRequired[str]
 
 
+class MapCalibration(TypedDict):
+    """
+    Geometry that maps rendered-map pixels back to device millimetres.
+
+    ``origin_x`` / ``origin_y`` anchor the device grid, ``resolution`` is the
+    millimetres per grid cell, ``width`` / ``height`` the grid size, and
+    ``scale`` / ``border`` how the renderer enlarged and padded the grid.
+    """
+
+    origin_x: float
+    origin_y: float
+    resolution: float
+    width: int
+    height: int
+    scale: float
+    border: int
+
+
+class RenderedMap(TypedDict):
+    """One rendered map: the PNG plus the calibration its render used."""
+
+    png: bytes
+    # None for a PNG restored from a cache written before calibration existed.
+    calibration: MapCalibration | None
+
+
 class CloudSessionTokens(TypedDict):
     """Xiaomi cloud session tokens persisted in the config entry."""
 
