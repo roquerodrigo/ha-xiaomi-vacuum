@@ -14,7 +14,7 @@ from homeassistant.components.vacuum.const import VacuumActivity
 from homeassistant.config_entries import ConfigEntryState
 from xiaomi_vacuum_sdk import ActionAddress
 
-from custom_components.xiaomi_vacuum.spec import OV71GL, Capability
+from custom_components.xiaomi_vacuum.spec import OV71GL, Capability, Property
 
 #: `room-information` (2/16) exactly as a physical S40 Pro published it
 #: (firmware 4.5.8_0053), accents and all.
@@ -150,11 +150,14 @@ async def test_ov71_clean_segments_uses_direct_strategy(
     )
 
 
-async def test_ov71_reads_the_x20_max_property_addresses(hass, setup_integration_ov71):
-    """The property poll targets the d109gl-shaped addresses of the S40 Pro."""
-    from custom_components.xiaomi_vacuum.spec import D109GL
-
-    assert dict(OV71GL.property_mapping) == dict(D109GL.property_mapping)
+async def test_ov71_reads_its_own_property_addresses(hass, setup_integration_ov71):
+    """Pin the S40 Pro's own addresses, which happen to match the X20 Max layout."""
+    mapping = OV71GL.property_mapping
+    assert mapping[Property.STATUS] == {"siid": 2, "piid": 2}
+    assert mapping[Property.FAULT_IDS] == {"siid": 2, "piid": 66}
+    assert mapping[Property.ROOM_INFORMATION] == {"siid": 2, "piid": 16}
+    assert mapping[Property.BATTERY_LEVEL] == {"siid": 3, "piid": 1}
+    assert mapping[Property.MAP_OBJ_NAME] == {"siid": 10, "piid": 1}
 
 
 async def test_ov71_parses_the_room_payload_a_real_device_publishes(
