@@ -1,5 +1,49 @@
 # Changelog
 
+## [2.4.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.3.2...v2.4.0) (2026-09-21)
+
+
+### Features
+
+* **map:** expose calibration points on the map image ([3f6d99b](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/3f6d99bc806f03662cb4a13c5a94d1d96c22e2bb))
+* **spec:** add xiaomi robot vacuum s40 pro ([1219fdd](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/1219fdd617a04fbcdb849611fdb41056f7cf193b))
+
+
+### Bug Fixes
+
+* **image:** keep a calibration that arrives with an unchanged map ([d76f54e](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/d76f54ea18985e0d0a3dc270e309c0f500e17866))
+
+
+### Performance Improvements
+
+* **map:** parse the map blob once via the SDK render API ([2b5d038](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/2b5d0380941366dd61803dc262b3ef4d0bb0d290))
+
+
+### Dependencies
+
+* **deps:** bump anyio from 4.13.0 to 4.14.2 ([acae007](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/acae007bc37fc5a077d1e21b2823f5d9e8864b89))
+
+
+### Development Dependencies
+
+* **deps-dev:** bump ruff in the python-development group ([12584e9](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/12584e983b4a2b4f6c2d412b7fbd43574f19b597))
+
+
+### Documentation
+
+* close the second zone-cleaning lead ([80afebc](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/80afebc035db77c2369c39ca6e50789140c60fee))
+* complete the local zone-cleaning negative result ([b3e7a7b](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/b3e7a7b591882302797ede8520cd81f0300fdc0d))
+* **coordinator:** fix the dangling line in the fault docstring ([bf66dce](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/bf66dce37fda354a311926631e5c6999f2903c03))
+* **readme:** mark the map card setup as display-only ([6ff52eb](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/6ff52ebe111807f1fea958eb627c2822c9040627))
+* record that spot cleaning is inert on the s40 pro ([9b518a7](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/9b518a703877448f2244dc76b753ed5a6ad556fc))
+* record what a real s40 pro reports during a zone clean ([5940cd2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/5940cd20d594e3ee49ff6149dba8160e61f6844f))
+
+
+### Tests
+
+* **coordinator:** cover the empty live fault list ([fe6059f](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/fe6059ff7e395611c41f3e52321004eb81c9bcda))
+* **ov71:** pin the s40 pro addresses instead of the x20 max mapping ([e9899cc](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/e9899cc9216c4282d483df570166bed8e445a9c4))
+
 ## [2.3.2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.3.1...v2.3.2) (2026-09-08)
 
 
