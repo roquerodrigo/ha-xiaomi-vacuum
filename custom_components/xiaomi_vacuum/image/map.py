@@ -43,6 +43,8 @@ class XiaomiVacuumMap(XiaomiVacuumEntity, ImageEntity):
 
     _attr_translation_key = "map"
     _attr_content_type = "image/png"
+    # Static geometry of the served PNG, not history worth recording.
+    _unrecorded_attributes = frozenset({"calibration", "calibration_points"})
 
     def __init__(
         self,
@@ -97,7 +99,14 @@ class XiaomiVacuumMap(XiaomiVacuumEntity, ImageEntity):
 
     def _handle_new_map(self) -> None:
         rendered = self._map_coordinator.data
-        if rendered is None or rendered["png"] == self._last_image:
+        # The calibration is compared too: a cache written before calibration
+        # existed restores it as None, and the first poll can re-render the
+        # very same PNG — comparing only bytes would drop the calibration
+        # until the map itself next changes, which can take hours docked.
+        if rendered is None or (
+            rendered["png"] == self._last_image
+            and rendered["calibration"] == self._last_calibration
+        ):
             return
         self._last_image = rendered["png"]
         self._last_calibration = rendered["calibration"]

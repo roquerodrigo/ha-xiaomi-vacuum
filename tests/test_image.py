@@ -207,3 +207,27 @@ async def test_image_without_calibration_exposes_none(
     state = hass.states.get("image.vacuum_map")
     assert state.attributes["calibration"] is None
     assert state.attributes["calibration_points"] is None
+
+
+async def test_image_picks_up_a_calibration_that_arrives_with_the_same_png(
+    hass, setup_integration_with_cloud
+):
+    """A cache predating the calibration must not pin the attribute to None."""
+    coord = setup_integration_with_cloud.runtime_data.map_coordinator
+    coord.async_set_updated_data(_rendered(b"SAME", calibration=None))
+    await hass.async_block_till_done()
+    assert hass.states.get("image.vacuum_map").attributes["calibration"] is None
+
+    coord.async_set_updated_data(_rendered(b"SAME"))
+    await hass.async_block_till_done()
+    state = hass.states.get("image.vacuum_map")
+    assert state.attributes["calibration"] == CALIBRATION
+    assert state.attributes["calibration_points"] is not None
+
+
+async def test_image_calibration_attributes_are_not_recorded(
+    hass, setup_integration_with_cloud
+):
+    """Static geometry would otherwise hit the recorder on every state write."""
+    entity = hass.data["entity_components"]["image"].get_entity("image.vacuum_map")
+    assert entity._unrecorded_attributes >= {"calibration", "calibration_points"}
