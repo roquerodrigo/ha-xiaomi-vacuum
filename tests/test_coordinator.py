@@ -64,6 +64,11 @@ def test_live_fault_code_ids_zero_when_no_active_fault():
     assert _live_fault_code_ids('{"ts": 1, "fault": [0]}', frozenset()) == 0
 
 
+def test_live_fault_code_ids_zero_when_fault_list_is_empty():
+    """A healthy S40 Pro publishes an empty list rather than ``[0]``."""
+    assert _live_fault_code_ids('{"ts": 1789918756, "fault": []}', frozenset()) == 0
+
+
 def test_live_fault_code_ids_returns_active_code():
     assert _live_fault_code_ids('{"ts": 1, "fault": [210009]}', frozenset()) == 210009
 

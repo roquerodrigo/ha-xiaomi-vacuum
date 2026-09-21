@@ -341,18 +341,29 @@ ignored the zone entirely. Beware of that false positive: on this firmware a
 status change alone does not mean the zone was accepted. The check is
 `sweep-type == 2` or a `zones` key in `current-cleaning-config`.
 
-What is left to try:
+The **cloud** transport was tried next, since that is what the Mi Home app
+uses, and it does discriminate where the local one cannot:
+`temporary-cleaning-zone` (2/55) comes back as `code: -706012015` with
+`exe_time: 0`, i.e. never executed, while `start-zone-sweep` (2/37) returns
+`code: 0` with `exe_time: 10` and a network cost, exactly like a known-good
+`identify` call. The robot really does receive and run the action.
 
-- The **cloud** transport, which is what the Mi Home app uses.
-  `POST /miotspec/action` returns real parameter errors (`-704040005`
-  structure mismatch, `-704030023` not writable) where the local transport
-  answers `code: 0` regardless, so it can tell a rejected payload from an
-  ignored one. Nothing more can be concluded locally.
-- The app's saved "custom cleanup" presets, which store the same flat polygon
-  under `mode_data` in `user-define-sweep-cfg` (2/42);
-  `start-user-define-sweep` (2/42) then takes the preset id as a string. That
-  would clean a preset the user saved in the app rather than an arbitrary
-  rectangle.
+That makes the outcome conclusive, because **the payload is not validated at
+all**: sending the literal string `garbage` on piid 12 returns the same
+`code: 0` / `exe_time: 11` as a well-formed payload. An empty string, a
+`{"zones": []}` object, a deliberately wrong piid, bare zone ids (`1`,
+`1,2`, `[1]`) and a fully-populated payload carrying `map_uid`, `clean_mode`,
+`clean_times`, `fan_level` and `water_level` all behave identically. The
+device accepts anything and cleans nothing, so no response can reveal the
+encoding it wants.
+
+Short of intercepting the Mi Home app's own traffic or decompiling its vacuum
+plugin, zone and spot cleaning cannot be driven from outside the app on this
+firmware. One lead remains untested: the app's saved "custom cleanup" presets
+store the same flat polygon under `mode_data` in `user-define-sweep-cfg`
+(2/42), and `start-user-define-sweep` (2/42) takes the preset id as a string.
+That would replay a preset the user saved in the app rather than an arbitrary
+rectangle.
 
 A **spot clean started from the app is the same mechanism**, just a smaller
 rectangle: a second capture of an app-driven spot clean reported

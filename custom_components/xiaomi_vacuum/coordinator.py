@@ -34,9 +34,10 @@ def _live_fault_code_ids(
     Return the current active fault code from the X20 Max `Fault Ids` property.
 
     `Fault Ids` (siid 2/piid 66) is the live fault state, shaped like
-    ``{"ts": ..., "fault": [<codes>]}`` where ``[0]`` means no active fault.
-    Codes listed in ``ignored`` are the model's permanent phantom faults and
-    are dropped as well. The
+    ``{"ts": ..., "fault": [<codes>]}``. A healthy robot publishes either
+    ``[0]`` or an empty list; both are observed on real hardware, so both count
+    as no active fault. Codes listed in ``ignored`` are the model's permanent
+    phantom faults and are dropped as well. The
     `Device Fault` property (piid 3) is not used — it latches the last code and
     never resets. Returns None when `Fault Ids` is missing or unparseable.
     """
