@@ -37,9 +37,9 @@ def _live_fault_code_ids(
     ``{"ts": ..., "fault": [<codes>]}``. A healthy robot publishes either
     ``[0]`` or an empty list; both are observed on real hardware, so both count
     as no active fault. Codes listed in ``ignored`` are the model's permanent
-    phantom faults and are dropped as well. The
-    `Device Fault` property (piid 3) is not used — it latches the last code and
-    never resets. Returns None when `Fault Ids` is missing or unparseable.
+    phantom faults and are dropped as well. The `Device Fault` property
+    (piid 3) is not used — it latches the last code and never resets. Returns
+    None when `Fault Ids` is missing or unparseable.
     """
     if not fault_ids_raw:
         return None
