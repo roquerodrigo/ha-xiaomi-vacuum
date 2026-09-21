@@ -137,6 +137,13 @@ under the `xiaomi_vacuum` key.
 
 ### Using the map with the Xiaomi Vacuum Map Card
 
+**This is a display-only map.** The card renders the vacuum's position, path
+and rooms correctly, but none of its interactive modes work: this integration
+implements no `xiaomi_miio.*` service and no `vacuum.send_command` payload the
+card's built-in platforms emit, and zone and spot cleaning are inert on these
+devices' firmware anyway (see [`XIAOMI_VACUUM_API.md`](XIAOMI_VACUUM_API.md)).
+Use the `vacuum.clean_area` service for room cleaning instead.
+
 The map image entity carries a `calibration_points` attribute describing how
 pixels of the served PNG map to the vacuum's millimetre coordinates, in the
 format the [Xiaomi Vacuum Map Card](https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card)
@@ -151,6 +158,9 @@ map_source:
 calibration_source:
   camera: true
 vacuum_platform: default
+# Drop the card's built-in interactive modes: they call services this
+# integration does not implement.
+map_modes: []
 ```
 
 The raw geometry (`origin_x`, `origin_y`, `resolution`, `width`, `height`,
