@@ -178,8 +178,7 @@ async def test_image_calibration_points_round_trip_the_sdk_projection(
     hass, setup_integration_with_cloud
 ):
     """Every exposed pair must satisfy the SDK's own device→pixel transform."""
-    from xiaomi_vacuum_sdk import MapPoint
-    from xiaomi_vacuum_sdk.map.coordinate_system import CoordinateSystem
+    from xiaomi_vacuum_sdk import CoordinateSystem, MapPoint
 
     coord = setup_integration_with_cloud.runtime_data.map_coordinator
     coord.async_set_updated_data(_rendered(b"CALIB"))

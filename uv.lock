@@ -1034,7 +1034,7 @@ dev = [
     { name = "pytest-asyncio", specifier = "==1.3.0" },
     { name = "pytest-cov", specifier = "==7.1.0" },
     { name = "pytest-homeassistant-custom-component", specifier = "==0.13.332" },
-    { name = "xiaomi-vacuum-sdk", specifier = "==0.1.0" },
+    { name = "xiaomi-vacuum-sdk", specifier = "==0.1.1" },
 ]
 lint = [
     { name = "mypy", specifier = "==2.3.1" },
@@ -2872,15 +2872,15 @@ wheels = [
 
 [[package]]
 name = "xiaomi-vacuum-sdk"
-version = "0.1.0"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
     { name = "pillow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e3/89/70da334eb273f76aa2ab0b83e7ce77d71142dacbb17f9dc243b988efb22d/xiaomi_vacuum_sdk-0.1.0.tar.gz", hash = "sha256:e19c84837e3fe8b2b071e8f503291f775ab2071091d000495684c2125e83967d", size = 80783, upload-time = "2026-08-09T18:35:27.357Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/0c/d2090151ec236f51437e172073c3ff60b3dada0bdac3370e97054a603efd/xiaomi_vacuum_sdk-0.1.1.tar.gz", hash = "sha256:dc9e73ec5f6dce0847bdbae814b14ee72949b8084538a3fb896249c3b27379cd", size = 82833, upload-time = "2026-09-21T08:45:29.301Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/25/9a/4c961ed376b670d407db53abaab66deff0875a73d517c90a84f2f5ea2de6/xiaomi_vacuum_sdk-0.1.0-py3-none-any.whl", hash = "sha256:cdde010a1aa3501219855d4d3df4fb70af2eef2c38d2b81df347e1cd8227d400", size = 29746, upload-time = "2026-08-09T18:35:26.03Z" },
+    { url = "https://files.pythonhosted.org/packages/37/40/8bded22a48098d0361fbfd402d14ee25137205a0411575262b0787e6866f/xiaomi_vacuum_sdk-0.1.1-py3-none-any.whl", hash = "sha256:5f736acf6bb3e3ee28fa9a13ad372ea3afbd29808d28d8bb653eca2df6ce06b0", size = 31247, upload-time = "2026-09-21T08:45:28.441Z" },
 ]
 
 [[package]]

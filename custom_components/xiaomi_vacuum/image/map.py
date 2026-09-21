@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, TypedDict
 
 from homeassistant.components.image import ImageEntity
+from xiaomi_vacuum_sdk import CoordinateSystem
 
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
@@ -126,35 +127,37 @@ def calibration_points(calibration: MapCalibration) -> list[CalibrationPoint]:
     """
     Three pixel ↔ millimetre pairs describing the served PNG.
 
-    Inverse of the SDK renderer's projection: the device grid is enlarged by
-    ``scale``, padded by ``border`` and flipped vertically (grid row 0 is the
-    bottom of the image). The pairs are the floor image's top-left, top-right
-    and bottom-left corners, which is the three-point form the Xiaomi Vacuum
-    Map Card accepts as a ``calibration_source``.
+    The projection is the SDK's own ``CoordinateSystem``, rebuilt from the
+    stored calibration so the pairs stay the exact inverse of what the
+    renderer drew. The pairs are the floor image's top-left, top-right and
+    bottom-left corners, which is the three-point form the Xiaomi Vacuum Map
+    Card accepts as a ``calibration_source``.
     """
+    coordinates = CoordinateSystem(
+        origin_x=calibration["origin_x"],
+        origin_y=calibration["origin_y"],
+        resolution=calibration["resolution"],
+        grid_height=calibration["height"],
+        scale=calibration["scale"],
+        offset=calibration["border"],
+    )
     scale = calibration["scale"]
     border = calibration["border"]
     floor_width = calibration["width"] * scale
     floor_height = calibration["height"] * scale
     return [
-        _calibration_point(calibration, border, border),
-        _calibration_point(calibration, border + floor_width, border),
-        _calibration_point(calibration, border, border + floor_height),
+        _calibration_point(coordinates, border, border),
+        _calibration_point(coordinates, border + floor_width, border),
+        _calibration_point(coordinates, border, border + floor_height),
     ]
 
 
 def _calibration_point(
-    calibration: MapCalibration, pixel_x: float, pixel_y: float
+    coordinates: CoordinateSystem, pixel_x: float, pixel_y: float
 ) -> CalibrationPoint:
     """Project one PNG pixel back onto the device's millimetre frame."""
-    scale = calibration["scale"]
-    resolution = calibration["resolution"]
-    grid_x = (pixel_x - calibration["border"]) / scale
-    grid_y = calibration["height"] - 1 - (pixel_y - calibration["border"]) / scale
+    point = coordinates.to_device(pixel_x, pixel_y)
     return {
         "map": {"x": round(pixel_x), "y": round(pixel_y)},
-        "vacuum": {
-            "x": round(calibration["origin_x"] + grid_x * resolution),
-            "y": round(calibration["origin_y"] + grid_y * resolution),
-        },
+        "vacuum": {"x": round(point.x), "y": round(point.y)},
     }

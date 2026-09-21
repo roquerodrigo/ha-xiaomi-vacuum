@@ -10,7 +10,7 @@
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues",
   "requirements": [
-    "xiaomi-vacuum-sdk==0.1.0"
+    "xiaomi-vacuum-sdk==0.1.1"
   ],
   "version": "2.3.2"
 }

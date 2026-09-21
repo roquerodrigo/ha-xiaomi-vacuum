@@ -11,8 +11,6 @@ from typing import TYPE_CHECKING, NotRequired, TypedDict
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from xiaomi_vacuum_sdk import MapParseError, MapRenderer, RenderOptions
-from xiaomi_vacuum_sdk.map.blob_decryptor import BlobDecryptor
-from xiaomi_vacuum_sdk.map.payload_parser import MapPayloadParser
 
 from .cloud import XiaomiCloudAuthError
 from .const import DOMAIN, LOGGER
@@ -64,12 +62,8 @@ class XiaomiVacuumMapCoordinator(DataUpdateCoordinator["RenderedMap | None"]):
         )
         # The SDK's default RenderOptions carry this integration's palette,
         # scale and element sizes; only the 12 px breathing border is added
-        # on top of the legacy render. The same options feed the calibration
-        # so pixel coordinates on the served PNG map back to device millimetres.
-        self._render_options = RenderOptions()
-        self._renderer = MapRenderer(self._render_options)
-        self._decryptor = BlobDecryptor()
-        self._parser = MapPayloadParser()
+        # on top of the legacy render.
+        self._renderer = MapRenderer(RenderOptions())
 
     async def async_load_cached(self) -> None:
         """Restore the last rendered map PNG from disk so it survives restarts."""
@@ -134,30 +128,28 @@ class XiaomiVacuumMapCoordinator(DataUpdateCoordinator["RenderedMap | None"]):
         """
         Decrypt, parse and render the map blob (CPU-bound, runs in the executor).
 
-        The blob is parsed once for the calibration and again inside the SDK
-        renderer, which only exposes finished PNG bytes; both steps share the
-        same options so the calibration describes the served image exactly.
+        ``render_map`` parses the blob once and returns the projection it drew
+        with, so the stored calibration describes the served PNG exactly.
         """
         try:
-            map_data = self._parser.parse(
-                self._decryptor.decrypt(raw, model, device_id)
-            )
-            png = self._renderer.render(raw, model=model, device_id=device_id)
+            rendered = self._renderer.render_map(raw, model=model, device_id=device_id)
         except MapParseError as exception:
             # The device published a payload without a drawable map (e.g. a
             # fresh map still being built) — keep serving the previous image.
             LOGGER.debug("Map payload not drawable: %s", exception)
             return None
+        coordinates = rendered.coordinates
         calibration: MapCalibration = {
-            "origin_x": map_data.origin_x,
-            "origin_y": map_data.origin_y,
-            "resolution": map_data.resolution,
-            "width": map_data.width,
-            "height": map_data.height,
-            "scale": self._render_options.scale,
-            "border": self._render_options.border,
+            "origin_x": coordinates.origin_x,
+            "origin_y": coordinates.origin_y,
+            "resolution": coordinates.resolution,
+            "width": rendered.map_data.width,
+            "height": coordinates.grid_height,
+            "scale": coordinates.scale,
+            # RenderOptions.border is an int; CoordinateSystem widens it.
+            "border": int(coordinates.offset),
         }
-        return {"png": png, "calibration": calibration}
+        return {"png": rendered.png, "calibration": calibration}
 
     @staticmethod
     def _extract_obj_name(raw_field: str | None) -> str | None:

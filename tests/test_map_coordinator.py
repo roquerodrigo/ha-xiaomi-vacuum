@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from homeassistant.helpers.update_coordinator import UpdateFailed
+from xiaomi_vacuum_sdk import CoordinateSystem, RenderOptions
 
 from custom_components.xiaomi_vacuum.map_coordinator import (
     MAP_UPDATE_INTERVAL,
@@ -25,8 +26,17 @@ def _cloud(map_bytes=b"BIN"):
     return cloud
 
 
-MAP_DATA = SimpleNamespace(
-    origin_x=-2750.0, origin_y=-7800.0, resolution=50.0, width=115, height=241
+MAP_DATA = SimpleNamespace(width=115, height=241)
+
+# The real projection the SDK renderer would have drawn with, so the
+# calibration the coordinator derives is checked against the genuine type.
+COORDINATES = CoordinateSystem(
+    origin_x=-2750.0,
+    origin_y=-7800.0,
+    resolution=50.0,
+    grid_height=241,
+    scale=RenderOptions().scale,
+    offset=RenderOptions().border,
 )
 
 CALIBRATION = {
@@ -44,14 +54,15 @@ def _rendered(png=b"FAKEPNG", calibration=CALIBRATION):
     return {"png": png, "calibration": calibration}
 
 
-def _fake_pipeline(coord, png=b"FAKEPNG", render_error=None, parse_error=None):
-    """Replace the SDK decrypt / parse / render trio with fakes."""
-    coord._decryptor = MagicMock()
-    coord._decryptor.decrypt = MagicMock(return_value={"payload": True})
-    coord._parser = MagicMock()
-    coord._parser.parse = MagicMock(return_value=MAP_DATA, side_effect=parse_error)
+def _fake_renderer(coord, png=b"FAKEPNG", error=None):
+    """Replace the SDK renderer with one returning a canned RenderedMap."""
     coord._renderer = MagicMock()
-    coord._renderer.render = MagicMock(return_value=png, side_effect=render_error)
+    coord._renderer.render_map = MagicMock(
+        return_value=SimpleNamespace(
+            png=png, map_data=MAP_DATA, coordinates=COORDINATES
+        ),
+        side_effect=error,
+    )
 
 
 def test_update_interval_is_60s():
@@ -73,7 +84,7 @@ async def test_update_returns_data_when_state_data_is_none(hass):
 async def test_update_persists_png_and_calibration_to_store(hass, hass_storage):
     cloud = _cloud()
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
-    _fake_pipeline(coord)
+    _fake_renderer(coord)
     assert await coord._async_update_data() == _rendered()
 
     import base64
@@ -149,10 +160,10 @@ async def test_update_skips_parse_when_blob_unchanged(hass):
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
     coord.data = _rendered(b"RENDERED")
     coord._last_raw = b"BIN"
-    _fake_pipeline(coord)
+    _fake_renderer(coord)
     result = await coord._async_update_data()
     assert result == _rendered(b"RENDERED")
-    coord._renderer.render.assert_not_called()
+    coord._renderer.render_map.assert_not_called()
 
 
 async def test_update_returns_data_when_payload_has_no_image(hass):
@@ -161,7 +172,7 @@ async def test_update_returns_data_when_payload_has_no_image(hass):
     cloud = _cloud()
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
     coord.data = _rendered(b"OLD")
-    _fake_pipeline(coord, parse_error=MapParseError("no map image"))
+    _fake_renderer(coord, error=MapParseError("no map image"))
     result = await coord._async_update_data()
     assert result == _rendered(b"OLD")
 
@@ -169,7 +180,7 @@ async def test_update_returns_data_when_payload_has_no_image(hass):
 async def test_update_returns_rendered_map_on_success(hass):
     cloud = _cloud()
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
-    _fake_pipeline(coord)
+    _fake_renderer(coord)
     result = await coord._async_update_data()
     assert result == _rendered()
 
@@ -178,12 +189,12 @@ async def test_update_retries_parse_after_failure_with_same_blob(hass):
     """A failed parse must not mark the blob as seen — the next poll retries."""
     cloud = _cloud(map_bytes=b"BIN")
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
-    _fake_pipeline(coord, render_error=RuntimeError("bad blob"))
+    _fake_renderer(coord, error=RuntimeError("bad blob"))
     with pytest.raises(UpdateFailed):
         await coord._async_update_data()
     with pytest.raises(UpdateFailed):
         await coord._async_update_data()
-    assert coord._renderer.render.call_count == 2
+    assert coord._renderer.render_map.call_count == 2
     assert coord._last_raw is None
 
 
@@ -233,31 +244,43 @@ async def test_update_skips_when_no_device_resolved(hass):
     assert await coord._async_update_data() == _rendered(b"OLD")
 
 
-def test_render_blob_passes_model_and_device_id(hass):
+def test_render_blob_parses_the_blob_once(hass):
+    """One `render_map` call serves both the image and the calibration."""
     cloud = _cloud()
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
-    _fake_pipeline(coord, png=b"P")
+    _fake_renderer(coord, png=b"P")
     rendered = coord._render_blob(b"raw", "xiaomi.vacuum.d109gl", "1234")
     # The SDK owns the `xiaomi.` -> `mi.` key normalization; the coordinator
     # hands over the full model string and the blob untouched.
-    coord._renderer.render.assert_called_once_with(
+    coord._renderer.render_map.assert_called_once_with(
         b"raw", model="xiaomi.vacuum.d109gl", device_id="1234"
-    )
-    coord._decryptor.decrypt.assert_called_once_with(
-        b"raw", "xiaomi.vacuum.d109gl", "1234"
     )
     assert rendered == _rendered(b"P")
 
 
-def test_render_blob_calibration_mirrors_render_options(hass):
-    """The calibration reports the scale / border the renderer actually used."""
-    from xiaomi_vacuum_sdk import RenderOptions
-
+def test_render_blob_calibration_describes_the_rendered_geometry(hass):
+    """The calibration mirrors the projection `render_map` reports, not guesses."""
     coord = XiaomiVacuumMapCoordinator(hass, _cloud(), _state_coord())
-    _fake_pipeline(coord)
+    _fake_renderer(coord)
+    calibration = coord._render_blob(b"raw", "xiaomi.vacuum.d109gl", "1")["calibration"]
+    assert calibration["origin_x"] == COORDINATES.origin_x
+    assert calibration["origin_y"] == COORDINATES.origin_y
+    assert calibration["resolution"] == COORDINATES.resolution
+    assert calibration["height"] == COORDINATES.grid_height
+    assert calibration["width"] == MAP_DATA.width
+    assert calibration["scale"] == COORDINATES.scale
+    # RenderOptions.border is an int; CoordinateSystem widens it to float.
+    assert calibration["border"] == RenderOptions().border
+    assert isinstance(calibration["border"], int)
+
+
+def test_render_blob_keeps_only_the_calibration_not_the_parsed_map(hass):
+    """The coordinator payload stays small and JSON-serializable for the store."""
+    coord = XiaomiVacuumMapCoordinator(hass, _cloud(), _state_coord())
+    _fake_renderer(coord)
     rendered = coord._render_blob(b"raw", "xiaomi.vacuum.d109gl", "1")
-    assert rendered["calibration"]["scale"] == RenderOptions().scale
-    assert rendered["calibration"]["border"] == RenderOptions().border
+    assert set(rendered) == {"png", "calibration"}
+    assert set(rendered["calibration"]) == set(CALIBRATION)
 
 
 def test_render_blob_returns_none_when_payload_not_drawable(hass):
@@ -265,16 +288,7 @@ def test_render_blob_returns_none_when_payload_not_drawable(hass):
 
     cloud = _cloud()
     coord = XiaomiVacuumMapCoordinator(hass, cloud, _state_coord())
-    _fake_pipeline(coord, parse_error=MapParseError("no map image"))
-    assert coord._render_blob(b"raw", "xiaomi.vacuum.d109gl", "1") is None
-
-
-def test_render_blob_returns_none_when_render_rejects_payload(hass):
-    """A parse error raised by the renderer itself is handled the same way."""
-    from xiaomi_vacuum_sdk import MapParseError
-
-    coord = XiaomiVacuumMapCoordinator(hass, _cloud(), _state_coord())
-    _fake_pipeline(coord, render_error=MapParseError("no map image"))
+    _fake_renderer(coord, error=MapParseError("no map image"))
     assert coord._render_blob(b"raw", "xiaomi.vacuum.d109gl", "1") is None
 
 
@@ -283,7 +297,6 @@ def test_render_blob_propagates_decrypt_errors(hass):
     from xiaomi_vacuum_sdk import MapDecryptError
 
     coord = XiaomiVacuumMapCoordinator(hass, _cloud(), _state_coord())
-    _fake_pipeline(coord)
-    coord._decryptor.decrypt = MagicMock(side_effect=MapDecryptError("bad key"))
+    _fake_renderer(coord, error=MapDecryptError("bad key"))
     with pytest.raises(MapDecryptError):
         coord._render_blob(b"raw", "xiaomi.vacuum.d109gl", "1")

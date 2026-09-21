@@ -1,16 +1,33 @@
 from __future__ import annotations
 
 import json
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from xiaomi_vacuum_sdk import CoordinateSystem, RenderOptions
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
 
 pytest_plugins = "pytest_homeassistant_custom_component"
+
+# What MapRenderer.render_map hands back: the PNG plus the geometry it drew
+# with, so the coordinator derives its calibration from a realistic shape.
+RENDERED_MAP = SimpleNamespace(
+    png=b"png-bytes",
+    map_data=SimpleNamespace(width=115, height=241),
+    coordinates=CoordinateSystem(
+        origin_x=-2750.0,
+        origin_y=-7800.0,
+        resolution=50.0,
+        grid_height=241,
+        scale=RenderOptions().scale,
+        offset=RenderOptions().border,
+    ),
+)
 
 SAMPLE_ROOM_INFO = json.dumps(
     {
@@ -272,7 +289,7 @@ async def setup_integration_with_cloud(
     with patch(
         "custom_components.xiaomi_vacuum.map_coordinator.MapRenderer"
     ) as renderer_cls:
-        renderer_cls.return_value.render = MagicMock(return_value=b"png-bytes")
+        renderer_cls.return_value.render_map = MagicMock(return_value=RENDERED_MAP)
 
         entry = MockConfigEntry(
             domain=DOMAIN,
