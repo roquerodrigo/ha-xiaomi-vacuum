@@ -62,12 +62,29 @@ async def test_async_get_state_requests_spec_mapping(mock_miot_device):
     assert state["status"] == 2
     assert state["battery_level"] == 99
     assert state["sweep_mop_type"] == 1
-    requested = mock_miot_device.get_properties.await_args.args[0]
+    requested = {
+        name: address
+        for call in mock_miot_device.get_properties.await_args_list
+        for name, address in call.args[0].items()
+    }
     assert requested["status"] == PropertyAddress(
         siid=D109GL.property_mapping["status"]["siid"],
         piid=D109GL.property_mapping["status"]["piid"],
     )
     assert set(requested) == set(D109GL.property_mapping)
+
+
+@pytest.mark.parametrize("spec", [D109GL, B108GL])
+async def test_async_get_state_reads_room_information_alone(mock_miot_device, spec):
+    state = await _client(mock_miot_device, spec).async_get_state()
+    requests = [
+        set(call.args[0]) for call in mock_miot_device.get_properties.await_args_list
+    ]
+    assert requests == [
+        set(spec.property_mapping) - {"room_information"},
+        {"room_information"},
+    ]
+    assert set(state) == set(spec.property_mapping)
 
 
 async def test_async_get_state_passes_through_missing_values(mock_miot_device):
