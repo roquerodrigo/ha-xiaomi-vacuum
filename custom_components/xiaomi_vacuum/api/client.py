@@ -11,6 +11,7 @@ from xiaomi_vacuum_sdk import (
     MiotClient,
     MiotError,
     PropertyAddress,
+    PropertyValue,
 )
 
 from ..cloud.errors import (  # noqa: TID252
@@ -45,6 +46,12 @@ if TYPE_CHECKING:
 # device feel unresponsive.
 _DEVICE_TIMEOUT_SECONDS = 10.0
 
+# The vacuums silently drop any reply that does not fit in a single UDP
+# datagram. The room list grows with the number and names of the rooms (non-ASCII
+# names are escaped), so batching it with other properties can push the reply
+# past that limit and leave every poll unanswered.
+_STANDALONE_PROPERTIES = frozenset({Property.ROOM_INFORMATION})
+
 
 class XiaomiVacuumApiClient:
     """Local MIoT client backed by ``xiaomi-vacuum-sdk`` for one model."""
@@ -57,6 +64,7 @@ class XiaomiVacuumApiClient:
             name: PropertyAddress(siid=address["siid"], piid=address["piid"])
             for name, address in spec.property_mapping.items()
         }
+        self._property_requests = _group_property_requests(self._properties)
         # Cloud client, set by the integration after the cloud session resolves.
         # When present, multi-step flows that local UDP mishandles (e.g. the S20+
         # room-clean) are routed through the cloud for reliability — matching
@@ -109,7 +117,9 @@ class XiaomiVacuumApiClient:
 
     async def async_get_state(self) -> VacuumState:
         """Read all mapped properties, keyed by the spec's property names."""
-        values = await self._run(self._client.get_properties(self._properties))
+        values: dict[str, PropertyValue] = {}
+        for properties in self._property_requests:
+            values |= await self._run(self._client.get_properties(properties))
         LOGGER.debug("Parsed state: %s", values)
         return cast("VacuumState", values)
 
@@ -322,6 +332,20 @@ class XiaomiVacuumApiClient:
 def _address(action: MiotActionAddress) -> ActionAddress:
     """Convert a spec action mapping entry to the SDK's address type."""
     return ActionAddress(siid=action["siid"], aiid=action["aiid"])
+
+
+def _group_property_requests(
+    properties: dict[str, PropertyAddress],
+) -> list[dict[str, PropertyAddress]]:
+    """Group the properties so each standalone one is read in its own request."""
+    shared: dict[str, PropertyAddress] = {}
+    standalone: list[dict[str, PropertyAddress]] = []
+    for name, address in properties.items():
+        if name in _STANDALONE_PROPERTIES:
+            standalone.append({name: address})
+        else:
+            shared[name] = address
+    return [shared, *standalone]
 
 
 # Columns published by the S20+ `room-info` property (SIID 6 / piid 10) and
