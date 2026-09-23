@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.4.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.4.0...v2.4.1) (2026-09-23)
+
+
+### Bug Fixes
+
+* **api:** read the room list in a request of its own ([325aa9d](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/325aa9df7a071d11e3eee4a10cbeaf87a7f7ad5d)), closes [#102](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/102) [#112](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/112)
+
+
+### Development Dependencies
+
+* **deps-dev:** bump ruff ([45acfa4](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/45acfa471686badbdd7a1802a6af4f77361050a1))
+
 ## [2.4.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.3.2...v2.4.0) (2026-09-21)
 
 
