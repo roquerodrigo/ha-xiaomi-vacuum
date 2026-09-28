@@ -28,7 +28,9 @@ UPDATE_INTERVAL = timedelta(seconds=30)
 
 
 def _live_fault_code_ids(
-    fault_ids_raw: str | None, ignored: frozenset[int]
+    fault_ids_raw: str | None,
+    ignored: frozenset[int],
+    notices: frozenset[int] = frozenset(),
 ) -> int | None:
     """
     Return the current active fault code from the X20 Max `Fault Ids` property.
@@ -37,7 +39,8 @@ def _live_fault_code_ids(
     ``{"ts": ..., "fault": [<codes>]}``. A healthy robot publishes either
     ``[0]`` or an empty list; both are observed on real hardware, so both count
     as no active fault. Codes listed in ``ignored`` are the model's permanent
-    phantom faults and are dropped as well. The `Device Fault` property
+    phantom faults and are dropped as well. A real fault wins over a code listed
+    in ``notices`` when both are published. The `Device Fault` property
     (piid 3) is not used — it latches the last code and never resets. Returns
     None when `Fault Ids` is missing or unparseable.
     """
@@ -48,6 +51,7 @@ def _live_fault_code_ids(
     except ValueError, TypeError, AttributeError:
         return None
     active = [code for code in ids if code and code not in ignored]
+    active.sort(key=lambda code: code in notices)
     return active[0] if active else 0
 
 
@@ -104,7 +108,9 @@ class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[VacuumState]):
                 return None
             return 0 if value in ignored else int(value)
         # X20 Max: a JSON fault-ids list.
-        return _live_fault_code_ids(data.get("fault_ids"), ignored)
+        return _live_fault_code_ids(
+            data.get("fault_ids"), ignored, self.spec.notice_fault_codes
+        )
 
     async def _enrich_fault_text(self, data: VacuumState) -> None:
         """Add the localized fault text for a non-zero fault code, if available."""

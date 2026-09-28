@@ -319,7 +319,7 @@ is identical on the S40 Pro. Differences worth knowing:
 | Extra properties on SIID 2 | `41 hot-water-mop-wash`, `56 sweep-ai-object`, `63/64 cut-hair-config`, `85-90` cleaning statistics and drying progress, `96 sweep-mop-status`, `97/98` sewage / water tank status, `99 sill`, `100/101` base-station / host water tank status — not read by the integration |
 | Extra actions on SIID 2 | `10 get-zone-configs`, `22 start-call-clean`, `44 stop-cut-hair`, `49-59` station cleaning, skip / final / temporary room and zone cleaning, tank emptying, spot cleaning, `62-64` object clean and station self-cleaning |
 | Zone cleaning | not enabled: the X20 Max encoding has not been tried on this model — see below |
-| Faults | publishes `100027` ("Sewage tank is full or not installed") in `Fault Ids` permanently — a station check the dockless retail unit can never satisfy; listed in the spec's `ignored_fault_codes` |
+| Faults | publishes `100027` ("Sewage tank is full or not installed") in `Fault Ids` permanently — a station check the dockless retail unit can never satisfy; listed in the spec's `ignored_fault_codes`. Publishes `210005` (dust bin out) and `210020` (water tank out) while the user services it, cleared once the part is back; listed in `notice_fault_codes` |
 
 ### Zone (rectangle) cleaning is unconfirmed on this firmware
 
@@ -448,9 +448,13 @@ Verified real example (account locale pt-BR):
 
 **Known codes.** Values in the `1000xx` range are the robot/station hardware checks
 (`100027` = sewage tank full or not installed, observed permanently on the dockless
-S40 Pro); `21xxxx` are navigation failures (`210009` = could not return to the dock).
+S40 Pro); `21xxxx` are robot-side conditions — navigation failures (`210009` =
+could not return to the dock) as well as maintenance notices (`210005` = dust bin
+out, `210020` = water tank out, both observed on the S40 Pro).
 A model that reports a code for hardware it does not have lists it in its
-`ModelSpec.ignored_fault_codes` so the coordinator drops it — see `spec/ov71gl.py`.
+`ModelSpec.ignored_fault_codes` so the coordinator drops it; a routine
+maintenance notice goes in `ModelSpec.notice_fault_codes`, which keeps it on the
+error sensors without forcing the vacuum into ERROR — see `spec/ov71gl.py`.
 
 This integration therefore resolves fault text at runtime: `cloud.XiaomiCloud.async_fault_text(code)`
 reads this feed and caches `{code: title}`; the coordinator attaches it to the fault as

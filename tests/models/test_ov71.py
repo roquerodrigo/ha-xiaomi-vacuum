@@ -5,11 +5,13 @@ sweep-route / obstacle-avoidance selects and route room cleaning through the
 direct start-vacuum-room-sweep action. It ships with a plain charging dock,
 so despite the spec template listing dock actions it must get no dust-arrest
 button and no mop-wash / dry send_commands. Its status table adds the three
-station-assisted washing codes (22-24).
+station-assisted washing codes (22-24). Taking the water tank or dust bin
+out is a maintenance notice, not a fault: the vacuum must not go to ERROR.
 """
 
 from __future__ import annotations
 
+import pytest
 from homeassistant.components.vacuum.const import VacuumActivity
 from homeassistant.config_entries import ConfigEntryState
 from xiaomi_vacuum_sdk import ActionAddress
@@ -178,3 +180,22 @@ async def test_ov71_parses_the_room_payload_a_real_device_publishes(
         Segment(id="5", name="Salon"),
         Segment(id="6", name="Entrée"),
     ]
+
+
+@pytest.mark.parametrize("code", [210005, 210020])
+async def test_ov71_maintenance_notice_does_not_force_error(
+    hass, setup_integration_ov71, code
+):
+    """Dust bin / water tank out: vacuum stays docked, sensors still show it."""
+    coord = setup_integration_ov71.runtime_data.coordinator
+    coord.async_set_updated_data({**coord.data, "status": 9, "fault": code})
+    await hass.async_block_till_done()
+    assert hass.states.get("vacuum.s40_pro").state == "docked"
+    assert hass.states.get("sensor.s40_pro_error_code").state == str(code)
+
+
+async def test_ov71_real_fault_still_forces_error(hass, setup_integration_ov71):
+    coord = setup_integration_ov71.runtime_data.coordinator
+    coord.async_set_updated_data({**coord.data, "status": 9, "fault": 210009})
+    await hass.async_block_till_done()
+    assert hass.states.get("vacuum.s40_pro").state == "error"

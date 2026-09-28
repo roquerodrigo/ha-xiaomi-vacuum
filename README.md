@@ -45,7 +45,8 @@ for two cloud-only extras: the **map image** and **localized error messages**.
 - **Error reporting** — `Error` (localized, human-readable fault text resolved
   from the Xiaomi cloud message feed) and `Error code` sensors. The fault is
   read from the device's *live* fault list, so it clears once the vacuum
-  recovers.
+  recovers. Routine maintenance notices (dust bin or water tank taken out) show
+  on these sensors without switching the vacuum entity to `error`.
 - **Consumable life sensors** (% remaining): mop, main brush, side brush,
   filter — matching the Mi Home app's consumables list.
 - **Configuration selects** for: cleaning mode (sweep / mop / sweep+mop /

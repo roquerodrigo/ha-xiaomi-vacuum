@@ -187,6 +187,15 @@ example: it ships with a plain charging dock and reports `100027` ("Sewage tank
 is full or not installed") forever. Only add a code once a real device is
 observed publishing it while the app reports nothing wrong.
 
+**Maintenance notices.** Some codes are not faults at all but routine
+maintenance: the robot publishes them while the user takes a part out (dust bin
+emptied, water tank refilled) and clears them once it is back. List them in
+`notice_fault_codes` (a `frozenset[int]`, empty by default). They still reach
+the Error / Error code sensors, but the vacuum entity keeps its status-derived
+activity instead of switching to `VacuumActivity.ERROR`; a real fault published
+alongside one takes precedence. The S40 Pro reports `210005` (dust bin out) and
+`210020` (water tank out).
+
 ### 3.5 Room cleaning strategy
 
 Set `room_clean_strategy`:

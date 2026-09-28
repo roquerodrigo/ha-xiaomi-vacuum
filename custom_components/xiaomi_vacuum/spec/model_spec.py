@@ -117,6 +117,12 @@ class ModelSpec:
     # are dropped before the fault reaches the entities, otherwise the vacuum
     # would sit in ERROR for its whole life (see S40 Pro / code 100027).
     ignored_fault_codes: frozenset[int] = frozenset()
+    # Fault codes that are routine maintenance notices rather than faults: the
+    # robot publishes them while the user empties the dust bin or refills the
+    # water tank, and clears them once the part is back. They still reach the
+    # Error / Error code sensors but do not force VacuumActivity.ERROR, the way
+    # other vacuum integrations treat dismissable warnings.
+    notice_fault_codes: frozenset[int] = frozenset()
 
     def __post_init__(self) -> None:
         """Wrap the mutable dict fields in read-only views."""

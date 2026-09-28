@@ -92,6 +92,16 @@ def test_live_fault_code_ids_keeps_real_code_alongside_ignored_one():
     assert _live_fault_code_ids(raw, frozenset({100027})) == 210009
 
 
+def test_live_fault_code_ids_prefers_real_fault_over_notice():
+    raw = '{"ts": 1, "fault": [210020, 210009]}'
+    assert _live_fault_code_ids(raw, frozenset(), frozenset({210020})) == 210009
+
+
+def test_live_fault_code_ids_reports_a_lone_notice():
+    raw = '{"ts": 1, "fault": [210020]}'
+    assert _live_fault_code_ids(raw, frozenset(), frozenset({210020})) == 210020
+
+
 def test_s40_pro_ignores_the_phantom_sewage_tank_fault():
     """The S40 Pro has no sewage tank, so 100027 is never a real fault."""
     assert 100027 in OV71GL.ignored_fault_codes
