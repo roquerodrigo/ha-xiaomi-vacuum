@@ -119,7 +119,9 @@ _ACTIONS = ModelActions(
 
 Each published status code must have an entry in `status`. Pick the
 closest-matching `VacuumActivity` for HA's UI; the `slug` is a stable
-translation key (see [§4 Translations](#4-translations)).
+translation key (see [§4 Translations](#4-translations)). Decide the activity
+from what the Mi Home app shows for the code (the `multiLanguage` endpoint in
+`XIAOMI_VACUUM_API.md` §1, `zh_cn` first), not from the spec's shorthand name.
 
 `is_idle` decides whether a fresh `start` is safe (the vacuum is parked at
 the dock) versus whether `start` should resume an in-progress clean.

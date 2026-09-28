@@ -5,7 +5,7 @@ sweep-route / obstacle-avoidance selects and route room cleaning through the
 direct start-vacuum-room-sweep action. It ships with a plain charging dock,
 so despite the spec template listing dock actions it must get no dust-arrest
 button and no mop-wash / dry send_commands. Its status table adds the three
-station-assisted cleaning codes (22-24).
+station-assisted washing codes (22-24).
 """
 
 from __future__ import annotations
@@ -95,18 +95,18 @@ async def test_ov71_status_table_covers_the_published_codes(
     assert set(spec.status) == set(range(1, 25))
     assert VacuumActivity.ERROR not in spec.status_to_activity.values()
     assert spec.idle_statuses == frozenset({1, 2, 9})
-    assert spec.status_to_activity[22] is VacuumActivity.CLEANING
+    assert spec.status_to_activity[22] is VacuumActivity.DOCKED
     assert spec.status_to_activity[23] is VacuumActivity.DOCKED
     assert spec.status_to_activity[24] is VacuumActivity.RETURNING
 
 
-async def test_ov71_station_assisted_status_shows_as_cleaning(
+async def test_ov71_station_assisted_status_shows_as_docked(
     hass, setup_integration_ov71
 ):
-    """The fixture reports status 22; the vacuum entity must be cleaning."""
+    """The fixture reports status 22, a rinse at the dock; the vacuum is docked."""
     state = hass.states.get("vacuum.s40_pro")
     assert state is not None
-    assert state.state == "cleaning"
+    assert state.state == "docked"
     status = hass.states.get("sensor.s40_pro_status")
     assert status is not None
     assert status.state == "station_assisting_cleaning"

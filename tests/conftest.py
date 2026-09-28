@@ -65,7 +65,7 @@ SAMPLE_STATE: dict[str, Any] = {
 _SAMPLE_STATE_D109: dict[str, Any] = SAMPLE_STATE
 
 #: Parsed-state fixture for the S40 Pro. Same property layout as the X20 Max;
-#: status 22 is one of the station-assisted cleaning codes only this model has.
+#: status 22 is one of the station-assisted washing codes only this model has.
 _SAMPLE_STATE_OV71: dict[str, Any] = {**SAMPLE_STATE, "status": 22}
 
 #: Parsed-state fixture for the S20+. Uses the plain `fault` property, exposes no

@@ -15,6 +15,12 @@ miot-spec instance, keyed by its `urn`, on the public service:
 
 - `https://miot-spec.org/miot-spec-v2/instances?status=all` — find the `urn` for a model
 - `https://miot-spec.org/miot-spec-v2/instance?type=<urn>` — full spec (all SIID/PIID/AIID)
+- `https://miot-spec.org/instance/v2/multiLanguage?urn=<urn>` — the strings the Mi Home
+  app shows, per locale (`zh_cn`, `en`, `pt_BR`, …), keyed
+  `service:<siid>:property:<piid>:valuelist:<index>` where `<index>` is the 0-based
+  position in the value list, not the value. The `zh_cn` string is the original; the
+  English value-list descriptions in the spec are often shorthand (`GoWash` is
+  洗拖布中, "washing the mop", not "going to wash").
 
 This is the authoritative source for the identifiers. To extend the integration, query
 `miot-spec.org` directly.

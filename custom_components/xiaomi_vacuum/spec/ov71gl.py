@@ -79,10 +79,11 @@ _ACTIONS = ModelActions(
 )
 
 # The ERROR activity is NOT produced from status: an active fault drives it (see
-# XiaomiVacuum.activity). Break/interrupt statuses and the bare "Error" status
-# (15) occur with no active fault during normal cycles, so they map to their
-# nearest non-error activity. Codes 22-24 are the station-assisted cleaning
-# cycle the S40 Pro adds over the X20 Max.
+# XiaomiVacuum.activity). The bare "Error" status (15) occurs with no active fault
+# during normal cycles, so it maps to IDLE instead. Activities follow what the
+# robot physically does, as the Mi Home strings describe it (see d109gl.py).
+# Codes 22-24 are the station-assisted washing cycle the S40 Pro adds over the
+# X20 Max: rinsing at the dock, rinse finished, returning to the dock to rinse.
 # is_idle = parked at the dock and safe to start a fresh clean from (1 Idle,
 # 2 Charging, 9 Charged).
 _STATUS: dict[int, StatusDef] = {
@@ -123,7 +124,7 @@ _STATUS: dict[int, StatusDef] = {
         "cleaning_job": CleaningJobSignal.FINISHED,
     },
     7: {
-        "activity": VacuumActivity.RETURNING,
+        "activity": VacuumActivity.DOCKED,
         "slug": "go_wash",
         "is_idle": False,
         "cleaning_job": CleaningJobSignal.INCONCLUSIVE,
@@ -195,13 +196,13 @@ _STATUS: dict[int, StatusDef] = {
         "cleaning_job": CleaningJobSignal.IN_PROGRESS,
     },
     19: {
-        "activity": VacuumActivity.PAUSED,
+        "activity": VacuumActivity.RETURNING,
         "slug": "go_charge_break",
         "is_idle": False,
         "cleaning_job": CleaningJobSignal.IN_PROGRESS,
     },
     20: {
-        "activity": VacuumActivity.PAUSED,
+        "activity": VacuumActivity.RETURNING,
         "slug": "wash_break",
         "is_idle": False,
         "cleaning_job": CleaningJobSignal.IN_PROGRESS,
@@ -213,10 +214,10 @@ _STATUS: dict[int, StatusDef] = {
         "cleaning_job": CleaningJobSignal.FINISHED,
     },
     22: {
-        "activity": VacuumActivity.CLEANING,
+        "activity": VacuumActivity.DOCKED,
         "slug": "station_assisting_cleaning",
         "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
+        "cleaning_job": CleaningJobSignal.INCONCLUSIVE,
     },
     23: {
         "activity": VacuumActivity.DOCKED,

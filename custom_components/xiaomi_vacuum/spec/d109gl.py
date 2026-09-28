@@ -71,9 +71,11 @@ _ACTIONS = ModelActions(
 )
 
 # The ERROR activity is NOT produced from status: an active fault drives it (see
-# XiaomiVacuum.activity). Break/interrupt statuses (3 BreakCharging, 19 GoChargeBreak,
-# 20 WashBreak) and the bare "Error" status (15) occur with no active fault during
-# normal cycles, so they map to their nearest non-error activity instead.
+# XiaomiVacuum.activity). The bare "Error" status (15) occurs with no active fault
+# during normal cycles, so it maps to IDLE instead. Activities follow what the
+# robot physically does, as the Mi Home strings describe it: 19 GoChargeBreak and
+# 20 WashBreak drive back to the dock mid-job, 7 GoWash washes the mop while
+# docked. Whether the job carries on afterwards is what `cleaning_job` records.
 # is_idle = parked at the dock and safe to start a fresh clean from (1 Idle,
 # 2 Charging, 9 Charged).
 _STATUS: dict[int, StatusDef] = {
@@ -114,7 +116,7 @@ _STATUS: dict[int, StatusDef] = {
         "cleaning_job": CleaningJobSignal.FINISHED,
     },
     7: {
-        "activity": VacuumActivity.RETURNING,
+        "activity": VacuumActivity.DOCKED,
         "slug": "go_wash",
         "is_idle": False,
         "cleaning_job": CleaningJobSignal.INCONCLUSIVE,
@@ -186,13 +188,13 @@ _STATUS: dict[int, StatusDef] = {
         "cleaning_job": CleaningJobSignal.IN_PROGRESS,
     },
     19: {
-        "activity": VacuumActivity.PAUSED,
+        "activity": VacuumActivity.RETURNING,
         "slug": "go_charge_break",
         "is_idle": False,
         "cleaning_job": CleaningJobSignal.IN_PROGRESS,
     },
     20: {
-        "activity": VacuumActivity.PAUSED,
+        "activity": VacuumActivity.RETURNING,
         "slug": "wash_break",
         "is_idle": False,
         "cleaning_job": CleaningJobSignal.IN_PROGRESS,

@@ -165,13 +165,25 @@ async def test_cleaning_unknown_without_history_on_an_inconclusive_status(
     assert state == "unknown"
 
 
-async def test_cleaning_on_for_s40_pro_station_assisted_cleaning(
+async def test_cleaning_keeps_the_verdict_through_s40_pro_station_washing(
     hass, setup_integration_ov71
 ):
-    """The S40 Pro fixture reports status 22 (station-assisted cleaning)."""
-    state = hass.states.get("binary_sensor.s40_pro_cleaning_in_progress")
-    assert state is not None
-    assert state.state == "on"
+    """Station-assisted washing (22-24) happens both mid-job and after it ends."""
+    entity_id = "binary_sensor.s40_pro_cleaning_in_progress"
+    assert hass.states.get(entity_id).state == "unknown"
+    coordinator = setup_integration_ov71.runtime_data.coordinator
+    sweeping, go_charge_to_wash, washing, washed, charging = 4, 24, 22, 23, 2
+    for status, expected in (
+        (sweeping, "on"),
+        (go_charge_to_wash, "on"),
+        (washing, "on"),
+        (washed, "on"),
+        (charging, "off"),
+        (washing, "off"),
+    ):
+        coordinator.async_set_updated_data({**coordinator.data, "status": status})
+        await hass.async_block_till_done()
+        assert hass.states.get(entity_id).state == expected
 
 
 async def test_cleaning_follows_s20_plus_statuses(hass, setup_integration_b108):

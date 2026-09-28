@@ -172,6 +172,27 @@ def test_status_codes_sharing_a_slug_agree_on_the_cleaning_job_signal():
             assert status["cleaning_job"] == expected, status["slug"]
 
 
+def test_status_codes_sharing_a_slug_agree_on_the_activity():
+    activity_by_slug: dict[str, VacuumActivity] = {}
+    for spec in MODELS.values():
+        for status in spec.status.values():
+            expected = activity_by_slug.setdefault(status["slug"], status["activity"])
+            assert status["activity"] is expected, status["slug"]
+
+
+@pytest.mark.parametrize(
+    ("code", "activity"),
+    [
+        (7, VacuumActivity.DOCKED),
+        (19, VacuumActivity.RETURNING),
+        (20, VacuumActivity.RETURNING),
+    ],
+)
+def test_d109_activities_follow_the_mi_home_status_strings(code, activity):
+    """7 washes the mop at the dock; 19 and 20 drive back to it mid-job."""
+    assert D109GL.status_to_activity[code] is activity
+
+
 def test_cleaning_job_signals_are_decisive_for_unambiguous_statuses():
     from custom_components.xiaomi_vacuum.spec import CleaningJobSignal
 
