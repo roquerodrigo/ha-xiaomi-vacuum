@@ -6,7 +6,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
 )
-from homeassistant.const import STATE_OFF, STATE_ON
+from homeassistant.const import STATE_OFF, STATE_ON, EntityCategory
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
@@ -26,6 +26,7 @@ class XiaomiVacuumCleaningBinarySensor(
     """
 
     _attr_device_class = BinarySensorDeviceClass.RUNNING
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_translation_key = "cleaning"
     _cleaning_in_progress: bool | None = None
 

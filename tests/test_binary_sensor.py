@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
+from homeassistant.const import EntityCategory
+from homeassistant.helpers import entity_registry as er
 
 
 async def test_battery_charging_on(hass, setup_integration):
@@ -70,6 +72,8 @@ async def test_cleaning_off_while_docked(hass, setup_integration):
     assert state is not None
     assert state.state == "off"
     assert state.attributes["device_class"] == BinarySensorDeviceClass.RUNNING
+    entry = er.async_get(hass).async_get(CLEANING_ENTITY_ID)
+    assert entry.entity_category is EntityCategory.DIAGNOSTIC
 
 
 async def test_cleaning_stays_on_through_a_mid_job_mop_wash(hass, setup_integration):
