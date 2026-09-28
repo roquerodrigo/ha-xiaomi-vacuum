@@ -124,11 +124,29 @@ translation key (see [§4 Translations](#4-translations)).
 `is_idle` decides whether a fresh `start` is safe (the vacuum is parked at
 the dock) versus whether `start` should resume an in-progress clean.
 
+`cleaning_job` drives the *Cleaning in progress* binary sensor. Use
+`CleaningJobSignal.IN_PROGRESS` for statuses that only happen during a job
+(cleaning, paused, washing the mop or recharging mid-job),
+`CleaningJobSignal.FINISHED` for statuses that only happen outside one (idle,
+charging, returning to the dock at the end), and
+`CleaningJobSignal.INCONCLUSIVE` for statuses the device reports both mid-job
+and after the job ends (e.g. `station_working`) — those keep the previous
+verdict.
+
 ```python
 _STATUS: dict[int, StatusDef] = {
-    1: {"activity": VacuumActivity.IDLE, "slug": "idle", "is_idle": True},
-    2: {"activity": VacuumActivity.DOCKED, "slug": "charging", "is_idle": True},
-    4: {"activity": VacuumActivity.CLEANING, "slug": "sweeping", "is_idle": False},
+    1: {
+        "activity": VacuumActivity.IDLE,
+        "slug": "idle",
+        "is_idle": True,
+        "cleaning_job": CleaningJobSignal.FINISHED,
+    },
+    4: {
+        "activity": VacuumActivity.CLEANING,
+        "slug": "sweeping",
+        "is_idle": False,
+        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
+    },
     ...
 }
 ```

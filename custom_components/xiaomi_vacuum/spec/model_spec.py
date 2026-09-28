@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from homeassistant.components.vacuum.const import VacuumActivity
 
     from .addresses import MiotActionAddress, MiotPropertyAddress
+    from .cleaning_job_signal import CleaningJobSignal
     from .model_actions import ModelActions
 
 # How the live fault is read. d109gl publishes a `Fault Ids` JSON list
@@ -30,11 +31,12 @@ RoomCleanStrategy = Literal["direct", "config_then_custom"]
 
 
 class StatusDef(TypedDict):
-    """Per-status-code metadata: HA activity, slug, and idle flag."""
+    """Per-status-code metadata: HA activity, slug, idle flag and job signal."""
 
     activity: VacuumActivity
     slug: str
     is_idle: bool
+    cleaning_job: CleaningJobSignal
 
 
 #: Maps each optional :class:`Capability` to the :class:`EntityKey` it gates.
@@ -62,6 +64,7 @@ _BASE_ENTITIES: frozenset[EntityKey] = frozenset(
         EntityKey.FILTER_LIFE_SENSOR,
         EntityKey.BATTERY_CHARGING_SENSOR,
         EntityKey.MOP_PAD_SENSOR,
+        EntityKey.CLEANING_SENSOR,
         EntityKey.SWEEP_MOP_TYPE_SELECT,
         EntityKey.CLEAN_TIMES_SELECT,
         EntityKey.MOP_WATER_LEVEL_SELECT,
@@ -138,6 +141,11 @@ class ModelSpec:
     def idle_statuses(self) -> frozenset[int]:
         """Status codes that count as parked/idle (a fresh start is safe)."""
         return frozenset(code for code, s in self.status.items() if s["is_idle"])
+
+    @property
+    def cleaning_job_signals(self) -> dict[int, CleaningJobSignal]:
+        """Status code → what it reveals about the cleaning job."""
+        return {code: s["cleaning_job"] for code, s in self.status.items()}
 
     def status_code_for(self, activity: VacuumActivity) -> int:
         """

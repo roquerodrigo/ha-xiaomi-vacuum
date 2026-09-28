@@ -160,6 +160,27 @@ def test_status_back_compat_properties_match_status_table():
         assert D109GL.status_slugs[code] == status["slug"]
         is_idle = code in D109GL.idle_statuses
         assert is_idle == status["is_idle"]
+        assert D109GL.cleaning_job_signals[code] == status["cleaning_job"]
+
+
+def test_status_codes_sharing_a_slug_agree_on_the_cleaning_job_signal():
+    """A slug means the same device state on every model, so its signal must match."""
+    signal_by_slug: dict[str, object] = {}
+    for spec in MODELS.values():
+        for status in spec.status.values():
+            expected = signal_by_slug.setdefault(status["slug"], status["cleaning_job"])
+            assert status["cleaning_job"] == expected, status["slug"]
+
+
+def test_cleaning_job_signals_are_decisive_for_unambiguous_statuses():
+    from custom_components.xiaomi_vacuum.spec import CleaningJobSignal
+
+    for spec in MODELS.values():
+        for status in spec.status.values():
+            if status["is_idle"]:
+                assert status["cleaning_job"] is CleaningJobSignal.FINISHED
+            if status["activity"] in (VacuumActivity.CLEANING, VacuumActivity.PAUSED):
+                assert status["cleaning_job"] is CleaningJobSignal.IN_PROGRESS
 
 
 def test_d109_route_and_obstacle_enumerations_are_per_model():
@@ -186,7 +207,15 @@ def test_spec_fields_are_immutable():
     # mapping instead of short-circuiting on a missing key.
     mutations: dict[str, tuple[object, object]] = {
         "property_mapping": (Property.STATUS, {"siid": 0, "piid": 0}),
-        "status": (1, {"activity": VacuumActivity.IDLE, "slug": "x", "is_idle": False}),
+        "status": (
+            1,
+            {
+                "activity": VacuumActivity.IDLE,
+                "slug": "x",
+                "is_idle": False,
+                "cleaning_job": "finished",
+            },
+        ),
         "fan_speeds": ("silent", 99),
         "sweep_mop_types": ("sweep", 99),
         "clean_times": ("one_time", 99),

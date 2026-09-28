@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 from homeassistant.components.vacuum.const import VacuumActivity
 
+from .cleaning_job_signal import CleaningJobSignal
 from .enumerations import (
     CHARGING_STATE_SLUGS,
     FAN_SPEEDS,
@@ -76,50 +77,131 @@ _ACTIONS = ModelActions(
 # is_idle = parked at the dock and safe to start a fresh clean from (1 Idle,
 # 2 Charging, 9 Charged).
 _STATUS: dict[int, StatusDef] = {
-    1: {"activity": VacuumActivity.IDLE, "slug": "idle", "is_idle": True},
-    2: {"activity": VacuumActivity.DOCKED, "slug": "charging", "is_idle": True},
-    3: {"activity": VacuumActivity.DOCKED, "slug": "break_charging", "is_idle": False},
-    4: {"activity": VacuumActivity.CLEANING, "slug": "sweeping", "is_idle": False},
-    5: {"activity": VacuumActivity.PAUSED, "slug": "paused", "is_idle": False},
-    6: {"activity": VacuumActivity.RETURNING, "slug": "go_charging", "is_idle": False},
-    7: {"activity": VacuumActivity.RETURNING, "slug": "go_wash", "is_idle": False},
-    8: {"activity": VacuumActivity.CLEANING, "slug": "remote", "is_idle": False},
-    9: {"activity": VacuumActivity.DOCKED, "slug": "charged", "is_idle": True},
-    10: {"activity": VacuumActivity.CLEANING, "slug": "building_map", "is_idle": False},
-    11: {"activity": VacuumActivity.IDLE, "slug": "updating", "is_idle": False},
+    1: {
+        "activity": VacuumActivity.IDLE,
+        "slug": "idle",
+        "is_idle": True,
+        "cleaning_job": CleaningJobSignal.FINISHED,
+    },
+    2: {
+        "activity": VacuumActivity.DOCKED,
+        "slug": "charging",
+        "is_idle": True,
+        "cleaning_job": CleaningJobSignal.FINISHED,
+    },
+    3: {
+        "activity": VacuumActivity.DOCKED,
+        "slug": "break_charging",
+        "is_idle": False,
+        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
+    },
+    4: {
+        "activity": VacuumActivity.CLEANING,
+        "slug": "sweeping",
+        "is_idle": False,
+        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
+    },
+    5: {
+        "activity": VacuumActivity.PAUSED,
+        "slug": "paused",
+        "is_idle": False,
+        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
+    },
+    6: {
+        "activity": VacuumActivity.RETURNING,
+        "slug": "go_charging",
+        "is_idle": False,
+        "cleaning_job": CleaningJobSignal.FINISHED,
+    },
+    7: {
+        "activity": VacuumActivity.RETURNING,
+        "slug": "go_wash",
+        "is_idle": False,
+        "cleaning_job": CleaningJobSignal.INCONCLUSIVE,
+    },
+    8: {
+        "activity": VacuumActivity.CLEANING,
+        "slug": "remote",
+        "is_idle": False,
+        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
+    },
+    9: {
+        "activity": VacuumActivity.DOCKED,
+        "slug": "charged",
+        "is_idle": True,
+        "cleaning_job": CleaningJobSignal.FINISHED,
+    },
+    10: {
+        "activity": VacuumActivity.CLEANING,
+        "slug": "building_map",
+        "is_idle": False,
+        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
+    },
+    11: {
+        "activity": VacuumActivity.IDLE,
+        "slug": "updating",
+        "is_idle": False,
+        "cleaning_job": CleaningJobSignal.FINISHED,
+    },
     12: {
         "activity": VacuumActivity.DOCKED,
         "slug": "multi_task_station_working",
         "is_idle": False,
+        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
     },
     13: {
         "activity": VacuumActivity.RETURNING,
         "slug": "multi_task_recharge",
         "is_idle": False,
+        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
     },
     14: {
         "activity": VacuumActivity.DOCKED,
         "slug": "station_working",
         "is_idle": False,
+        "cleaning_job": CleaningJobSignal.INCONCLUSIVE,
     },
-    15: {"activity": VacuumActivity.IDLE, "slug": "error", "is_idle": False},
+    15: {
+        "activity": VacuumActivity.IDLE,
+        "slug": "error",
+        "is_idle": False,
+        "cleaning_job": CleaningJobSignal.INCONCLUSIVE,
+    },
     16: {
         "activity": VacuumActivity.CLEANING,
         "slug": "sweeping_and_mopping",
         "is_idle": False,
+        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
     },
-    17: {"activity": VacuumActivity.CLEANING, "slug": "mopping", "is_idle": False},
-    18: {"activity": VacuumActivity.PAUSED, "slug": "mapping_pause", "is_idle": False},
+    17: {
+        "activity": VacuumActivity.CLEANING,
+        "slug": "mopping",
+        "is_idle": False,
+        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
+    },
+    18: {
+        "activity": VacuumActivity.PAUSED,
+        "slug": "mapping_pause",
+        "is_idle": False,
+        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
+    },
     19: {
         "activity": VacuumActivity.PAUSED,
         "slug": "go_charge_break",
         "is_idle": False,
+        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
     },
-    20: {"activity": VacuumActivity.PAUSED, "slug": "wash_break", "is_idle": False},
+    20: {
+        "activity": VacuumActivity.PAUSED,
+        "slug": "wash_break",
+        "is_idle": False,
+        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
+    },
     21: {
         "activity": VacuumActivity.RETURNING,
         "slug": "go_charge_building_map",
         "is_idle": False,
+        "cleaning_job": CleaningJobSignal.FINISHED,
     },
 }
 

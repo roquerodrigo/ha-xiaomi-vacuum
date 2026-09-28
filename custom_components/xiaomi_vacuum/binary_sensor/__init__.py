@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from ..spec import EntityKey  # noqa: TID252
 from .battery_charging import XiaomiVacuumBatteryChargingBinarySensor
+from .cleaning import XiaomiVacuumCleaningBinarySensor
 from .mop_pad import XiaomiVacuumMopPadBinarySensor
 
 if TYPE_CHECKING:
@@ -17,12 +18,14 @@ if TYPE_CHECKING:
 
 __all__ = [
     "XiaomiVacuumBatteryChargingBinarySensor",
+    "XiaomiVacuumCleaningBinarySensor",
     "XiaomiVacuumMopPadBinarySensor",
 ]
 
 _BINARY_SENSOR_CLASSES: dict[EntityKey, type[XiaomiVacuumEntity]] = {
     EntityKey.BATTERY_CHARGING_SENSOR: XiaomiVacuumBatteryChargingBinarySensor,
     EntityKey.MOP_PAD_SENSOR: XiaomiVacuumMopPadBinarySensor,
+    EntityKey.CLEANING_SENSOR: XiaomiVacuumCleaningBinarySensor,
 }
 
 

@@ -23,6 +23,7 @@ from .addresses import (
 )
 from .b108gl import B108GL
 from .capability import Capability
+from .cleaning_job_signal import CleaningJobSignal
 from .d109gl import D109GL
 from .entity_key import EntityKey
 from .model_actions import ModelActions, _require_action
@@ -46,6 +47,7 @@ __all__ = [
     "OV71GL",
     "SUPPORTED_MODELS",
     "Capability",
+    "CleaningJobSignal",
     "EntityKey",
     "FaultKind",
     "MiotActionAddress",

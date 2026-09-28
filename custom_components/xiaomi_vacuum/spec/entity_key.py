@@ -19,6 +19,7 @@ class EntityKey(StrEnum):
     FILTER_LIFE_SENSOR = "filter_life"
     BATTERY_CHARGING_SENSOR = "battery_charging"
     MOP_PAD_SENSOR = "mop_pad"
+    CLEANING_SENSOR = "cleaning"
     MAP_IMAGE = "map"
     SWEEP_MOP_TYPE_SELECT = "sweep_mop_type"
     CLEAN_TIMES_SELECT = "clean_times"

@@ -125,6 +125,7 @@ text, and route the S20+ room clean through the cloud.
 | `sensor.<name>_filter_life` | `sensor` | Filter remaining life (%) |
 | `binary_sensor.<name>_battery_charging` | `binary_sensor` | Whether the battery is charging |
 | `binary_sensor.<name>_mop_pad` | `binary_sensor` | Whether the mop pad is attached |
+| `binary_sensor.<name>_cleaning_in_progress` | `binary_sensor` | Whether a cleaning job is underway, including mop washes and recharges mid-job |
 | `select.<name>_mode` | `select` | Sweep / Mop / Sweep+Mop / Sweep before mopping |
 | `select.<name>_clean_times` | `select` | Once / Twice (X20 Max and S40 Pro also: Three times) |
 | `select.<name>_mop_water_level` | `select` | Off / Level 1–3 |

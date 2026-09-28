@@ -154,6 +154,9 @@
             }
         },
         "binary_sensor": {
+            "cleaning": {
+                "name": "Cleaning in progress"
+            },
             "mop_pad": {
                 "name": "Mop pad"
             }
