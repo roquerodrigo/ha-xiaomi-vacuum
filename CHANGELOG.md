@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.5.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.4.1...v2.5.0) (2026-09-28)
+
+
+### Features
+
+* **binary_sensor:** add a cleaning in progress sensor ([d505d37](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/d505d37a8657c02dd8e71f525309402258330418))
+* **binary_sensor:** list the cleaning sensor under diagnostics ([711f123](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/711f123c35c45e583034508f1d6b5519260fac77))
+
+
+### Bug Fixes
+
+* **spec:** align status activities and translations with the Mi Home app ([2ed898f](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/2ed898ff508a7f6dac65ba8bc0f8e6e6ec7dc50e))
+
+
+### Development Dependencies
+
+* **deps-dev:** bump ruff in the python-development group ([eecdedc](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/eecdedcbf4a45e86f7d40d4875069aea430d4326))
+
 ## [2.4.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.4.0...v2.4.1) (2026-09-23)
 
 
