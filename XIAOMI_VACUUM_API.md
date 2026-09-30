@@ -196,10 +196,29 @@ spec instance on miot-spec.org — see section 1.)
 | 21   | Start Eject                         | —                    |        |
 | 31   | Stop Mop Wash                       | —                    |        |
 | 32   | Stop Dry                            | —                    |        |
-| 37   | Start Zone Sweep                    | [12]                 |        |
+| 37   | **Start Zone Sweep**                | [12] Zone IDs        | ✓ (in_piid 12) |
 | 45   | Start Water Self Check              | —                    |        |
 
 (Order-clean, remote-control, build-map, user-sweep actions aiid 23–48 in raw JSON.)
+
+**Zone cleaning.** `start-zone-sweep` (2/37) takes, on `zone-ids` (piid 12), a
+JSON string holding one block per rectangle — the encoding the Mi Home plugin
+uses:
+
+```json
+[{"blocks_region":[260,750,260,250,890,250,890,750],"blocks_attr":0}]
+```
+
+`blocks_region` is the flat four-corner polygon in map millimetres, ordered
+left/top, left/bottom, right/bottom, right/top (the same convention the device
+reports in `current-cleaning-config`), and `blocks_attr` is always `0`. Repeats
+are not part of the payload: set `clean-times` (2/8) before the call. A bare
+polygon, a `{"zones": […]}` object or an empty list are also acknowledged with
+`code: 0`, but the robot leaves the dock, raises fault `210005` and returns, so
+the acknowledgement proves nothing. A payload that was accepted shows as
+`sweep-type` (2/5) = `2` and a `zones` key in `current-cleaning-config` (2/40)
+right after the call; `zone-ids` itself stays empty. The integration exposes
+this as the `xiaomi_vacuum.clean_zone` action.
 
 **Events** (SIID 2): 1 Build Map Complete · 2 Sweep Complete · 3 Dust Arrest Complete ·
 4 Mop Wash Complete · 5 Dry Complete
@@ -299,10 +318,10 @@ is identical on the S40 Pro. Differences worth knowing:
 | Services | no `18 Detergent Management`, no `19 Dust Bag`; adds `16 imu` (calibration action) |
 | Extra properties on SIID 2 | `41 hot-water-mop-wash`, `56 sweep-ai-object`, `63/64 cut-hair-config`, `85-90` cleaning statistics and drying progress, `96 sweep-mop-status`, `97/98` sewage / water tank status, `99 sill`, `100/101` base-station / host water tank status — not read by the integration |
 | Extra actions on SIID 2 | `10 get-zone-configs`, `22 start-call-clean`, `44 stop-cut-hair`, `49-59` station cleaning, skip / final / temporary room and zone cleaning, tank emptying, spot cleaning, `62-64` object clean and station self-cleaning |
-| Zone cleaning | not usable from this integration — see below |
+| Zone cleaning | not enabled: the X20 Max encoding has not been tried on this model — see below |
 | Faults | publishes `100027` ("Sewage tank is full or not installed") in `Fault Ids` permanently — a station check the dockless retail unit can never satisfy; listed in the spec's `ignored_fault_codes` |
 
-### Zone (rectangle) cleaning is not reproducible on this firmware
+### Zone (rectangle) cleaning is unconfirmed on this firmware
 
 Captured from a physical S40 Pro on firmware `4.5.8_0053` while the Mi Home app
 cleaned a rectangle the user drew:
@@ -363,9 +382,11 @@ all**: sending the literal string `garbage` on piid 12 returns the same
 device accepts anything and cleans nothing, so no response can reveal the
 encoding it wants.
 
-Short of intercepting the Mi Home app's own traffic or decompiling its vacuum
-plugin, zone and spot cleaning cannot be driven from outside the app on this
-firmware. One lead remains untested: the app's saved "custom cleanup" presets
+None of these payloads wrapped the polygon in the
+`[{"blocks_region": […], "blocks_attr": 0}]` block list that the X20 Max
+plugin sends and that works on the X20 Max (see its actions above), so the
+experiment above does not rule that encoding out on the S40 Pro. Until it is
+confirmed on this model, the integration does not enable zone cleaning here. One lead remains untested: the app's saved "custom cleanup" presets
 store the same flat polygon under `mode_data` in `user-define-sweep-cfg`
 (2/42), and `start-user-define-sweep` (2/42) takes the preset id as a string.
 That would replay a preset the user saved in the app rather than an arbitrary
