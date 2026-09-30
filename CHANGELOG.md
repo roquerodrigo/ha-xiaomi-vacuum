@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.6.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.5.0...v2.6.0) (2026-09-30)
+
+
+### Features
+
+* **vacuum:** add a clean_zone action for rectangle cleaning on the X20 Max ([86393a7](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/86393a7fba1ce32be9b05522837c7c50035c1dfd)), closes [#119](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/119)
+
+
+### Documentation
+
+* **api:** document the start-zone-sweep block payload ([a91c430](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/a91c430f65308b5afea3c73db131cf6a5f04c60f)), closes [#119](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/119)
+
 ## [2.5.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.4.1...v2.5.0) (2026-09-28)
 
 
