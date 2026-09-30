@@ -36,6 +36,10 @@ for two cloud-only extras: the **map image** and **localized error messages**.
   you can use Home Assistant's *Settings → Devices & services → Entities →
   vacuum → ⚙ → Map vacuum segments to areas* dialog and call the standard
   `vacuum.clean_area` action with HA areas.
+- **Zone cleaning** (X20 Max) — the `xiaomi_vacuum.clean_zone` action cleans
+  one or more rectangles drawn in the vacuum's map coordinates, optionally
+  setting the number of repeats. See
+  [Using the map with the Xiaomi Vacuum Map Card](#using-the-map-with-the-xiaomi-vacuum-map-card).
 - **Map image** — the live map is rendered from the Xiaomi cloud as an `image`
   entity you can drop on a dashboard.
 - **Error reporting** — `Error` (localized, human-readable fault text resolved
@@ -138,12 +142,11 @@ under the `xiaomi_vacuum` key.
 
 ### Using the map with the Xiaomi Vacuum Map Card
 
-**This is a display-only map.** The card renders the vacuum's position, path
-and rooms correctly, but none of its interactive modes work: this integration
-implements no `xiaomi_miio.*` service and no `vacuum.send_command` payload the
-card's built-in platforms emit, and zone and spot cleaning are inert on these
-devices' firmware anyway (see [`XIAOMI_VACUUM_API.md`](XIAOMI_VACUUM_API.md)).
-Use the `vacuum.clean_area` service for room cleaning instead.
+The card renders the vacuum's position, path and rooms. Its built-in
+interactive modes target other integrations' services and do not work here;
+on the X20 Max, a custom map mode drives zone cleaning through the
+`xiaomi_vacuum.clean_zone` action instead. Use the `vacuum.clean_area` action
+for room cleaning.
 
 The map image entity carries a `calibration_points` attribute describing how
 pixels of the served PNG map to the vacuum's millimetre coordinates, in the
@@ -159,9 +162,37 @@ map_source:
 calibration_source:
   camera: true
 vacuum_platform: default
-# Drop the card's built-in interactive modes: they call services this
-# integration does not implement.
-map_modes: []
+map_modes:
+  - name: Zone cleaning
+    icon: mdi:selection-drag
+    selection_type: MANUAL_RECTANGLE
+    max_selections: 5
+    repeats_type: EXTERNAL
+    max_repeats: 3
+    service_call_schema:
+      service: xiaomi_vacuum.clean_zone
+      service_data:
+        zones: "[[selection]]"
+        repeats: "[[repeats]]"
+      target:
+        entity_id: "[[entity_id]]"
+```
+
+On the S20+ and S40 Pro, set `map_modes: []` instead: zone cleaning is not
+available on those models, and the card's built-in modes call services this
+integration does not implement.
+
+The action can also be called directly, with each zone given as two opposite
+corners `[x1, y1, x2, y2]` in millimetres:
+
+```yaml
+action: xiaomi_vacuum.clean_zone
+target:
+  entity_id: vacuum.<name>
+data:
+  zones:
+    - [260, 250, 890, 750]
+  repeats: 1
 ```
 
 The raw geometry (`origin_x`, `origin_y`, `resolution`, `width`, `height`,

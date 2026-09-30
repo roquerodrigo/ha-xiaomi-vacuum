@@ -219,6 +219,31 @@
         },
         "send_command_params_unsupported": {
             "message": "The command {command} does not accept parameters."
+        },
+        "zone_cleaning_unsupported": {
+            "message": "Zone cleaning is not supported on the {model}."
+        },
+        "zone_repeats_unsupported": {
+            "message": "Unsupported number of repeats {repeats}. Valid values: {valid_repeats}."
+        },
+        "zone_empty": {
+            "message": "Every zone needs a non-zero width and height."
+        }
+    },
+    "services": {
+        "clean_zone": {
+            "name": "Clean zone",
+            "description": "Cleans one or more rectangles drawn in the vacuum's map coordinates.",
+            "fields": {
+                "zones": {
+                    "name": "Zones",
+                    "description": "List of rectangles, each given as two opposite corners [x1, y1, x2, y2] in millimetres of the vacuum's map, as reported by the map image's calibration points."
+                },
+                "repeats": {
+                    "name": "Repeats",
+                    "description": "How many times each zone is cleaned. Updates the clean repetitions setting; the current setting is kept when omitted."
+                }
+            }
         }
     }
 }

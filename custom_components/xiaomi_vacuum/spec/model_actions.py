@@ -28,6 +28,7 @@ class ModelActions:
     start_room_sweep: MiotActionInputAddress | None = None
     set_room_clean_configs: MiotActionAddress | None = None
     start_custom_sweep: MiotActionAddress | None = None
+    start_zone_sweep: MiotActionInputAddress | None = None
     # Dock-only actions; None when the model has no such hardware (S20+).
     start_dust_arrest: MiotActionAddress | None = None
     start_mop_wash: MiotActionAddress | None = None

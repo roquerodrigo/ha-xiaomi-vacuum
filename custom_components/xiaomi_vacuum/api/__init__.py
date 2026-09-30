@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .cleaning_zone import CleaningZone
 from .client import XiaomiVacuumApiClient
 from .errors import (
     XiaomiVacuumApiClientCommunicationError,
@@ -9,6 +10,7 @@ from .errors import (
 )
 
 __all__ = [
+    "CleaningZone",
     "XiaomiVacuumApiClient",
     "XiaomiVacuumApiClientCommunicationError",
     "XiaomiVacuumApiClientError",

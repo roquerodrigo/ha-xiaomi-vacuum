@@ -27,7 +27,7 @@ from .errors import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable
+    from collections.abc import Awaitable, Sequence
 
     from ..cloud import XiaomiCloud  # noqa: TID252
     from ..data import (  # noqa: TID252
@@ -38,6 +38,7 @@ if TYPE_CHECKING:
     )
     from ..spec import ModelSpec  # noqa: TID252
     from ..spec.addresses import MiotActionAddress  # noqa: TID252
+    from .cleaning_zone import CleaningZone
 
 # Xiaomi vacuums routinely take >5 s to ack action commands (start / pause /
 # room-sweep) — the device is busy spinning up and misses the default read
@@ -266,6 +267,27 @@ class XiaomiVacuumApiClient:
         await self._call_action_cloud_or_local(
             start_action["siid"], start_action["aiid"], []
         )
+
+    async def async_clean_zones(
+        self, zones: Sequence[CleaningZone], repeats: int | None = None
+    ) -> None:
+        """
+        Start cleaning rectangular zones, optionally setting the repeat count.
+
+        The device acknowledges any ``start-zone-sweep`` payload with ``code: 0``
+        but only moves for the block list the Mi Home plugin sends; repeats are
+        not part of that payload, so they go to the clean-times property first.
+        """
+        action = self._spec.actions.start_zone_sweep
+        if action is None:
+            msg = "Failed to clean zones: this model has no zone-sweep action"
+            raise XiaomiVacuumApiClientError(msg)
+        if repeats is not None:
+            await self.async_set_property(Property.CLEAN_TIMES, repeats)
+        blocks = json.dumps([zone.to_block() for zone in zones], separators=(",", ":"))
+        payload: list[JsonValue] = [{"piid": action["in_piid"], "value": blocks}]
+        LOGGER.debug("Calling start-zone-sweep with payload: %s", payload)
+        await self._run_action(self._client.call_action(_address(action), payload))
 
     async def _call_action_cloud_or_local(
         self, siid: int, aiid: int, params: list[str]

@@ -423,3 +423,41 @@ async def test_run_propagates_unexpected_as_api_error(mock_miot_device):
     mock_miot_device.call_action.side_effect = ValueError("bad")
     with pytest.raises(XiaomiVacuumApiClientError, match="Unexpected"):
         await _client(mock_miot_device).async_start()
+
+
+async def test_async_clean_zones_sends_blocks_on_zone_ids(mock_miot_device):
+    from custom_components.xiaomi_vacuum.api import CleaningZone
+
+    zones = [CleaningZone.from_corners([260, 250, 890, 750])]
+    await _client(mock_miot_device).async_clean_zones(zones)
+    mock_miot_device.set_property.assert_not_called()
+    mock_miot_device.call_action.assert_called_once_with(
+        ActionAddress(siid=2, aiid=37),
+        [
+            {
+                "piid": 12,
+                "value": '[{"blocks_region":[260,750,260,250,890,250,890,750],'
+                '"blocks_attr":0}]',
+            }
+        ],
+    )
+
+
+async def test_async_clean_zones_sets_repeats_first(mock_miot_device):
+    from custom_components.xiaomi_vacuum.api import CleaningZone
+
+    zones = [CleaningZone.from_corners([0, 0, 100, 100])]
+    await _client(mock_miot_device).async_clean_zones(zones, repeats=3)
+    mock_miot_device.set_property.assert_called_once_with(
+        PropertyAddress(siid=2, piid=8), 3
+    )
+    mock_miot_device.call_action.assert_called_once()
+
+
+async def test_async_clean_zones_without_action_raises(mock_miot_device):
+    from custom_components.xiaomi_vacuum.api import CleaningZone
+
+    zones = [CleaningZone.from_corners([0, 0, 100, 100])]
+    with pytest.raises(XiaomiVacuumApiClientError, match="no zone-sweep action"):
+        await _client(mock_miot_device, spec=B108GL).async_clean_zones(zones)
+    mock_miot_device.call_action.assert_not_called()

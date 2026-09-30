@@ -45,5 +45,10 @@
                 "default": "mdi:delete-empty"
             }
         }
+    },
+    "services": {
+        "clean_zone": {
+            "service": "mdi:selection-drag"
+        }
     }
 }

@@ -15,6 +15,7 @@ from homeassistant.components.vacuum.const import (
 )
 from homeassistant.exceptions import ServiceValidationError
 
+from ..api import CleaningZone  # noqa: TID252
 from ..const import DOMAIN, LOGGER  # noqa: TID252
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
@@ -217,6 +218,36 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
             segment_ids,
             room_information=self.coordinator.data.get("room_information"),
         )
+        self._patch_state(status=self.spec.status_code_for(VacuumActivity.CLEANING))
+        self._schedule_refresh()
+
+    async def async_clean_zone(
+        self, zones: list[list[int]], repeats: int | None = None
+    ) -> None:
+        """Clean rectangles given as ``[x1, y1, x2, y2]`` in map millimetres."""
+        if self.spec.actions.start_zone_sweep is None:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="zone_cleaning_unsupported",
+                translation_placeholders={"model": self.spec.name},
+            )
+        valid_repeats = sorted(self.spec.clean_times.values())
+        if repeats is not None and repeats not in valid_repeats:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="zone_repeats_unsupported",
+                translation_placeholders={
+                    "repeats": str(repeats),
+                    "valid_repeats": ", ".join(str(r) for r in valid_repeats),
+                },
+            )
+        cleaning_zones = [CleaningZone.from_corners(corners) for corners in zones]
+        if any(zone.is_empty for zone in cleaning_zones):
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="zone_empty",
+            )
+        await self._client.async_clean_zones(cleaning_zones, repeats)
         self._patch_state(status=self.spec.status_code_for(VacuumActivity.CLEANING))
         self._schedule_refresh()
 

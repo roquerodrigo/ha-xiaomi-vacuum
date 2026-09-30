@@ -358,3 +358,64 @@ async def test_async_clean_segments_via_entity(
     entity.hass = hass
     await entity.async_clean_segments(["10", "28"])
     assert mock_miot_device.call_action.called
+
+
+async def test_clean_zone_service_starts_zone_sweep(
+    hass, setup_integration, mock_miot_device
+):
+    mock_miot_device.call_action.reset_mock()
+    mock_miot_device.set_property.reset_mock()
+    await hass.services.async_call(
+        DOMAIN,
+        "clean_zone",
+        {"entity_id": "vacuum.vacuum", "zones": [[890, 750, 260, 250]], "repeats": 1},
+        blocking=True,
+    )
+    mock_miot_device.set_property.assert_called_once()
+    address, payload = mock_miot_device.call_action.call_args.args
+    assert address == ActionAddress(siid=2, aiid=37)
+    assert json.loads(payload[0]["value"]) == [
+        {"blocks_region": [260, 750, 260, 250, 890, 250, 890, 750], "blocks_attr": 0}
+    ]
+    assert hass.states.get("vacuum.vacuum").state == "cleaning"
+
+
+@pytest.mark.parametrize(
+    ("service_data", "translation_key"),
+    [
+        ({"zones": [[0, 0, 0, 100]]}, "zone_empty"),
+        ({"zones": [[0, 0, 100, 100]], "repeats": 4}, "zone_repeats_unsupported"),
+    ],
+)
+async def test_clean_zone_service_rejects_invalid_input(
+    hass, setup_integration, mock_miot_device, service_data, translation_key
+):
+    from homeassistant.exceptions import ServiceValidationError
+
+    mock_miot_device.call_action.reset_mock()
+    with pytest.raises(ServiceValidationError) as error:
+        await hass.services.async_call(
+            DOMAIN,
+            "clean_zone",
+            {"entity_id": "vacuum.vacuum", **service_data},
+            blocking=True,
+        )
+    assert error.value.translation_key == translation_key
+    mock_miot_device.call_action.assert_not_called()
+
+
+async def test_clean_zone_service_unsupported_model(
+    hass, setup_integration_b108, mock_miot_device_b108
+):
+    from homeassistant.exceptions import ServiceValidationError
+
+    entity_id = hass.states.async_entity_ids("vacuum")[0]
+    with pytest.raises(ServiceValidationError) as error:
+        await hass.services.async_call(
+            DOMAIN,
+            "clean_zone",
+            {"entity_id": entity_id, "zones": [[0, 0, 100, 100]]},
+            blocking=True,
+        )
+    assert error.value.translation_key == "zone_cleaning_unsupported"
+    mock_miot_device_b108.call_action.assert_not_called()

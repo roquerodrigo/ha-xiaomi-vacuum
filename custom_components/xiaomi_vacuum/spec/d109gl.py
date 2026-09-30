@@ -62,6 +62,7 @@ _ACTIONS = ModelActions(
     # Resume a paused job (vs. start_sweep, which begins a fresh clean).
     continue_sweep={"siid": 2, "aiid": 8},
     start_room_sweep={"siid": 2, "aiid": 16, "in_piid": 15},
+    start_zone_sweep={"siid": 2, "aiid": 37, "in_piid": 12},
     identify={"siid": 6, "aiid": 1},
     start_dust_arrest={"siid": 2, "aiid": 18},
     start_mop_wash={"siid": 2, "aiid": 19},

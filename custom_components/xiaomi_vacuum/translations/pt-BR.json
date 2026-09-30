@@ -219,6 +219,31 @@
         },
         "send_command_params_unsupported": {
             "message": "O comando {command} não aceita parâmetros."
+        },
+        "zone_cleaning_unsupported": {
+            "message": "A limpeza por zona não é suportada no {model}."
+        },
+        "zone_repeats_unsupported": {
+            "message": "Número de repetições não suportado: {repeats}. Valores válidos: {valid_repeats}."
+        },
+        "zone_empty": {
+            "message": "Toda zona precisa ter largura e altura diferentes de zero."
+        }
+    },
+    "services": {
+        "clean_zone": {
+            "name": "Limpar zona",
+            "description": "Limpa um ou mais retângulos desenhados nas coordenadas do mapa do aspirador.",
+            "fields": {
+                "zones": {
+                    "name": "Zonas",
+                    "description": "Lista de retângulos, cada um informado por dois cantos opostos [x1, y1, x2, y2] em milímetros do mapa do aspirador, conforme os pontos de calibração da imagem do mapa."
+                },
+                "repeats": {
+                    "name": "Repetições",
+                    "description": "Quantas vezes cada zona é limpa. Atualiza a configuração de repetições de limpeza; sem este campo, a configuração atual é mantida."
+                }
+            }
         }
     }
 }
