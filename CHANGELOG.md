@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.6.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.6.0...v2.6.1) (2026-09-30)
+
+
+### Bug Fixes
+
+* **spec:** do not flag s40 pro dust bin and water tank notices as errors ([097e9de](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/097e9de574104cfc5e9eece7b38bd4867836345c))
+
+
+### Continuous Integration
+
+* **release:** sync uv.lock on the release pull request ([1279d0d](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/1279d0da0e1b9f1bb196ef1f9dd56d3ff09b81d2))
+
 ## [2.6.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.5.0...v2.6.0) (2026-09-30)
 
 
