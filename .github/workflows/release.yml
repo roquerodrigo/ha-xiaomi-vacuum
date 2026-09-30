@@ -24,17 +24,6 @@ jobs:
     secrets:
       release-token: ${{ secrets.RELEASE_PLEASE_PAT }}
 
-  sync-uv-lock:
-    needs: release
-    if: needs.release.outputs.release-pr != ''
-    permissions:
-      contents: read
-    uses: roquerodrigo/workflows/.github/workflows/sync-uv-lock.yml@main
-    with:
-      release-pr: ${{ needs.release.outputs.release-pr }}
-    secrets:
-      release-token: ${{ secrets.RELEASE_PLEASE_PAT }}
-
   publish:
     needs: release
     if: needs.release.outputs.release-created == 'true'
