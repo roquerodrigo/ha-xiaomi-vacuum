@@ -65,8 +65,10 @@ here.
   committed, `[tool.uv] package = false`).
 - Dependency groups in `pyproject.toml`: `dev` (HA test harness, pytest,
   `xiaomi-vacuum-sdk`) and `lint` (`ruff`, `mypy`).
-- Local dev setup is `uv sync` (there is no setup script; dependencies live
-  in `pyproject.toml`).
+- Local dev setup is `uv sync --all-groups` (there is no setup script;
+  dependencies live in `pyproject.toml`). A bare `uv sync` installs only the
+  `dev` group — there is no `tool.uv.default-groups` — so `ruff`/`mypy` from
+  `lint` would be missing.
 - `scripts/develop` — runs a real local HA instance against this
   integration (`config/` dir, symlink-free via `PYTHONPATH`).
 - `scripts/qr_test.py` — standalone CLI to exercise the Xiaomi cloud QR-login
