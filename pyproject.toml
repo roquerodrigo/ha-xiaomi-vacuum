@@ -18,8 +18,8 @@ dev = [
     "xiaomi-vacuum-sdk==0.1.1",
 ]
 lint = [
-    "ruff==0.16.9",
-    "mypy==2.3.1",
+    "ruff==0.16.10",
+    "mypy==2.4.0",
 ]
 
 [tool.pytest.ini_options]
