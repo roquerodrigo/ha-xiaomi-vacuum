@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.6.2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.6.1...v2.6.2) (2026-10-05)
+
+
+### Dependencies
+
+* **deps:** bump urllib3 from 2.7.0 to 2.8.0 ([4dba5e2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/4dba5e2ca5137e7df6cd6241120e8bd36c88f79d))
+* **deps:** bump virtualenv from 21.3.3 to 21.7.13 ([0044abc](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/0044abc7a6a03b38c2ad81905cdb87c9a9f897a1))
+
+
+### Development Dependencies
+
+* **deps-dev:** bump the python-development group with 2 updates ([4eaf5d1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/4eaf5d19295d31b15ce80963f623d7aef85877b4))
+
+
+### Documentation
+
+* refresh CLAUDE.md ([52d7d2d](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/52d7d2d384dd8253085eb255120802c3013f3cd8))
+
 ## [2.6.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.6.0...v2.6.1) (2026-09-30)
 
 

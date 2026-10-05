@@ -12,5 +12,5 @@
   "requirements": [
     "xiaomi-vacuum-sdk==0.1.1"
   ],
-  "version": "2.6.1"
+  "version": "2.6.2"
 }
