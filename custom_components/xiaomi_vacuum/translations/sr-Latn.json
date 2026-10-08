@@ -1,0 +1,249 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Izaberite Xiaomi cloud region",
+                "description": "Izaberite region u kojem je registrovan vaš Xiaomi nalog. Evropa i Velika Britanija koriste server u Nemačkoj (DE). Izbor pogrešnog regiona znači da usisivač neće biti pronađen.",
+                "data": {
+                    "cloud_country": "Region"
+                },
+                "data_description": {
+                    "cloud_country": "Mi Home cloud server koji hostuje vaš nalog."
+                }
+            },
+            "qr": {
+                "title": "Skenirajte QR kod kamerom telefona",
+                "description": "![QR]({qr_image})\n\n**Nemojte skenirati ovaj kod aplikacijom Mi Home — ona ga neće prepoznati.** Usmerite običnu kameru telefona (ili bilo koju aplikaciju za skeniranje QR kodova) prema kodu i otvorite vezu: to vas vodi na Xiaomi stranicu za prijavu. Ako se kod teško čita, zumirajte stranicu pretraživača. Dijalog će automatski nastaviti dalje kada završite prijavu na telefonu."
+            },
+            "qr_failed": {
+                "title": "QR kod nije skeniran na vreme",
+                "description": "QR kod je istekao pre nego što ste ga skenirali. Potvrdite da biste generisali novi."
+            },
+            "reauth_confirm": {
+                "title": "Ponovo se povežite na Xiaomi cloud",
+                "description": "Xiaomi cloud sesija je istekla, pa je mapa čišćenja prestala da se ažurira. Potvrdite da biste prikazali novi QR kod i ponovo se prijavili — usisivač i njegovi ostali entiteti nastavljaju da rade u međuvremenu."
+            },
+            "reconfigure": {
+                "title": "Promenite Xiaomi cloud region",
+                "description": "Izaberite region u kojem je registrovan vaš Xiaomi nalog. Trenutna cloud sesija se ponovo koristi, tako da nije potrebno novo skeniranje QR koda. Ako je region pogrešan, usisivač neće biti pronađen.",
+                "data": {
+                    "cloud_country": "Region"
+                },
+                "data_description": {
+                    "cloud_country": "Mi Home cloud server koji hostuje vaš nalog."
+                }
+            },
+            "discover": {
+                "title": "Izaberite svoj usisivač",
+                "description": "Pronađeno je više od jednog usisivača na vašem nalogu. Izaberite onaj koji želite da dodate.",
+                "data": {
+                    "device": "Usisivač"
+                }
+            }
+        },
+        "progress": {
+            "waiting_for_scan": "![QR]({qr_image})\n\n**Nemojte skenirati ovaj kod aplikacijom Mi Home — ona ga neće prepoznati.** Usmerite običnu kameru telefona (ili bilo koju aplikaciju za skeniranje QR kodova) prema kodu i otvorite vezu: to vas vodi na Xiaomi stranicu za prijavu. Ako se kod teško čita, zumirajte stranicu pretraživača. Dijalog će automatski nastaviti dalje kada završite prijavu na telefonu."
+        },
+        "error": {
+            "qr_not_scanned": "QR kod nije skeniran na vreme. Prikazan je novi kod — pokušajte ponovo."
+        },
+        "abort": {
+            "already_configured": "Ovaj usisivač je već konfigurisan.",
+            "no_vacuum_found": "Nije pronađen nijedan usisivač na ovom Xiaomi nalogu. Proverite da li je uparen u aplikaciji Mi Home i pokušajte ponovo.",
+            "no_vacuum_in_account": "Ovaj Xiaomi nalog ima uređaje, ali nijedan od njih nije podržani usisivač. Xiaomi cloud region mora da se podudara sa onim koji koristi vaš Mi Home nalog — rekonfigurišite i izaberite ispravan region, ili uparite usisivač sa ovim nalogom u aplikaciji Mi Home.",
+            "cloud_list_failed": "Nije moguće učitati listu uređaja sa vašeg Xiaomi naloga. Pokušajte ponovo kasnije.",
+            "no_local_ip": "Xiaomi cloud nije vratio lokalnu IP adresu za ovaj usisivač. Proverite da li je na mreži i povezan na isti Wi-Fi kao i Home Assistant.",
+            "local_unreachable": "Usisivač je pronađen na klaudu, ali Home Assistant ne može da pristupi njegovoj lokalnoj mreži (LAN). Proverite da li je na istoj mreži i na vezi.",
+            "local_probe_failed": "Lokalno ispitivanje nije uspelo neočekivano. Pogledajte dnevnike (logs).",
+            "reauth_successful": "Xiaomi cloud sesija je osvežena. Mapa čišćenja će ponovo početi da se ažurira.",
+            "reauth_failed": "Nije moguće osvežiti Xiaomi cloud sesiju. Pokušajte ponovo.",
+            "reconfigure_successful": "Region je ažuriran. Usisivač sada koristi izabrani Xiaomi cloud server.",
+            "unique_id_mismatch": "Usisivač pronađen u tom regionu je drugačiji uređaj od ovog unosa. Region je ostao nepromenjen."
+        }
+    },
+    "selector": {
+        "cloud_country": {
+            "options": {
+                "de": "Europe / UK",
+                "us": "United States",
+                "cn": "China (mainland)",
+                "ru": "Russia",
+                "sg": "Singapore",
+                "i2": "India",
+                "tw": "Taiwan"
+            }
+        }
+    },
+    "issues": {
+        "cannot_connect": {
+            "title": "Cannot reach {name}",
+            "description": "Home Assistant cannot connect to the vacuum at {host}. The robot is likely powered off or disconnected from the network. Its entities show as unavailable and the map keeps the last known image until it reconnects. This issue clears automatically once the vacuum is back online."
+        },
+        "unsupported_model": {
+            "title": "{name} is an unsupported model",
+            "description": "The vacuum reports model `{model}`, which this integration does not yet know about. It fell back to a best-effort spec so basic local control keeps working, but some entities (status, fault, capabilities) may be wrong or missing. Please open an issue on the project's GitHub page with this model name so support can be added."
+        }
+    },
+    "entity": {
+        "vacuum": {
+            "xiaomi_vacuum": {
+                "state_attributes": {
+                    "fan_speed": {
+                        "state": {
+                            "silent": "Minimum",
+                            "basic": "Nisko",
+                            "strong": "Jako",
+                            "full_speed": "Maksimum"
+                        }
+                    }
+                }
+            }
+        },
+        "sensor": {
+            "status": {
+                "name": "Status",
+                "state": {
+                    "idle": "Mirovanje",
+                    "charging": "Punjenje",
+                    "break_charging": "Punjenje radi nastavka",
+                    "sweeping": "Čišćenje",
+                    "paused": "Pauzirano",
+                    "go_charging": "Povratak na bazu",
+                    "go_wash": "Pranje krpe",
+                    "remote": "Daljinsko upravljanje",
+                    "charged": "Napunjeno",
+                    "building_map": "Kreiranje mape",
+                    "updating": "Ažuriranje",
+                    "multi_task_station_working": "Rad stanice (više zadataka)",
+                    "multi_task_recharge": "Povratak na punjenje (više zadataka)",
+                    "station_working": "Stanica radi",
+                    "error": "Greška",
+                    "sweeping_and_mopping": "Usisavanje i brisanje",
+                    "mopping": "Brisanje krpom",
+                    "mapping_pause": "Kreiranje mape pauzirano",
+                    "go_charge_break": "Povratak na punjenje (nastaviće)",
+                    "wash_break": "Povratak na bazu tokom čišćenja",
+                    "go_charge_building_map": "Povratak na bazu nakon mapiranja",
+                    "station_assisting_cleaning": "Pranje uz pomoć stanice",
+                    "station_assisting_cleaned": "Pranje uz pomoć stanice završeno",
+                    "go_charge_in_station_assisting_cleaning": "Povratak na bazu na pranje"
+                }
+            },
+            "error": {
+                "name": "Greška"
+            },
+            "error_code": {
+                "name": "Kod greške"
+            },
+            "mop_life": {
+                "name": "Vek trajanja krpe"
+            },
+            "side_brush_life": {
+                "name": "Vek bočne četke"
+            },
+            "filter_life": {
+                "name": "Vek filtera"
+            },
+            "main_brush_life": {
+                "name": "Vek glavne četke"
+            }
+        },
+        "button": {
+            "dust_arrest": {
+                "name": "Sakupljanje prašine"
+            }
+        },
+        "binary_sensor": {
+            "cleaning": {
+                "name": "Čišćenje u toku"
+            },
+            "mop_pad": {
+                "name": "Podloga za krpu"
+            }
+        },
+        "image": {
+            "map": {
+                "name": "Mapa"
+            }
+        },
+        "select": {
+            "sweep_mop_type": {
+                "name": "Režim rada",
+                "state": {
+                    "sweep": "Usisavanje",
+                    "mop": "Brisanje",
+                    "sweep_mop": "Usisavanje i brisanje",
+                    "sweep_before_mopping": "Usisavanje pre brisanja"
+                }
+            },
+            "clean_times": {
+                "name": "Broj čišćenja",
+                "state": {
+                    "one_time": "Jednom",
+                    "two_times": "Dvaput",
+                    "three_times": "Tri puta"
+                }
+            },
+            "mop_water_level": {
+                "name": "Nivo vode za krpu",
+                "state": {
+                    "off": "Isključeno",
+                    "level_1": "Nivo 1",
+                    "level_2": "Nivo 2",
+                    "level_3": "Nivo 3"
+                }
+            },
+            "sweep_route": {
+                "name": "Ruta čišćenja",
+                "state": {
+                    "quick": "Brzo",
+                    "daily": "Standardno",
+                    "careful": "Dubinsko"
+                }
+            },
+            "obstacle_avoidance_strategy": {
+                "name": "Izbegavanje prepreka",
+                "state": {
+                    "less_collisions": "Manje sudara",
+                    "high_coverage": "Visoka pokrivenost"
+                }
+            }
+        }
+    },
+    "exceptions": {
+        "mop_mode_requires_pad": {
+            "message": "Nije moguće izabrati režim brisanja: podloga za brisanje nije detektovana. Postavite podlogu za brisanje na usisivač i pokušajte ponovo."
+        },
+        "unknown_send_command": {
+            "message": "Nepoznata komanda {command}. Važeće komande: {valid_commands}."
+        },
+        "send_command_params_unsupported": {
+            "message": "Komanda {command} ne prihvata parametre."
+        },
+        "zone_cleaning_unsupported": {
+            "message": "Čišćenje zona nije podržano na modelu {model}."
+        },
+        "zone_repeats_unsupported": {
+            "message": "Nepodržan broj ponavljanja {repeats}. Važeće vrednosti: {valid_repeats}."
+        },
+        "zone_empty": {
+            "message": "Svaka zona mora imati širinu i visinu veću od nule."
+        }
+    },
+    "services": {
+        "clean_zone": {
+            "name": "Očisti zonu",
+            "description": "Čisti jedan ili više pravougaonika iscrtanih u koordinatama mape usisivača.",
+            "fields": {
+                "zones": {
+                    "name": "Zone",
+                    "description": "Lista pravougaonika, gde je svaki zadat preko dva naspramna ugla [x1, y1, x2, y2] u milimetrima mape usisivača, kao što je prijavljeno tačkama kalibracije na slici mape."
+                },
+                "repeats": {
+                    "name": "Ponavljanja",
+                    "description": "Koliko puta se svaka zona čisti. Ažurira podešavanje broja ponavljanja čišćenja; trenutno podešavanje se zadržava ako se izostavi."
+                }
+            }
+        }
+    }
+}
