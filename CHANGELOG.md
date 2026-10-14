@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.6.2](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.6.1...v2.6.2) (2026-10-14)
+
+
+### Miscellaneous Chores
+
+* **release:** keep only user-facing changes in the changelog ([f3e9c82](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/f3e9c82a6252b2d69a8d4943641eea8b6e97bc79))
+
 ## [2.6.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.6.0...v2.6.1) (2026-09-30)
 
 

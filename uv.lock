@@ -1029,7 +1029,7 @@ wheels = [
 
 [[package]]
 name = "ha-xiaomi-vacuum"
-version = "2.6.1"
+version = "2.6.2"
 source = { virtual = "." }
 
 [package.dev-dependencies]
