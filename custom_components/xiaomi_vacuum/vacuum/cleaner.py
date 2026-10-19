@@ -18,6 +18,7 @@ from homeassistant.exceptions import ServiceValidationError
 from ..api import CleaningZone  # noqa: TID252
 from ..const import DOMAIN, LOGGER  # noqa: TID252
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
+from .start_custom_cleaning import async_update_custom_cleaning_options
 
 if TYPE_CHECKING:
     from ..api import XiaomiVacuumApiClient  # noqa: TID252
@@ -264,6 +265,9 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
                 translation_placeholders={"model": self.spec.name},
             )
         cleanings = await self._client.async_get_custom_cleanings()
+        async_update_custom_cleaning_options(
+            self.hass, self.coordinator.config_entry, cleanings
+        )
         cleaning = next((c for c in cleanings if c.matches(name)), None)
         if cleaning is None:
             raise ServiceValidationError(

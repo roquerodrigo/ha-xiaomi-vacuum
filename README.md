@@ -159,9 +159,11 @@ data:
   name: Afternoon cleaning
 ```
 
-The list is read from the vacuum on every call, so cleanings added or renamed
-in the app are available right away. An unknown name fails with the list of
-cleanings the vacuum reports.
+In the action editor, the name field is a dropdown with the custom cleanings
+the vacuum reports when the integration loads and after each call. A name that
+is not listed yet can still be typed: the list is read from the vacuum on every
+call, so cleanings added or renamed in the app work right away. An unknown name
+fails with the list of cleanings the vacuum reports.
 
 ### Using the map with the Xiaomi Vacuum Map Card
 

@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.loader import Integration
 
-    from .api import XiaomiVacuumApiClient
+    from .api import CustomCleaning, XiaomiVacuumApiClient
     from .coordinator import XiaomiVacuumDataUpdateCoordinator
     from .map_coordinator import XiaomiVacuumMapCoordinator
     from .spec import ModelSpec
@@ -128,3 +128,4 @@ class XiaomiVacuumData:
     info: DeviceInfoLike
     spec: ModelSpec
     map_coordinator: XiaomiVacuumMapCoordinator | None = None
+    custom_cleanings: tuple[CustomCleaning, ...] = ()

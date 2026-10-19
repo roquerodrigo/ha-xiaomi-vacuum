@@ -26,4 +26,6 @@ start_custom_cleaning:
       required: true
       example: "Afternoon cleaning"
       selector:
-        text:
+        select:
+          options: []
+          custom_value: true

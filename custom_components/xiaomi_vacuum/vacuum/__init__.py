@@ -10,6 +10,11 @@ from homeassistant.helpers import entity_platform
 
 from ..spec import EntityKey  # noqa: TID252
 from .cleaner import XiaomiVacuum
+from .start_custom_cleaning import (
+    SERVICE_START_CUSTOM_CLEANING,
+    START_CUSTOM_CLEANING_SCHEMA,
+    async_refresh_custom_cleaning_options,
+)
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -20,7 +25,6 @@ if TYPE_CHECKING:
 __all__ = ["XiaomiVacuum"]
 
 SERVICE_CLEAN_ZONE = "clean_zone"
-SERVICE_START_CUSTOM_CLEANING = "start_custom_cleaning"
 
 _ZONE_CORNERS = vol.ExactSequence([vol.Coerce(int)] * 4)
 
@@ -33,17 +37,13 @@ CLEAN_ZONE_SCHEMA = cv.make_entity_service_schema(
     }
 )
 
-START_CUSTOM_CLEANING_SCHEMA = cv.make_entity_service_schema(
-    {vol.Required("name"): vol.All(cv.string, vol.Length(min=1))}
-)
-
 _VACUUM_CLASSES: dict[EntityKey, type[XiaomiVacuum]] = {
     EntityKey.VACUUM: XiaomiVacuum,
 }
 
 
 async def async_setup_entry(
-    hass: HomeAssistant,  # noqa: ARG001
+    hass: HomeAssistant,
     entry: XiaomiVacuumConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
@@ -64,3 +64,4 @@ async def async_setup_entry(
         START_CUSTOM_CLEANING_SCHEMA,
         "async_start_custom_cleaning",
     )
+    await async_refresh_custom_cleaning_options(hass, entry)
