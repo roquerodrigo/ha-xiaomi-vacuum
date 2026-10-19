@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 __all__ = ["XiaomiVacuum"]
 
 SERVICE_CLEAN_ZONE = "clean_zone"
+SERVICE_START_CUSTOM_CLEANING = "start_custom_cleaning"
 
 _ZONE_CORNERS = vol.ExactSequence([vol.Coerce(int)] * 4)
 
@@ -30,6 +31,10 @@ CLEAN_ZONE_SCHEMA = cv.make_entity_service_schema(
         ),
         vol.Optional("repeats"): vol.All(vol.Coerce(int), vol.Range(min=1)),
     }
+)
+
+START_CUSTOM_CLEANING_SCHEMA = cv.make_entity_service_schema(
+    {vol.Required("name"): vol.All(cv.string, vol.Length(min=1))}
 )
 
 _VACUUM_CLASSES: dict[EntityKey, type[XiaomiVacuum]] = {
@@ -50,6 +55,12 @@ async def async_setup_entry(
         if key in coordinator.spec.entities
     ]
     async_add_entities(entities)
-    entity_platform.async_get_current_platform().async_register_entity_service(
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
         SERVICE_CLEAN_ZONE, CLEAN_ZONE_SCHEMA, "async_clean_zone"
+    )
+    platform.async_register_entity_service(
+        SERVICE_START_CUSTOM_CLEANING,
+        START_CUSTOM_CLEANING_SCHEMA,
+        "async_start_custom_cleaning",
     )

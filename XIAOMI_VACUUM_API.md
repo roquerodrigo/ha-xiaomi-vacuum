@@ -160,6 +160,9 @@ marked **✓** (verified correct against the spec).
 | 34   | Auto Mop Dry                    | bool   | r,w,n  |                                                                                                                                                                                                                                                                                                                       |        |
 | 35   | Auto Water Change               | bool   | r,w,n  |                                                                                                                                                                                                                                                                                                                       |        |
 | 36   | Use Detergent                   | bool   | r,w,n  |                                                                                                                                                                                                                                                                                                                       |        |
+| 40   | Current Cleaning Config         | string | r,n    | running job; carries a `user_define` key during a custom cleaning                                                                                                                                                                                                                                                     |        |
+| 42   | **User Define Sweep Cfg**       | string | r,n    | custom cleanings saved in Mi Home `{"user_labels": [{"id": ..., "name": ...}]}`; read on demand                                                                                                                                                                                                                       | ✓      |
+| 43   | User Define Sweep Id            | uint16 | r,n    | (input to aiid 42)                                                                                                                                                                                                                                                                                                    |        |
 | 66   | **Fault Ids**                   | string | r,n    | live fault list `{"ts": ..., "fault": [codes]}`; `[0]` = no active fault                                                                                                                                                                                                                                              | ✓      |
 | 73   | Carpet Cleaning Method          | uint8  | r,w,n  | 0 Self Adaption, 1 Avoid, 2 Ignore, 3 Span                                                                                                                                                                                                                                                                            |        |
 | 74   | **Sweep Route**                 | uint8  | r,w,n  | 1 Quick, 2 Daily, 3 Careful                                                                                                                                                                                                                                                                                           | ✓      |
@@ -169,7 +172,7 @@ marked **✓** (verified correct against the spec).
 | 83   | Worry Free Clean Mode           | uint8  | r,w,n  | 0 Silent, 1 Deep Clean, 2 Standard                                                                                                                                                                                                                                                                                    |        |
 | 84   | Wash Mop Water Temperature      | uint8  | r,w,n  | 0 Ordinary, 1 Warm, 2 Hot, 3 Smart                                                                                                                                                                                                                                                                                    |        |
 
-(For the full property list incl. piid 24/27/38–72/77–81, query the published
+(For the full property list incl. piid 24/27/38/39/41/53–72/77–81, query the published
 spec instance on miot-spec.org — see section 1.)
 
 **Actions** (SIID 2)
@@ -197,6 +200,7 @@ spec instance on miot-spec.org — see section 1.)
 | 31   | Stop Mop Wash                       | —                    |        |
 | 32   | Stop Dry                            | —                    |        |
 | 37   | **Start Zone Sweep**                | [12] Zone IDs        | ✓ (in_piid 12) |
+| 42   | **Start User Define Sweep**         | [43] User Define Sweep Id | ✓ (in_piid 43) |
 | 45   | Start Water Self Check              | —                    |        |
 
 (Order-clean, remote-control, build-map, user-sweep actions aiid 23–48 in raw JSON.)
@@ -219,6 +223,21 @@ the acknowledgement proves nothing. A payload that was accepted shows as
 `sweep-type` (2/5) = `2` and a `zones` key in `current-cleaning-config` (2/40)
 right after the call; `zone-ids` itself stays empty. The integration exposes
 this as the `xiaomi_vacuum.clean_zone` action.
+
+**Custom cleanings.** The cleanings saved in the Mi Home app are published on
+`user-define-sweep-cfg` (2/42) as a JSON string:
+
+```json
+{"user_labels":[{"id":131206493,"name":"Litter box","v":1,"mop":[1],"room_ids":[],"user_cfg":[]}]}
+```
+
+`start-user-define-sweep` (2/42) takes the cleaning's `id` as an integer on
+`user-define-sweep-id` (piid 43). The spec declares that property as `uint16`,
+but the device accepts the full identifier (e.g. `131206493`) over the local
+transport and starts the cleaning: `current-cleaning-config` (2/40) then
+carries a `user_define` key with the cleaning's id, name and settings. The
+integration reads 2/42 on demand rather than polling it, and exposes this as
+the `xiaomi_vacuum.start_custom_cleaning` action.
 
 **Events** (SIID 2): 1 Build Map Complete · 2 Sweep Complete · 3 Dust Arrest Complete ·
 4 Mop Wash Complete · 5 Dry Complete

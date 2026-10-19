@@ -21,6 +21,7 @@ from ..cloud.errors import (  # noqa: TID252
 )
 from ..const import LOGGER  # noqa: TID252
 from ..spec import Property  # noqa: TID252
+from .custom_cleaning import CustomCleaning
 from .errors import (
     XiaomiVacuumApiClientCommunicationError,
     XiaomiVacuumApiClientError,
@@ -287,6 +288,31 @@ class XiaomiVacuumApiClient:
         blocks = json.dumps([zone.to_block() for zone in zones], separators=(",", ":"))
         payload: list[JsonValue] = [{"piid": action["in_piid"], "value": blocks}]
         LOGGER.debug("Calling start-zone-sweep with payload: %s", payload)
+        await self._run_action(self._client.call_action(_address(action), payload))
+
+    async def async_get_custom_cleanings(self) -> list[CustomCleaning]:
+        """Read the custom cleanings saved in the Mi Home app."""
+        address = self._spec.user_define_sweep_config
+        if address is None:
+            msg = "Failed to read custom cleanings: this model has no custom cleanings"
+            raise XiaomiVacuumApiClientError(msg)
+        values = await self._run(
+            self._client.get_properties(
+                {"config": PropertyAddress(siid=address["siid"], piid=address["piid"])}
+            )
+        )
+        return CustomCleaning.list_from_config(values.get("config"))
+
+    async def async_start_custom_cleaning(self, cleaning: CustomCleaning) -> None:
+        """Start a custom cleaning saved in the Mi Home app."""
+        action = self._spec.actions.start_user_define_sweep
+        if action is None:
+            msg = "Failed to start custom cleaning: this model has no custom cleanings"
+            raise XiaomiVacuumApiClientError(msg)
+        payload: list[JsonValue] = [
+            {"piid": action["in_piid"], "value": cleaning.identifier}
+        ]
+        LOGGER.debug("Calling start-user-define-sweep with payload: %s", payload)
         await self._run_action(self._client.call_action(_address(action), payload))
 
     async def _call_action_cloud_or_local(

@@ -123,6 +123,10 @@ class ModelSpec:
     # Error / Error code sensors but do not force VacuumActivity.ERROR, the way
     # other vacuum integrations treat dismissable warnings.
     notice_fault_codes: frozenset[int] = frozenset()
+    # The custom cleanings list is read on demand, not polled: it grows with
+    # every cleaning saved in Mi Home and would push the batched poll reply past
+    # the single-datagram limit.
+    user_define_sweep_config: MiotPropertyAddress | None = None
 
     def __post_init__(self) -> None:
         """Wrap the mutable dict fields in read-only views."""

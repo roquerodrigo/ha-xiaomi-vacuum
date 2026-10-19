@@ -461,3 +461,40 @@ async def test_async_clean_zones_without_action_raises(mock_miot_device):
     with pytest.raises(XiaomiVacuumApiClientError, match="no zone-sweep action"):
         await _client(mock_miot_device, spec=B108GL).async_clean_zones(zones)
     mock_miot_device.call_action.assert_not_called()
+
+
+async def test_async_get_custom_cleanings_reads_config_on_demand(mock_miot_device):
+    from custom_components.xiaomi_vacuum.api import CustomCleaning
+
+    mock_miot_device.get_properties.side_effect = None
+    mock_miot_device.get_properties.return_value = {
+        "config": '{"user_labels":[{"id":131206493,"name":"Litter box"}]}'
+    }
+    cleanings = await _client(mock_miot_device).async_get_custom_cleanings()
+    assert cleanings == [CustomCleaning(identifier=131206493, name="Litter box")]
+    mock_miot_device.get_properties.assert_called_once_with(
+        {"config": PropertyAddress(siid=2, piid=42)}
+    )
+
+
+async def test_async_start_custom_cleaning_sends_identifier(mock_miot_device):
+    from custom_components.xiaomi_vacuum.api import CustomCleaning
+
+    cleaning = CustomCleaning(identifier=131206493, name="Litter box")
+    await _client(mock_miot_device).async_start_custom_cleaning(cleaning)
+    mock_miot_device.call_action.assert_called_once_with(
+        ActionAddress(siid=2, aiid=42), [{"piid": 43, "value": 131206493}]
+    )
+
+
+async def test_custom_cleanings_without_support_raise(mock_miot_device):
+    from custom_components.xiaomi_vacuum.api import CustomCleaning
+
+    client = _client(mock_miot_device, spec=B108GL)
+    with pytest.raises(XiaomiVacuumApiClientError, match="no custom cleanings"):
+        await client.async_get_custom_cleanings()
+    with pytest.raises(XiaomiVacuumApiClientError, match="no custom cleanings"):
+        await client.async_start_custom_cleaning(
+            CustomCleaning(identifier=1, name="Any")
+        )
+    mock_miot_device.call_action.assert_not_called()

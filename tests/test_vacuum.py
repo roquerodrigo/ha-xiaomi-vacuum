@@ -419,3 +419,87 @@ async def test_clean_zone_service_unsupported_model(
         )
     assert error.value.translation_key == "zone_cleaning_unsupported"
     mock_miot_device_b108.call_action.assert_not_called()
+
+
+_CUSTOM_CLEANINGS_CONFIG = json.dumps(
+    {
+        "user_labels": [
+            {"id": 836314484, "name": "Afternoon cleaning"},
+            {"id": 131206493, "name": "Litter box"},
+        ]
+    }
+)
+
+
+def _serve_custom_cleanings(mock_miot_device, config):
+    poll = mock_miot_device.get_properties.side_effect
+
+    def get_properties(mapping, **kwargs):
+        if "config" in mapping:
+            return {"config": config}
+        return poll(mapping, **kwargs)
+
+    mock_miot_device.get_properties.side_effect = get_properties
+
+
+async def test_start_custom_cleaning_service_starts_matching_cleaning(
+    hass, setup_integration, mock_miot_device
+):
+    _serve_custom_cleanings(mock_miot_device, _CUSTOM_CLEANINGS_CONFIG)
+    mock_miot_device.call_action.reset_mock()
+    await hass.services.async_call(
+        DOMAIN,
+        "start_custom_cleaning",
+        {"entity_id": "vacuum.vacuum", "name": "litter BOX"},
+        blocking=True,
+    )
+    mock_miot_device.call_action.assert_called_once_with(
+        ActionAddress(siid=2, aiid=42), [{"piid": 43, "value": 131206493}]
+    )
+    assert hass.states.get("vacuum.vacuum").state == "cleaning"
+
+
+@pytest.mark.parametrize(
+    ("config", "available"),
+    [
+        (_CUSTOM_CLEANINGS_CONFIG, "Afternoon cleaning, Litter box"),
+        ('{"user_labels":[]}', "-"),
+    ],
+)
+async def test_start_custom_cleaning_service_rejects_unknown_name(
+    hass, setup_integration, mock_miot_device, config, available
+):
+    from homeassistant.exceptions import ServiceValidationError
+
+    _serve_custom_cleanings(mock_miot_device, config)
+    mock_miot_device.call_action.reset_mock()
+    with pytest.raises(ServiceValidationError) as error:
+        await hass.services.async_call(
+            DOMAIN,
+            "start_custom_cleaning",
+            {"entity_id": "vacuum.vacuum", "name": "Kitchen"},
+            blocking=True,
+        )
+    assert error.value.translation_key == "custom_cleaning_not_found"
+    assert error.value.translation_placeholders == {
+        "name": "Kitchen",
+        "available": available,
+    }
+    mock_miot_device.call_action.assert_not_called()
+
+
+async def test_start_custom_cleaning_service_unsupported_model(
+    hass, setup_integration_b108, mock_miot_device_b108
+):
+    from homeassistant.exceptions import ServiceValidationError
+
+    entity_id = hass.states.async_entity_ids("vacuum")[0]
+    with pytest.raises(ServiceValidationError) as error:
+        await hass.services.async_call(
+            DOMAIN,
+            "start_custom_cleaning",
+            {"entity_id": entity_id, "name": "Litter box"},
+            blocking=True,
+        )
+    assert error.value.translation_key == "custom_cleaning_unsupported"
+    mock_miot_device_b108.call_action.assert_not_called()

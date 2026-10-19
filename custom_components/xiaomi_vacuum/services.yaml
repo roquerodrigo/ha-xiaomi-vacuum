@@ -15,3 +15,15 @@ clean_zone:
           min: 1
           max: 3
           mode: box
+
+start_custom_cleaning:
+  target:
+    entity:
+      integration: xiaomi_vacuum
+      domain: vacuum
+  fields:
+    name:
+      required: true
+      example: "Afternoon cleaning"
+      selector:
+        text:

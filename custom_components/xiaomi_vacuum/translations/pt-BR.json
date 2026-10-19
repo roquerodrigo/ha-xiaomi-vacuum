@@ -228,6 +228,12 @@
         },
         "zone_empty": {
             "message": "Toda zona precisa ter largura e altura diferentes de zero."
+        },
+        "custom_cleaning_unsupported": {
+            "message": "As limpezas personalizadas não são suportadas no {model}."
+        },
+        "custom_cleaning_not_found": {
+            "message": "Nenhuma limpeza personalizada chamada {name}. Disponíveis: {available}."
         }
     },
     "services": {
@@ -242,6 +248,16 @@
                 "repeats": {
                     "name": "Repetições",
                     "description": "Quantas vezes cada zona é limpa. Atualiza a configuração de repetições de limpeza; sem este campo, a configuração atual é mantida."
+                }
+            }
+        },
+        "start_custom_cleaning": {
+            "name": "Iniciar limpeza personalizada",
+            "description": "Inicia uma limpeza personalizada salva no app Mi Home, com os cômodos ou zonas e as configurações guardadas nela.",
+            "fields": {
+                "name": {
+                    "name": "Nome",
+                    "description": "Nome da limpeza personalizada como aparece no app Mi Home. Maiúsculas e minúsculas são ignoradas."
                 }
             }
         }

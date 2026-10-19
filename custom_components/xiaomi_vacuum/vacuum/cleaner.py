@@ -255,6 +255,29 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         self._patch_state(status=self.spec.status_code_for(VacuumActivity.CLEANING))
         self._schedule_refresh()
 
+    async def async_start_custom_cleaning(self, name: str) -> None:
+        """Start the custom cleaning saved in the Mi Home app under ``name``."""
+        if self.spec.actions.start_user_define_sweep is None:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="custom_cleaning_unsupported",
+                translation_placeholders={"model": self.spec.name},
+            )
+        cleanings = await self._client.async_get_custom_cleanings()
+        cleaning = next((c for c in cleanings if c.matches(name)), None)
+        if cleaning is None:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="custom_cleaning_not_found",
+                translation_placeholders={
+                    "name": name,
+                    "available": ", ".join(c.name for c in cleanings) or "-",
+                },
+            )
+        await self._client.async_start_custom_cleaning(cleaning)
+        self._patch_state(status=self.spec.status_code_for(VacuumActivity.CLEANING))
+        self._schedule_refresh()
+
 
 # Column/key aliases for room id and name across both payload shapes
 # (object-array on the X20 Max, table/matrix on the S20+). Keys are matched

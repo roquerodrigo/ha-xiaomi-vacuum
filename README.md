@@ -40,6 +40,9 @@ for two cloud-only extras: the **map image** and **localized error messages**.
   one or more rectangles drawn in the vacuum's map coordinates, optionally
   setting the number of repeats. See
   [Using the map with the Xiaomi Vacuum Map Card](#using-the-map-with-the-xiaomi-vacuum-map-card).
+- **Custom cleanings** (X20 Max) — the `xiaomi_vacuum.start_custom_cleaning`
+  action starts a custom cleaning saved in the Mi Home app by its name. See
+  [Starting a custom cleaning](#starting-a-custom-cleaning).
 - **Map image** — the live map is rendered from the Xiaomi cloud as an `image`
   entity you can drop on a dashboard.
 - **Error reporting** — `Error` (localized, human-readable fault text resolved
@@ -140,6 +143,25 @@ text, and route the S20+ room clean through the cloud.
 
 The vacuum entity also exposes raw MIoT diagnostics as extra state attributes
 under the `xiaomi_vacuum` key.
+
+### Starting a custom cleaning
+
+Custom cleanings are created in the Mi Home app, each with its own rooms or
+zones and cleaning settings. On the X20 Max, the
+`xiaomi_vacuum.start_custom_cleaning` action starts one by its name, matched
+without regard to case:
+
+```yaml
+action: xiaomi_vacuum.start_custom_cleaning
+target:
+  entity_id: vacuum.<name>
+data:
+  name: Afternoon cleaning
+```
+
+The list is read from the vacuum on every call, so cleanings added or renamed
+in the app are available right away. An unknown name fails with the list of
+cleanings the vacuum reports.
 
 ### Using the map with the Xiaomi Vacuum Map Card
 

@@ -63,6 +63,7 @@ _ACTIONS = ModelActions(
     continue_sweep={"siid": 2, "aiid": 8},
     start_room_sweep={"siid": 2, "aiid": 16, "in_piid": 15},
     start_zone_sweep={"siid": 2, "aiid": 37, "in_piid": 12},
+    start_user_define_sweep={"siid": 2, "aiid": 42, "in_piid": 43},
     identify={"siid": 6, "aiid": 1},
     start_dust_arrest={"siid": 2, "aiid": 18},
     start_mop_wash={"siid": 2, "aiid": 19},
@@ -240,6 +241,7 @@ D109GL = ModelSpec(
     },
     fault_kind="ids",
     room_clean_strategy="direct",
+    user_define_sweep_config={"siid": 2, "piid": 42},
     sweep_routes=dict(SWEEP_ROUTES),
     obstacle_avoidances=dict(OBSTACLE_AVOIDANCES),
 )

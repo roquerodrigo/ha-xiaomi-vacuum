@@ -299,3 +299,15 @@ def test_require_action_raises_at_import_time_when_absent():
 
     with pytest.raises(ValueError, match="needs an action this model defines"):
         _require_action(None, "start_mop_wash")
+
+
+def test_custom_cleanings_wired_only_where_verified():
+    assert D109GL.actions.start_user_define_sweep == {
+        "siid": 2,
+        "aiid": 42,
+        "in_piid": 43,
+    }
+    assert D109GL.user_define_sweep_config == {"siid": 2, "piid": 42}
+    for spec in (B108GL, OV71GL):
+        assert spec.actions.start_user_define_sweep is None
+        assert spec.user_define_sweep_config is None

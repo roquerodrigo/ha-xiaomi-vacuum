@@ -228,6 +228,12 @@
         },
         "zone_empty": {
             "message": "Every zone needs a non-zero width and height."
+        },
+        "custom_cleaning_unsupported": {
+            "message": "Custom cleanings are not supported on the {model}."
+        },
+        "custom_cleaning_not_found": {
+            "message": "No custom cleaning named {name}. Available: {available}."
         }
     },
     "services": {
@@ -242,6 +248,16 @@
                 "repeats": {
                     "name": "Repeats",
                     "description": "How many times each zone is cleaned. Updates the clean repetitions setting; the current setting is kept when omitted."
+                }
+            }
+        },
+        "start_custom_cleaning": {
+            "name": "Start custom cleaning",
+            "description": "Starts a custom cleaning saved in the Mi Home app, with the rooms or zones and the settings stored in it.",
+            "fields": {
+                "name": {
+                    "name": "Name",
+                    "description": "Name of the custom cleaning as shown in the Mi Home app. Case is ignored."
                 }
             }
         }
