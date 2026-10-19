@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.7.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.6.1...v2.7.0) (2026-10-19)
+
+
+### Features
+
+* **vacuum:** add start_custom_cleaning action ([a91368e](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/a91368ed93367570012bcce03b579d282754b2f6))
+* **vacuum:** list custom cleanings in the start_custom_cleaning name field ([496adcb](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/496adcb46779f7fb1f02f34fa94efa97090d02c7))
+
+
+### Miscellaneous Chores
+
+* **release:** keep only user-facing changes in the changelog ([f3e9c82](https://github.com/roquerodrigo/ha-xiaomi-vacuum/commit/f3e9c82a6252b2d69a8d4943641eea8b6e97bc79))
+
 ## [2.6.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.6.0...v2.6.1) (2026-09-30)
 
 
