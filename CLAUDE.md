@@ -26,12 +26,8 @@ here.
   `EntityDescription`-with-`value_fn` pattern).
 - **`api/`** wraps the local MIoT client; **`cloud/`** wraps the Xiaomi cloud
   (QR login, device discovery, map fetch, error-message resolution).
-- **`spec/`** — per-model MIoT spec registry, one module per concern:
-  `property.py`, `entity_key.py`, `capability.py` and `addresses.py` hold the
-  vocabulary; `model_actions.py` and `model_spec.py` the two dataclasses;
-  `d109gl.py` (X20 Max), `b108gl.py` (S20+) and `ov71gl.py` (S40 Pro) one
-  `ModelSpec` instance each;
-  `registry.py` the model-string lookup. A `ModelSpec` bundles its property
+- **`spec/`** — per-model MIoT spec registry: one `ModelSpec` module per model
+  plus `registry.py` for the model-string lookup. A `ModelSpec` bundles its property
   mapping, action mapping, status table, enumerations, `send_command`
   whitelist, fault representation, and room-clean strategy. Capabilities
   (`DUST_ARREST` / `SWEEP_ROUTE` / `OBSTACLE_AVOIDANCE`) are **derived** from
@@ -44,10 +40,6 @@ here.
   before touching any SIID/PIID/AIID — the S20+ diverges from the other two on
   almost all of them, and the S40 Pro shares the X20 Max layout but has no
   dock hardware.**
-- **`coordinator.py`** — local device state polling (`DataUpdateCoordinator`).
-- **`map_coordinator.py`** — separate coordinator for the cloud-rendered map
-  image, decoupled from local polling.
-- **`cached_device_info.py`** — persists device info discovered during setup.
 - **`config_flow.py`** — QR-login config flow plus reauth (fresh QR scan when
   the stored cloud session expires) and a reconfigure flow for changing the
   Xiaomi cloud region.
