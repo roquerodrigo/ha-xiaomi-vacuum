@@ -64,24 +64,24 @@
     "selector": {
         "cloud_country": {
             "options": {
-                "de": "Europe / UK",
-                "us": "United States",
-                "cn": "China (mainland)",
-                "ru": "Russia",
-                "sg": "Singapore",
-                "i2": "India",
-                "tw": "Taiwan"
+                "de": "Evropa / Velika Britanija",
+                "us": "Sjedinjene Američke Države",
+                "cn": "Kina (kontinentalna)",
+                "ru": "Rusija",
+                "sg": "Singapur",
+                "i2": "Indija",
+                "tw": "Tajvan"
             }
         }
     },
     "issues": {
         "cannot_connect": {
-            "title": "Cannot reach {name}",
-            "description": "Home Assistant cannot connect to the vacuum at {host}. The robot is likely powered off or disconnected from the network. Its entities show as unavailable and the map keeps the last known image until it reconnects. This issue clears automatically once the vacuum is back online."
+            "title": "Uređaj {name} nije dostupan",
+            "description": "Home Assistant ne može da se poveže sa usisivačem na adresi {host}. Robot je verovatno isključen ili nije povezan na mrežu. Njegovi entiteti se prikazuju kao nedostupni, a mapa zadržava poslednju poznatu sliku dok se ponovo ne poveže. Ovaj problem se automatski uklanja kada usisivač ponovo bude na mreži."
         },
         "unsupported_model": {
-            "title": "{name} is an unsupported model",
-            "description": "The vacuum reports model `{model}`, which this integration does not yet know about. It fell back to a best-effort spec so basic local control keeps working, but some entities (status, fault, capabilities) may be wrong or missing. Please open an issue on the project's GitHub page with this model name so support can be added."
+            "title": "{name} je nepodržani model",
+            "description": "Usisivač prijavljuje model `{model}`, koji ova integracija još ne poznaje. Korišćena je približna specifikacija kako bi osnovno lokalno upravljanje nastavilo da radi, ali neki entiteti (status, greška, mogućnosti) mogu biti netačni ili nedostajati. Otvorite prijavu problema (issue) na GitHub stranici projekta sa nazivom ovog modela kako bi podrška mogla da bude dodata."
         }
     },
     "entity": {
@@ -228,6 +228,12 @@
         },
         "zone_empty": {
             "message": "Svaka zona mora imati širinu i visinu veću od nule."
+        },
+        "custom_cleaning_unsupported": {
+            "message": "Prilagođena čišćenja nisu podržana na modelu {model}."
+        },
+        "custom_cleaning_not_found": {
+            "message": "Ne postoji prilagođeno čišćenje pod nazivom {name}. Dostupna: {available}."
         }
     },
     "services": {
@@ -242,6 +248,16 @@
                 "repeats": {
                     "name": "Ponavljanja",
                     "description": "Koliko puta se svaka zona čisti. Ažurira podešavanje broja ponavljanja čišćenja; trenutno podešavanje se zadržava ako se izostavi."
+                }
+            }
+        },
+        "start_custom_cleaning": {
+            "name": "Pokreni prilagođeno čišćenje",
+            "description": "Pokreće prilagođeno čišćenje sačuvano u aplikaciji Mi Home, sa prostorijama ili zonama i podešavanjima koja su u njemu sačuvana.",
+            "fields": {
+                "name": {
+                    "name": "Naziv",
+                    "description": "Naziv prilagođenog čišćenja kako je prikazan u aplikaciji Mi Home. Velika i mala slova se ne razlikuju."
                 }
             }
         }
