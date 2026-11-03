@@ -1036,9 +1036,6 @@ source = { virtual = "." }
 dev = [
     { name = "homeassistant" },
     { name = "pre-commit" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
     { name = "pytest-homeassistant-custom-component" },
     { name = "xiaomi-vacuum-sdk" },
 ]
@@ -1053,9 +1050,6 @@ lint = [
 dev = [
     { name = "homeassistant", specifier = "==2026.5.3" },
     { name = "pre-commit", specifier = "==4.7.0" },
-    { name = "pytest", specifier = "==9.0.3" },
-    { name = "pytest-asyncio", specifier = "==1.3.0" },
-    { name = "pytest-cov", specifier = "==7.1.0" },
     { name = "pytest-homeassistant-custom-component", specifier = "==0.13.332" },
     { name = "xiaomi-vacuum-sdk", specifier = "==0.1.1" },
 ]
