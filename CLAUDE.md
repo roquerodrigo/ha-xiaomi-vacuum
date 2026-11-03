@@ -93,11 +93,13 @@ uv run pytest
 
 Every job calls a reusable workflow from `roquerodrigo/workflows`, tracking
 `@main` (no version pinning — the workflows repo is same-owner and changes
-there take effect here immediately).
+there take effect here immediately). The one exception is the release job,
+which runs the [Release Autopilot](https://github.com/marketplace/actions/release-autopilot)
+action at `@latest`.
 
 - `ci.yml` — `lint` → `tests` + `validate` in parallel (both need `lint`),
   then `update-pr-branch` once all three pass (pull requests only).
-- `release.yml` — release-please, triggered by `workflow_run` after CI
+- `release.yml` — Release Autopilot, triggered by `workflow_run` after CI
   succeeds on a push to `main`. It is decoupled from `ci.yml`, not a job in
   it, so a red CI never cuts a release.
 - `codeql.yml` — weekly (Sunday) plus every push/PR.
