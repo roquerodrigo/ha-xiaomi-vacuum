@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.8.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.7.0...v2.8.0) (2026-11-03)
+
+### New features
+
+- Adds Serbian translations in Cyrillic and Latin scripts, covering the interface, cloud region names, repair issues and the custom cleaning service. ([#131](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/131))
+
 ## [2.7.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.6.1...v2.7.0) (2026-10-19)
 
 
