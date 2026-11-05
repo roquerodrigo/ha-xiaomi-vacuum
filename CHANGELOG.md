@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.9.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.8.0...v2.9.0) (2026-11-05)
+
+Vacuums with an unsupported model now get a repair that links to a prefilled support request form.
+
+### New features
+
+- The unsupported model repair now links to a model support request form with the model ID already filled in, making it easier to ask for support. ([#153](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/153))
+
 ## [2.8.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.7.0...v2.8.0) (2026-11-03)
 
 ### New features
