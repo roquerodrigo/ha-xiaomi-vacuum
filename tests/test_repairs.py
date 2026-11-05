@@ -8,6 +8,7 @@ from custom_components.xiaomi_vacuum.repairs import (
     async_clear_unsupported_model,
     async_raise_cannot_connect,
     async_raise_unsupported_model,
+    model_support_request_url,
 )
 
 
@@ -58,7 +59,17 @@ async def test_raise_unsupported_model_creates_issue_with_model(hass):
     assert issue.translation_placeholders == {
         "name": "Vacuum",
         "model": "xiaomi.vacuum.zzzzz",
+        "request_url": model_support_request_url("xiaomi.vacuum.zzzzz"),
     }
+
+
+def test_model_support_request_url_prefills_the_form():
+    assert model_support_request_url("xiaomi.vacuum.zzzzz") == (
+        "https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/new"
+        "?template=model_support.yml"
+        "&title=Add+support+for+xiaomi.vacuum.zzzzz"
+        "&model=xiaomi.vacuum.zzzzz"
+    )
 
 
 async def test_unsupported_model_raise_then_clear_are_idempotent(hass):

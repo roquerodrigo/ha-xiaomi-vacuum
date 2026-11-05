@@ -81,7 +81,7 @@
         },
         "unsupported_model": {
             "title": "{name} é um modelo não suportado",
-            "description": "O aspirador reporta o modelo `{model}`, que esta integração ainda não conhece. Ela usou uma spec provisória para manter o controle local básico funcionando, mas algumas entidades (status, falhas, capacidades) podem estar erradas ou ausentes. Por favor abra uma issue no GitHub do projeto com o nome deste modelo para que suporte possa ser adicionado."
+            "description": "O aspirador reporta o modelo `{model}`, que esta integração ainda não conhece. Ela usou uma spec provisória para manter o controle local básico funcionando, mas algumas entidades (status, falhas, capacidades) podem estar erradas ou ausentes. Para pedir suporte, abra uma [solicitação de suporte ao modelo]({request_url}) — o modelo já vem preenchido."
         }
     },
     "entity": {
