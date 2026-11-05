@@ -81,7 +81,7 @@
         },
         "unsupported_model": {
             "title": "{name} je nepodržani model",
-            "description": "Usisivač prijavljuje model `{model}`, koji ova integracija još ne poznaje. Korišćena je približna specifikacija kako bi osnovno lokalno upravljanje nastavilo da radi, ali neki entiteti (status, greška, mogućnosti) mogu biti netačni ili nedostajati. Otvorite prijavu problema (issue) na GitHub stranici projekta sa nazivom ovog modela kako bi podrška mogla da bude dodata."
+            "description": "Usisivač prijavljuje model `{model}`, koji ova integracija još ne poznaje. Korišćena je približna specifikacija kako bi osnovno lokalno upravljanje nastavilo da radi, ali neki entiteti (status, greška, mogućnosti) mogu biti netačni ili nedostajati. Da biste zatražili podršku, otvorite [zahtev za podršku modela]({request_url}) — model je već popunjen."
         }
     },
     "entity": {

@@ -7,6 +7,7 @@ body:
       value: >-
         Before opening, search the [existing issues](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues?q=is%3Aissue) for the same idea.
         Suggest one feature per issue.
+        To ask for a vacuum model that is not supported yet, use the Model support request form instead.
   - type: textarea
     id: problem
     attributes:

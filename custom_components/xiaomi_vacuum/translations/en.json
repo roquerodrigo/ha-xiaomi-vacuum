@@ -81,7 +81,7 @@
         },
         "unsupported_model": {
             "title": "{name} is an unsupported model",
-            "description": "The vacuum reports model `{model}`, which this integration does not yet know about. It fell back to a best-effort spec so basic local control keeps working, but some entities (status, fault, capabilities) may be wrong or missing. Please open an issue on the project's GitHub page with this model name so support can be added."
+            "description": "The vacuum reports model `{model}`, which this integration does not yet know about. It fell back to a best-effort spec so basic local control keeps working, but some entities (status, fault, capabilities) may be wrong or missing. To ask for support, open a [model support request]({request_url}) — the model is already filled in."
         }
     },
     "entity": {

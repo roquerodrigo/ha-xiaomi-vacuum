@@ -3,10 +3,18 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from urllib.parse import urlencode
 
 from homeassistant.helpers import issue_registry as ir
 
-from .const import CONF_HOST, DOMAIN, ISSUE_CANNOT_CONNECT, ISSUE_UNSUPPORTED_MODEL
+from .const import (
+    CONF_HOST,
+    DOMAIN,
+    ISSUE_CANNOT_CONNECT,
+    ISSUE_UNSUPPORTED_MODEL,
+    MODEL_SUPPORT_REQUEST_TEMPLATE,
+    MODEL_SUPPORT_REQUEST_URL,
+)
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -22,6 +30,18 @@ def _issue_id(entry: XiaomiVacuumConfigEntry) -> str:
 def _unsupported_issue_id(entry: XiaomiVacuumConfigEntry) -> str:
     """Return the per-entry issue id for the unsupported_model repair."""
     return f"{ISSUE_UNSUPPORTED_MODEL}_{entry.entry_id}"
+
+
+def model_support_request_url(model: str) -> str:
+    """Return the GitHub model support form URL, prefilled with the model."""
+    query = urlencode(
+        {
+            "template": MODEL_SUPPORT_REQUEST_TEMPLATE,
+            "title": f"Add support for {model}",
+            "model": model,
+        }
+    )
+    return f"{MODEL_SUPPORT_REQUEST_URL}?{query}"
 
 
 def async_raise_cannot_connect(
@@ -57,7 +77,8 @@ def async_raise_unsupported_model(
 
     The integration falls back to a default spec for an unknown model so local
     control keeps working, but several entities may be wrong (status codes,
-    PIIDs, capabilities). Surfacing a repair tells the user to file an issue.
+    PIIDs, capabilities). Surfacing a repair points the user to the model
+    support request form, prefilled with the reported model.
     """
     ir.async_create_issue(
         hass,
@@ -66,7 +87,11 @@ def async_raise_unsupported_model(
         is_fixable=False,
         severity=ir.IssueSeverity.WARNING,
         translation_key=ISSUE_UNSUPPORTED_MODEL,
-        translation_placeholders={"name": entry.title, "model": model},
+        translation_placeholders={
+            "name": entry.title,
+            "model": model,
+            "request_url": model_support_request_url(model),
+        },
     )
 
 

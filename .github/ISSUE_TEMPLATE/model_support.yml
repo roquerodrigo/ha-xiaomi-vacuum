@@ -1,0 +1,65 @@
+name: Model support request
+description: Ask for a Xiaomi vacuum model that is not supported yet.
+title: "Add support for "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Before opening, search the [existing issues](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues?q=is%3Aissue) for the same model.
+
+
+        Every Xiaomi vacuum exposes its own MIoT layout, so a new model cannot be added blindly:
+        each one needs its properties mapped and then tested on the real device.
+        This integration is maintained on personal, unpaid time, and without the device at hand
+        support only moves forward with someone who owns it testing beta releases and reporting back.
+
+
+        If you would like to help the project grow, please consider
+        [sponsoring it on GitHub](https://github.com/sponsors/roquerodrigo) —
+        it funds the hardware and the hours that new models take.
+        Sponsoring is entirely optional: every request is read either way.
+        If you prefer to add the model yourself, [ADDING_A_MODEL.md](https://github.com/roquerodrigo/ha-xiaomi-vacuum/blob/main/ADDING_A_MODEL.md)
+        walks through it.
+  - type: input
+    id: model
+    attributes:
+      label: Model ID
+      description: >-
+        The `xiaomi.vacuum.*` identifier shown in the "unsupported model" notice under
+        Settings → System → Repairs, or as the model on the device page.
+      placeholder: xiaomi.vacuum.d109gl
+    validations:
+      required: true
+  - type: input
+    id: name
+    attributes:
+      label: Commercial name
+      placeholder: Xiaomi Robot Vacuum X20 Max
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Integration version
+      description: As shown in HACS.
+      placeholder: 1.2.3
+    validations:
+      required: true
+  - type: checkboxes
+    id: testing
+    attributes:
+      label: Testing
+      options:
+        - label: I own this vacuum and can install beta releases and report back how they behave.
+          required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: On the device or integration page, select ⋮ → Download diagnostics and drag the file here.
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: What works and what is wrong or missing today, screenshots, or anything else that helps.

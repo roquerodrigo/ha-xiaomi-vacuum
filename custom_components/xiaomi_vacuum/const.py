@@ -34,6 +34,10 @@ DEFAULT_CLOUD_REGION = "us"
 
 ISSUE_CANNOT_CONNECT = "cannot_connect"
 ISSUE_UNSUPPORTED_MODEL = "unsupported_model"
+MODEL_SUPPORT_REQUEST_URL = (
+    "https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/new"
+)
+MODEL_SUPPORT_REQUEST_TEMPLATE = "model_support.yml"
 
 # Vacuum models discovered in the cloud are matched by this prefix (see
 # config_flow); the per-model MIoT spec lives in `spec.MODELS`. Adding a new
