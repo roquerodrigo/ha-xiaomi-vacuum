@@ -11,8 +11,9 @@
 
 A [Home Assistant](https://www.home-assistant.io/) integration for the
 **Xiaomi Robot Vacuum X20 Max** (`xiaomi.vacuum.d109gl`), **Xiaomi Robot
-Vacuum S20+** (`xiaomi.vacuum.b108gl`) and **Xiaomi Robot Vacuum S40 Pro**
-(`xiaomi.vacuum.ov71gl`).
+Vacuum S20+** (`xiaomi.vacuum.b108gl`), **Xiaomi Robot Vacuum S40 Pro**
+(`xiaomi.vacuum.ov71gl`) and **Xiaomi Robot Vacuum X20+** (`xiaomi.vacuum.c102gl`,
+basic support).
 
 Day-to-day control and state polling run **locally** over the MIoT protocol
 (`iot_class: local_polling`). The Xiaomi cloud is used for one-time setup —
@@ -20,13 +21,20 @@ a QR login that discovers the vacuum and fetches its IP and token for you — an
 for two cloud-only extras: the **map image** and **localized error messages**.
 
 > Tested against `xiaomi.vacuum.d109gl` (X20 Max), `xiaomi.vacuum.b108gl`
-> (S20+) and `xiaomi.vacuum.ov71gl` (S40 Pro). Other Xiaomi vacuums matching
+> (S20+), `xiaomi.vacuum.ov71gl` (S40 Pro) and `xiaomi.vacuum.c102gl` (X20+).
+> Other Xiaomi vacuums matching
 > the `xiaomi.vacuum.*` model prefix may be discovered but aren't officially
 > supported.
 >
 > The S40 Pro is an export-only model: it does not appear when the Xiaomi
 > cloud region is set to China. Pick the region your Mi Home account uses
 > (Europe for EU units).
+>
+> The X20+ is built by Dreame and uses a different MIoT layout. It supports
+> start / pause / stop / dock / locate, fan speed, mop water level, status,
+> battery, consumables, errors, the mop-pad sensor and the dust-bin button.
+> Room cleaning, the map and the cleaning-mode / clean-times selects are not
+> available on it yet; pick the cleaning mode in Mi Home.
 
 ## Features
 
@@ -57,11 +65,12 @@ for two cloud-only extras: the **map image** and **localized error messages**.
   S40 Pro also expose sweep route (quick / standard / deep) and obstacle
   avoidance strategy; the S20+ has no such properties and omits those selects.
 - **Empty dust bin** button (triggers the dock to collect the vacuum's dust) —
-  X20 Max only; the S20+ and S40 Pro ship with a plain charging dock.
+  X20 Max and X20+; the S20+ and S40 Pro ship with a plain charging dock.
 - **`vacuum.send_command`** — a whitelist of extra MIoT actions (start mop,
   sweep+mop, continue sweep; and on the X20 Max, mop wash start/stop and dry
   start/stop). The mop-wash and dry actions target the X20 Max auto-wash dock
-  and are not available on the S20+ or S40 Pro.
+  and are not available on the S20+ or S40 Pro. The X20+ offers continue
+  sweep, mop wash start and dry start/stop.
 - **Optimistic UI updates** — actions reflect immediately in the card; a
   background refresh confirms the device state ~5 s later.
 - **Internationalization**: English and Brazilian Portuguese (`pt-BR`).

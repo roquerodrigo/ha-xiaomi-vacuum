@@ -60,7 +60,17 @@ direct `start-vacuum-room-sweep` action exists but the robot ignores it.
 Create `custom_components/xiaomi_vacuum/spec/c108gl.py`, named after the model
 string. Mirror the structure of the closest sibling (`d109gl.py` for a model
 with an auto-wash dock, `ov71gl.py` for an X20-Max-shaped spec without dock
-hardware, `b108gl.py` for the S20+ layout).
+hardware, `b108gl.py` for the S20+ layout, `c102gl.py` for a Dreame-built
+model).
+
+**Dreame-built models** (the handshake reports manufacturer `dreame`, the spec
+puts job data in a SIID-4 Dreame service) follow `c102gl.py`: a plain uint8
+fault, pause on `stop-sweeping`, stop on the Dreame `stop-clean`, no
+mode-specific start actions, and a task-status property (`Property.TASK_STATUS`)
+that decides the cleaning job instead of the status table. Entities backed by
+one property (mop pad, mode, clean times, water level, map) are only created
+when the spec maps that property, so leave unmapped what the model packs into a
+Dreame bitfield.
 
 **Check the retail hardware, not just the spec.** Xiaomi reuses one spec
 template across a product line: the S40 Pro (`ov71gl`) publishes dust-arrest

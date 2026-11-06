@@ -23,6 +23,8 @@ class XiaomiVacuumCleaningBinarySensor(
     (mop washes, mid-job recharges, a user pause). Statuses the device reports
     both mid-job and after the job ends keep the previous verdict, which is
     restored across restarts so a job ending inside such a status is not lost.
+    Models publishing a task status (X20+) decide from it instead, see
+    :meth:`ModelSpec.cleaning_job_signal`.
     """
 
     _attr_device_class = BinarySensorDeviceClass.RUNNING
@@ -54,10 +56,11 @@ class XiaomiVacuumCleaningBinarySensor(
         super()._handle_coordinator_update()
 
     def _follow_status(self) -> None:
-        status = self.coordinator.data.get("status")
-        if status is None:
-            return
-        signal = self.coordinator.spec.cleaning_job_signals.get(int(status))
+        data = self.coordinator.data
+        status = data.get("status")
+        signal = self.coordinator.spec.cleaning_job_signal(
+            int(status) if status is not None else None, data.get("task_status")
+        )
         if signal is CleaningJobSignal.IN_PROGRESS:
             self._cleaning_in_progress = True
         elif signal is CleaningJobSignal.FINISHED:

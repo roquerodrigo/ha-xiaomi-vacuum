@@ -230,9 +230,11 @@ D109GL = ModelSpec(
     },
     charging_state_slugs=dict(CHARGING_STATE_SLUGS),
     send_commands={
-        "start_only_sweep": _ACTIONS.start_only_sweep,
-        "start_mop": _ACTIONS.start_mop,
-        "start_sweep_mop": _ACTIONS.start_sweep_mop,
+        "start_only_sweep": _require_action(
+            _ACTIONS.start_only_sweep, "start_only_sweep"
+        ),
+        "start_mop": _require_action(_ACTIONS.start_mop, "start_mop"),
+        "start_sweep_mop": _require_action(_ACTIONS.start_sweep_mop, "start_sweep_mop"),
         "continue_sweep": _ACTIONS.continue_sweep,
         "start_mop_wash": _require_action(_ACTIONS.start_mop_wash, "start_mop_wash"),
         "stop_mop_wash": _require_action(_ACTIONS.stop_mop_wash, "stop_mop_wash"),

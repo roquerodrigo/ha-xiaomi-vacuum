@@ -1,8 +1,9 @@
 # ha-xiaomi-vacuum
 
 Home Assistant custom integration for the **Xiaomi Robot Vacuum X20 Max**
-(`xiaomi.vacuum.d109gl`), **Xiaomi Robot Vacuum S20+** (`xiaomi.vacuum.b108gl`)
-and **Xiaomi Robot Vacuum S40 Pro** (`xiaomi.vacuum.ov71gl`), domain
+(`xiaomi.vacuum.d109gl`), **Xiaomi Robot Vacuum S20+** (`xiaomi.vacuum.b108gl`),
+**Xiaomi Robot Vacuum S40 Pro** (`xiaomi.vacuum.ov71gl`) and the Dreame-built
+**Xiaomi Robot Vacuum X20+** (`xiaomi.vacuum.c102gl`, basic support), domain
 `xiaomi_vacuum`. Public repo, HACS-distributed.
 
 Read `README.md` for the user-facing feature list and setup flow,
@@ -32,14 +33,15 @@ here.
   whitelist, fault representation, and room-clean strategy. Capabilities
   (`DUST_ARREST` / `SWEEP_ROUTE` / `OBSTACLE_AVOIDANCE`) are **derived** from
   the spec, not declared; the set of entities to create (`spec.entities`) is in
-  turn derived from the capability set plus a base roster. Platforms filter
+  turn derived from the capability set, the mapped properties and a base
+  roster. Platforms filter
   their `_*_CLASSES` registries by `EntityKey in spec.entities`, so adding a
   new model is a data-only change: one module plus a `registry.py` line (see
   `ADDING_A_MODEL.md`). The spec is selected from the device model at setup and
   threaded through `runtime_data` / the coordinator. **Read the model's module
   before touching any SIID/PIID/AIID — the S20+ diverges from the other two on
-  almost all of them, and the S40 Pro shares the X20 Max layout but has no
-  dock hardware.**
+  almost all of them, the S40 Pro shares the X20 Max layout but has no
+  dock hardware, and the X20+ is a Dreame layout unlike any of them.**
 - **`config_flow.py`** — QR-login config flow plus reauth (fresh QR scan when
   the stored cloud session expires) and a reconfigure flow for changing the
   Xiaomi cloud region.

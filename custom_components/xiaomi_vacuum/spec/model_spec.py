@@ -7,6 +7,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, Literal, TypedDict
 
 from .capability import Capability
+from .cleaning_job_signal import CleaningJobSignal
 from .entity_key import EntityKey
 from .property import Property
 
@@ -14,7 +15,6 @@ if TYPE_CHECKING:
     from homeassistant.components.vacuum.const import VacuumActivity
 
     from .addresses import MiotActionAddress, MiotPropertyAddress
-    from .cleaning_job_signal import CleaningJobSignal
     from .model_actions import ModelActions
 
 # How the live fault is read. d109gl publishes a `Fault Ids` JSON list
@@ -27,7 +27,15 @@ FaultKind = Literal["ids", "simple"]
 # - "config_then_custom": the app first marks the target rooms via
 #   `set-room-clean-configs` (setting their `on` flag), then fires
 #   `start-custom-sweep` with no params (S20+). Captured from the Mi Home app.
-RoomCleanStrategy = Literal["direct", "config_then_custom"]
+# - "none": room cleaning is not wired for this model yet (X20+, pending the
+#   Dreame-style segment clean).
+RoomCleanStrategy = Literal["direct", "config_then_custom", "none"]
+
+#: Task-status value meaning "no job open". Dreame-built models publish a
+#: task-status property (0 completed, 1 auto clean, 2 zone, 3 room, 6+ the
+#: matching paused states, ...) that, unlike the status, stays non-zero for the
+#: whole job: through mid-job mop washes, recharges and the drive back.
+TASK_STATUS_COMPLETED = 0
 
 
 class StatusDef(TypedDict):
@@ -48,12 +56,11 @@ _CAPABILITY_ENTITIES: dict[Capability, EntityKey] = {
 
 #: Entities every supported vacuum exposes regardless of capabilities.
 #: Includes the platforms whose creation is otherwise unconditional
-#: (vacuum entity, sensors, binary sensor, map image) so the entity-key
+#: (vacuum entity, sensors, binary sensors) so the entity-key
 #: registry stays the single source of truth for what a model exposes.
 _BASE_ENTITIES: frozenset[EntityKey] = frozenset(
     {
         EntityKey.VACUUM,
-        EntityKey.MAP_IMAGE,
         EntityKey.BATTERY_SENSOR,
         EntityKey.STATUS_SENSOR,
         EntityKey.ERROR_SENSOR,
@@ -63,13 +70,21 @@ _BASE_ENTITIES: frozenset[EntityKey] = frozenset(
         EntityKey.SIDE_BRUSH_LIFE_SENSOR,
         EntityKey.FILTER_LIFE_SENSOR,
         EntityKey.BATTERY_CHARGING_SENSOR,
-        EntityKey.MOP_PAD_SENSOR,
         EntityKey.CLEANING_SENSOR,
-        EntityKey.SWEEP_MOP_TYPE_SELECT,
-        EntityKey.CLEAN_TIMES_SELECT,
-        EntityKey.MOP_WATER_LEVEL_SELECT,
     }
 )
+
+#: Entities backed by one property, created only when the model maps it. The
+#: Xiaomi in-house models map all of them; the X20+ packs its sweep/mop mode
+#: into a Dreame clean-setting bitfield, publishes no clean-times property, and
+#: has no map entity until its Dreame map format can be rendered.
+_PROPERTY_ENTITIES: dict[Property, EntityKey] = {
+    Property.MAP_OBJ_NAME: EntityKey.MAP_IMAGE,
+    Property.MOP_STATUS: EntityKey.MOP_PAD_SENSOR,
+    Property.SWEEP_MOP_TYPE: EntityKey.SWEEP_MOP_TYPE_SELECT,
+    Property.CLEAN_TIMES: EntityKey.CLEAN_TIMES_SELECT,
+    Property.MOP_WATER_LEVEL: EntityKey.MOP_WATER_LEVEL_SELECT,
+}
 
 #: Names of the dict-typed fields wrapped in read-only views by
 #: :meth:`ModelSpec.__post_init__`.
@@ -187,12 +202,65 @@ class ModelSpec:
 
     @property
     def entities(self) -> frozenset[EntityKey]:
-        """Entities to create for this model: base set plus capability-gated ones."""
+        """Entities to create: base set, capability-gated and property-backed ones."""
         keys = set(_BASE_ENTITIES)
         for cap in self.capabilities:
             if (key := _CAPABILITY_ENTITIES.get(cap)) is not None:
                 keys.add(key)
+        keys.update(
+            key
+            for prop, key in _PROPERTY_ENTITIES.items()
+            if prop in self.property_mapping
+        )
         return frozenset(keys)
+
+    @property
+    def supports_room_clean(self) -> bool:
+        """Whether the model has the actions its room-clean strategy needs."""
+        actions = self.actions
+        if self.room_clean_strategy == "direct":
+            return actions.start_room_sweep is not None
+        if self.room_clean_strategy == "config_then_custom":
+            return (
+                actions.set_room_clean_configs is not None
+                and actions.start_custom_sweep is not None
+            )
+        return False
+
+    def cleaning_job_signal(
+        self, status: int | None, task_status: int | None = None
+    ) -> CleaningJobSignal:
+        """
+        Return what the polled state reveals about the cleaning job.
+
+        A model that maps :attr:`Property.TASK_STATUS` decides from it alone: it
+        is the one value that stays set for the whole job, while the status
+        repeats codes mid-job and after it (charging, mop washing). Other models,
+        and a task status not polled yet, fall back to the status table.
+        """
+        if Property.TASK_STATUS in self.property_mapping and isinstance(
+            task_status, int
+        ):
+            if task_status == TASK_STATUS_COMPLETED:
+                return CleaningJobSignal.FINISHED
+            return CleaningJobSignal.IN_PROGRESS
+        if status is None or (signal := self.cleaning_job_signals.get(status)) is None:
+            return CleaningJobSignal.INCONCLUSIVE
+        return signal
+
+    def is_idle(self, status: int | None, task_status: int | None = None) -> bool:
+        """
+        Whether a fresh clean is safe: parked/idle with no job left to resume.
+
+        The task status vetoes an idle status while a job is still open, e.g. the
+        X20+ charging mid-job reports the same status as charging after it.
+        """
+        if status not in self.idle_statuses:
+            return False
+        return (
+            self.cleaning_job_signal(status, task_status)
+            is not CleaningJobSignal.IN_PROGRESS
+        )
 
     @property
     def fan_speed_names(self) -> dict[int, str]:

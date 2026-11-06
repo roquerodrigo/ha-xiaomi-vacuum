@@ -126,7 +126,11 @@
                     "go_charge_building_map": "Voltando à base após o mapeamento",
                     "station_assisting_cleaning": "Lavagem assistida pela base",
                     "station_assisting_cleaned": "Lavagem assistida pela base concluída",
-                    "go_charge_in_station_assisting_cleaning": "Voltando à base para lavar"
+                    "go_charge_in_station_assisting_cleaning": "Voltando à base para lavar",
+                    "drying": "Secando o mop",
+                    "dust_collecting": "Esvaziando o reservatório de pó",
+                    "water_inspecting": "Verificando a água",
+                    "washing_paused": "Lavagem do mop pausada"
                 }
             },
             "error": {
@@ -219,6 +223,9 @@
         },
         "send_command_params_unsupported": {
             "message": "O comando {command} não aceita parâmetros."
+        },
+        "room_cleaning_unsupported": {
+            "message": "A limpeza por cômodo ainda não é suportada no {model}."
         },
         "zone_cleaning_unsupported": {
             "message": "A limpeza por zona não é suportada no {model}."

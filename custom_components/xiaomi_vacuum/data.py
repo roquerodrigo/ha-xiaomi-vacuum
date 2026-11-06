@@ -39,6 +39,7 @@ class VacuumState(TypedDict):
     """
 
     status: int | None
+    task_status: NotRequired[int | None]
     sweep_mop_type: NotRequired[int | None]
     cleaning_area: NotRequired[int | None]
     cleaning_time: NotRequired[int | None]

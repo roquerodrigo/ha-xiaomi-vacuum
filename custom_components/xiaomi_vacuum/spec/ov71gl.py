@@ -35,7 +35,7 @@ from .enumerations import (
     SWEEP_MOP_TYPES,
     SWEEP_ROUTES,
 )
-from .model_actions import ModelActions
+from .model_actions import ModelActions, _require_action
 from .model_spec import ModelSpec, StatusDef
 from .property import Property
 
@@ -273,9 +273,11 @@ OV71GL = ModelSpec(
     },
     charging_state_slugs=dict(CHARGING_STATE_SLUGS),
     send_commands={
-        "start_only_sweep": _ACTIONS.start_only_sweep,
-        "start_mop": _ACTIONS.start_mop,
-        "start_sweep_mop": _ACTIONS.start_sweep_mop,
+        "start_only_sweep": _require_action(
+            _ACTIONS.start_only_sweep, "start_only_sweep"
+        ),
+        "start_mop": _require_action(_ACTIONS.start_mop, "start_mop"),
+        "start_sweep_mop": _require_action(_ACTIONS.start_sweep_mop, "start_sweep_mop"),
         "continue_sweep": _ACTIONS.continue_sweep,
     },
     fault_kind="ids",

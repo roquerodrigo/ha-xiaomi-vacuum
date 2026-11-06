@@ -126,7 +126,11 @@
                     "go_charge_building_map": "Повратак на базу након мапирања",
                     "station_assisting_cleaning": "Прање уз помоћ станице",
                     "station_assisting_cleaned": "Прање уз помоћ станице завршено",
-                    "go_charge_in_station_assisting_cleaning": "Повратак на базу на прање"
+                    "go_charge_in_station_assisting_cleaning": "Повратак на базу на прање",
+                    "drying": "Сушење крпе",
+                    "dust_collecting": "Пражњење посуде за прашину",
+                    "water_inspecting": "Провера воде",
+                    "washing_paused": "Прање крпе паузирано"
                 }
             },
             "error": {
@@ -219,6 +223,9 @@
         },
         "send_command_params_unsupported": {
             "message": "Команда {command} не прихвата параметре."
+        },
+        "room_cleaning_unsupported": {
+            "message": "Чишћење просторија још није подржано на моделу {model}."
         },
         "zone_cleaning_unsupported": {
             "message": "Чишћење зона није подржано на моделу {model}."
