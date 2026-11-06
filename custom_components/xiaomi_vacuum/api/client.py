@@ -218,6 +218,9 @@ class XiaomiVacuumApiClient:
         """
         strategy = self._spec.room_clean_strategy
         actions = self._spec.actions
+        if strategy == "none":
+            msg = f"Room cleaning is not supported on the {self._spec.name}"
+            raise XiaomiVacuumApiClientError(msg)
         if strategy == "direct":
             if actions.start_room_sweep is None:
                 msg = "direct room-clean strategy but no start_room_sweep action"

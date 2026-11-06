@@ -920,8 +920,13 @@ def test_call_action_returns_response_body_on_success():
 
 @pytest.mark.parametrize(
     "model",
-    ["xiaomi.vacuum.d109gl", "xiaomi.vacuum.b108gl", "xiaomi.vacuum.ov71gl"],
-    ids=["x20_max_d109gl", "s20_plus_b108gl", "s40_pro_ov71gl"],
+    [
+        "xiaomi.vacuum.d109gl",
+        "xiaomi.vacuum.b108gl",
+        "xiaomi.vacuum.ov71gl",
+        "xiaomi.vacuum.c102gl",
+    ],
+    ids=["x20_max_d109gl", "s20_plus_b108gl", "s40_pro_ov71gl", "x20_plus_c102gl"],
 )
 def test_every_model_action_round_trips_through_call_action(model):
     """For each supported model, every spec action survives the generic cloud path."""
@@ -973,7 +978,9 @@ def test_every_model_action_round_trips_through_call_action(model):
     }
     assert set(seen) == expected
     # Each action called exactly once (no model-specific short-circuit / dedupe).
-    assert len(seen) == len(expected)
+    # Counted per action, not per address: the X20+ resumes through its start
+    # action, so two actions can share one address.
+    assert len(seen) == sum(1 for _name, addr in pairs if addr is not None)
 
 
 def test_response_key_names_lists_keys_without_values():

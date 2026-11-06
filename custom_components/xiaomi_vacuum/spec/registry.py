@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from ..const import LOGGER  # noqa: TID252
 from .b108gl import B108GL
+from .c102gl import C102GL
 from .d109gl import D109GL
 from .ov71gl import OV71GL
 
@@ -16,6 +17,7 @@ MODELS: dict[str, ModelSpec] = {
     D109GL.model: D109GL,
     B108GL.model: B108GL,
     OV71GL.model: OV71GL,
+    C102GL.model: C102GL,
 }
 
 #: Tuple form for documentation / discovery-side checks.

@@ -7,6 +7,7 @@ from homeassistant.components.vacuum.const import VacuumActivity
 
 from custom_components.xiaomi_vacuum.spec import (
     B108GL,
+    C102GL,
     D109GL,
     DEFAULT_MODEL,
     MODELS,
@@ -21,6 +22,7 @@ def test_registry_lists_all_supported_models():
         "xiaomi.vacuum.d109gl",
         "xiaomi.vacuum.b108gl",
         "xiaomi.vacuum.ov71gl",
+        "xiaomi.vacuum.c102gl",
     }
     assert set(MODELS) == set(SUPPORTED_MODELS)
     assert DEFAULT_MODEL == "xiaomi.vacuum.d109gl"
@@ -32,6 +34,7 @@ def test_registry_lists_all_supported_models():
         ("xiaomi.vacuum.d109gl", D109GL),
         ("xiaomi.vacuum.b108gl", B108GL),
         ("xiaomi.vacuum.ov71gl", OV71GL),
+        ("xiaomi.vacuum.c102gl", C102GL),
     ],
 )
 def test_get_spec_returns_known_model(model, spec):
@@ -308,6 +311,57 @@ def test_custom_cleanings_wired_only_where_verified():
         "in_piid": 43,
     }
     assert D109GL.user_define_sweep_config == {"siid": 2, "piid": 42}
-    for spec in (B108GL, OV71GL):
+    for spec in (B108GL, OV71GL, C102GL):
         assert spec.actions.start_user_define_sweep is None
         assert spec.user_define_sweep_config is None
+
+
+@pytest.mark.parametrize("spec", [D109GL, B108GL, OV71GL], ids=lambda s: s.model)
+def test_in_house_models_keep_their_property_backed_entities(spec):
+    """Gating these on mapped properties must not drop them from older models."""
+    from custom_components.xiaomi_vacuum.spec import EntityKey
+
+    for key in (
+        EntityKey.MAP_IMAGE,
+        EntityKey.MOP_PAD_SENSOR,
+        EntityKey.SWEEP_MOP_TYPE_SELECT,
+        EntityKey.CLEAN_TIMES_SELECT,
+        EntityKey.MOP_WATER_LEVEL_SELECT,
+    ):
+        assert key in spec.entities
+
+
+@pytest.mark.parametrize(
+    ("spec", "supported"),
+    [(D109GL, True), (B108GL, True), (OV71GL, True), (C102GL, False)],
+    ids=lambda v: getattr(v, "model", str(v)),
+)
+def test_supports_room_clean(spec, supported):
+    assert spec.supports_room_clean is supported
+
+
+def test_task_status_decides_the_cleaning_job_when_mapped():
+    from custom_components.xiaomi_vacuum.spec import CleaningJobSignal
+
+    # Charging (6) and washing (9) happen mid-job and after it.
+    assert C102GL.cleaning_job_signal(6, 1) is CleaningJobSignal.IN_PROGRESS
+    assert C102GL.cleaning_job_signal(9, 0) is CleaningJobSignal.FINISHED
+    # Not polled yet: fall back to the status table.
+    assert C102GL.cleaning_job_signal(9, None) is CleaningJobSignal.INCONCLUSIVE
+    assert C102GL.cleaning_job_signal(1, None) is CleaningJobSignal.IN_PROGRESS
+    assert C102GL.cleaning_job_signal(None, None) is CleaningJobSignal.INCONCLUSIVE
+    assert C102GL.cleaning_job_signal(999, None) is CleaningJobSignal.INCONCLUSIVE
+
+
+def test_task_status_is_ignored_by_models_that_do_not_map_it():
+    from custom_components.xiaomi_vacuum.spec import CleaningJobSignal
+
+    assert D109GL.cleaning_job_signal(2, 1) is CleaningJobSignal.FINISHED
+    assert D109GL.is_idle(2, 1) is True
+
+
+def test_open_task_vetoes_a_fresh_start_from_an_idle_status():
+    assert C102GL.is_idle(6, 1) is False  # recharging mid-job: resume instead
+    assert C102GL.is_idle(6, 0) is True
+    assert C102GL.is_idle(13, None) is True
+    assert C102GL.is_idle(1, 0) is False  # sweeping is never idle

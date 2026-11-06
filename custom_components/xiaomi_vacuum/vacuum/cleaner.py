@@ -144,7 +144,8 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
 
     def _idle_at_dock(self) -> bool:
         """Whether the robot is parked/idle, so start begins a fresh clean."""
-        return self.coordinator.data.get("status") in self.spec.idle_statuses
+        data = self.coordinator.data
+        return self.spec.is_idle(data.get("status"), data.get("task_status"))
 
     async def async_pause(self) -> None:
         """Pause cleaning."""
@@ -219,6 +220,12 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         **kwargs: object,  # noqa: ARG002
     ) -> None:
         """Clean specific segments by ID."""
+        if not self.spec.supports_room_clean:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="room_cleaning_unsupported",
+                translation_placeholders={"model": self.spec.name},
+            )
         await self._client.async_clean_segments(
             segment_ids,
             room_information=self.coordinator.data.get("room_information"),

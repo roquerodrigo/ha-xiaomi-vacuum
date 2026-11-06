@@ -9,6 +9,7 @@ class Property(StrEnum):
     """Symbolic name for a MIoT property exposed by the integration."""
 
     STATUS = "status"
+    TASK_STATUS = "task_status"
     FAULT_IDS = "fault_ids"
     FAULT = "fault"
     SWEEP_MOP_TYPE = "sweep_mop_type"

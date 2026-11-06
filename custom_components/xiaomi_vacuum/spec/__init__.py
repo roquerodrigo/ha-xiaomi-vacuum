@@ -2,12 +2,12 @@
 Per-model MIoT spec for the supported Xiaomi vacuums.
 
 Each :class:`ModelSpec` bundles everything that differs between the supported
-models (currently the X20 Max ``d109gl``, the S20+ ``b108gl`` and the S40 Pro
-``ov71gl``): the
+models (currently the X20 Max ``d109gl``, the S20+ ``b108gl``, the S40 Pro
+``ov71gl`` and the Dreame-built X20+ ``c102gl``): the
 SIID/PIID property mapping, the SIID/AIID action mapping, the status-code
 table, the enumerations exposed as selects, the ``send_command`` whitelist,
 and a few derived capabilities (dust arrest, sweep route, obstacle avoidance)
-that decide whether some entities are created at all.
+and mapped properties that decide whether some entities are created at all.
 
 The models are siblings but their published miot-spec instances diverge
 enough that a single shared mapping is wrong. Adding a model means adding one
@@ -22,6 +22,7 @@ from .addresses import (
     MiotPropertyAddress,
 )
 from .b108gl import B108GL
+from .c102gl import C102GL
 from .capability import Capability
 from .cleaning_job_signal import CleaningJobSignal
 from .d109gl import D109GL
@@ -40,6 +41,7 @@ from .registry import DEFAULT_MODEL, MODELS, SUPPORTED_MODELS, get_spec
 
 __all__ = [
     "B108GL",
+    "C102GL",
     "D109GL",
     "DEFAULT_MODEL",
     "MAPPING_FIELDS",

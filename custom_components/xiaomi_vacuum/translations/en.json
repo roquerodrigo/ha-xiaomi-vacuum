@@ -126,7 +126,11 @@
                     "go_charge_building_map": "Returning to dock after mapping",
                     "station_assisting_cleaning": "Station-assisted washing",
                     "station_assisting_cleaned": "Station-assisted washing finished",
-                    "go_charge_in_station_assisting_cleaning": "Returning to dock to wash"
+                    "go_charge_in_station_assisting_cleaning": "Returning to dock to wash",
+                    "drying": "Drying mop",
+                    "dust_collecting": "Emptying dust bin",
+                    "water_inspecting": "Checking water",
+                    "washing_paused": "Mop washing paused"
                 }
             },
             "error": {
@@ -219,6 +223,9 @@
         },
         "send_command_params_unsupported": {
             "message": "The command {command} does not accept parameters."
+        },
+        "room_cleaning_unsupported": {
+            "message": "Room cleaning is not supported on the {model} yet."
         },
         "zone_cleaning_unsupported": {
             "message": "Zone cleaning is not supported on the {model}."
