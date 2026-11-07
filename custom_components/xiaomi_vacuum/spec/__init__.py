@@ -20,6 +20,7 @@ from .addresses import (
     MiotActionAddress,
     MiotActionInputAddress,
     MiotPropertyAddress,
+    MiotSegmentCleanAddress,
 )
 from .b108gl import B108GL
 from .c102gl import C102GL
@@ -31,6 +32,7 @@ from .model_actions import ModelActions, _require_action
 from .model_spec import (
     MAPPING_FIELDS,
     FaultKind,
+    MapFormat,
     ModelSpec,
     RoomCleanStrategy,
     StatusDef,
@@ -52,9 +54,11 @@ __all__ = [
     "CleaningJobSignal",
     "EntityKey",
     "FaultKind",
+    "MapFormat",
     "MiotActionAddress",
     "MiotActionInputAddress",
     "MiotPropertyAddress",
+    "MiotSegmentCleanAddress",
     "ModelActions",
     "ModelSpec",
     "Property",

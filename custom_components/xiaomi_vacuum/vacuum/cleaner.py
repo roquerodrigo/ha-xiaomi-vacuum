@@ -16,8 +16,10 @@ from homeassistant.components.vacuum.const import (
 from homeassistant.exceptions import ServiceValidationError
 
 from ..api import CleaningZone  # noqa: TID252
+from ..cloud import XiaomiCloudError  # noqa: TID252
 from ..const import DOMAIN, LOGGER  # noqa: TID252
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
+from .dreame_rooms import dreame_map_object_name, parse_dreame_rooms
 from .start_custom_cleaning import async_update_custom_cleaning_options
 
 if TYPE_CHECKING:
@@ -57,13 +59,21 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
     """Xiaomi Vacuum entity."""
 
     _attr_name = None
-    _attr_supported_features = SUPPORTED_FEATURES
     _attr_translation_key = "xiaomi_vacuum"
+    # Last room list decoded from a Dreame map, served while the cloud is down.
+    _dreame_segments: tuple[Segment, ...] = ()
 
     @property
     def spec(self) -> ModelSpec:
         """The active model's spec."""
         return self.coordinator.spec
+
+    @property
+    def supported_features(self) -> VacuumEntityFeature:
+        """Advertise area cleaning only when the model has its room-clean actions."""
+        if self.spec.supports_room_clean:
+            return SUPPORTED_FEATURES
+        return SUPPORTED_FEATURES & ~VacuumEntityFeature.CLEAN_AREA
 
     @property
     def fan_speed_list(self) -> list[str]:
@@ -211,8 +221,30 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         # not check availability — data is None while the robot has been
         # offline since startup (offline-tolerant setup).
         data: VacuumState | None = self.coordinator.data
+        if self.spec.map_format == "dreame":
+            return await self._async_get_dreame_segments(data)
         raw = data.get("room_information") if data else None
         return _parse_segments(raw)
+
+    async def _async_get_dreame_segments(
+        self, data: VacuumState | None
+    ) -> list[Segment]:
+        """Download the current Dreame map and decode its rooms."""
+        cloud = self.coordinator.cloud
+        object_name = dreame_map_object_name(data.get("map_obj_name") if data else None)
+        if cloud is None or object_name is None:
+            LOGGER.debug("No cloud session or map object; cannot list Dreame rooms")
+            return list(self._dreame_segments)
+        try:
+            raw = await cloud.async_get_map_bytes(object_name)
+        except XiaomiCloudError as exception:
+            LOGGER.warning("Failed to download the map for the rooms: %s", exception)
+            return list(self._dreame_segments)
+        if raw:
+            segments = await self.hass.async_add_executor_job(parse_dreame_rooms, raw)
+            if segments:
+                self._dreame_segments = tuple(segments)
+        return list(self._dreame_segments)
 
     async def async_clean_segments(
         self,
@@ -220,12 +252,6 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         **kwargs: object,  # noqa: ARG002
     ) -> None:
         """Clean specific segments by ID."""
-        if not self.spec.supports_room_clean:
-            raise ServiceValidationError(
-                translation_domain=DOMAIN,
-                translation_key="room_cleaning_unsupported",
-                translation_placeholders={"model": self.spec.name},
-            )
         await self._client.async_clean_segments(
             segment_ids,
             room_information=self.coordinator.data.get("room_information"),

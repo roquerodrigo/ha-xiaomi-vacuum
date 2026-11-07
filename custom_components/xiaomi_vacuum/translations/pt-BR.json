@@ -224,9 +224,6 @@
         "send_command_params_unsupported": {
             "message": "O comando {command} não aceita parâmetros."
         },
-        "room_cleaning_unsupported": {
-            "message": "A limpeza por cômodo ainda não é suportada no {model}."
-        },
         "zone_cleaning_unsupported": {
             "message": "A limpeza por zona não é suportada no {model}."
         },

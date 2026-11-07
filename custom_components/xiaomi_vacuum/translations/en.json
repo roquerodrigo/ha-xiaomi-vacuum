@@ -224,9 +224,6 @@
         "send_command_params_unsupported": {
             "message": "The command {command} does not accept parameters."
         },
-        "room_cleaning_unsupported": {
-            "message": "Room cleaning is not supported on the {model} yet."
-        },
         "zone_cleaning_unsupported": {
             "message": "Zone cleaning is not supported on the {model}."
         },

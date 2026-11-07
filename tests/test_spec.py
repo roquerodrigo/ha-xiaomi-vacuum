@@ -333,11 +333,20 @@ def test_in_house_models_keep_their_property_backed_entities(spec):
 
 @pytest.mark.parametrize(
     ("spec", "supported"),
-    [(D109GL, True), (B108GL, True), (OV71GL, True), (C102GL, False)],
+    [(D109GL, True), (B108GL, True), (OV71GL, True), (C102GL, True)],
     ids=lambda v: getattr(v, "model", str(v)),
 )
 def test_supports_room_clean(spec, supported):
     assert spec.supports_room_clean is supported
+
+
+def test_strategies_without_their_actions_do_not_support_room_clean():
+    from dataclasses import replace
+
+    no_segment_action = replace(
+        C102GL, actions=replace(C102GL.actions, start_segment_clean=None)
+    )
+    assert no_segment_action.supports_room_clean is False
 
 
 def test_task_status_decides_the_cleaning_job_when_mapped():

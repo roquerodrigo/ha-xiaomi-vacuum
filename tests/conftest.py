@@ -108,6 +108,7 @@ _SAMPLE_STATE_C102: dict[str, Any] = {
     "main_brush_life": 0,
     "side_brush_life": 0,
     "filter_life": 0,
+    "map_obj_name": '{"object_name":"1234/567/map.bin","md5":"abc"}',
 }
 
 _MODEL_MACS: dict[str, str] = {
@@ -314,6 +315,55 @@ async def setup_integration_c102(
     return entry
 
 
+def build_dreame_map(
+    rooms: dict[str, dict[str, Any]] | None,
+    *,
+    envelope: bool = True,
+    key: str = "",
+) -> bytes:
+    """Build a Dreame cloud map blob with ``rooms`` as its ``seg_inf``."""
+    import base64
+    import json
+    import zlib
+
+    width, height = 4, 3
+    header = bytearray(27)
+    header[19:21] = width.to_bytes(2, "little")
+    header[21:23] = height.to_bytes(2, "little")
+    trailer = b"" if rooms is None else json.dumps({"seg_inf": rooms}).encode()
+    frame = bytes(header) + bytes(width * height) + trailer
+    encoded = base64.b64encode(zlib.compress(frame)).decode()
+    encoded = encoded.replace("/", "_").replace("+", "-").rstrip("=")
+    if key:
+        encoded = f"{encoded},{key}"
+    if not envelope:
+        return encoded.encode()
+    maps = [
+        {"id": 0, "name": "", "angle": "0", "map": "not-the-current-map"},
+        {"id": 7, "name": "", "angle": "0", "map": encoded},
+    ]
+    return json.dumps({"mapstr": maps, "curr_id": 7}).encode()
+
+
+def b64_name(name: str) -> str:
+    """Encode a room name the way Dreame stores it in ``seg_inf``."""
+    import base64
+
+    return base64.b64encode(name.encode()).decode()
+
+
+@pytest.fixture
+def dreame_map():
+    """Factory building Dreame cloud map blobs (see :func:`build_dreame_map`)."""
+    return build_dreame_map
+
+
+@pytest.fixture
+def dreame_name():
+    """Encoder for Dreame base64 room names."""
+    return b64_name
+
+
 @pytest.fixture
 def mock_cloud() -> Generator:
     """Mock XiaomiCloud (covers both `from_session` and `__init__` paths)."""
@@ -325,6 +375,46 @@ def mock_cloud() -> Generator:
         instance.async_resolve_device = AsyncMock(return_value=device)
         instance.async_get_map_bytes = AsyncMock(return_value=b"PNG_BYTES")
         yield instance
+
+
+@pytest.fixture
+async def setup_integration_c102_with_cloud(
+    hass, mock_miot_device_c102, mock_cloud, enable_custom_integrations
+):
+    """Set up the X20+ with a cloud session; its Dreame map is never rendered."""
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    # The sample state carries the docked-with-mop notice (fault 68).
+    mock_cloud.async_fault_text = AsyncMock(return_value=None)
+
+    from custom_components.xiaomi_vacuum.const import (
+        CONF_CLOUD_COUNTRY,
+        CONF_CLOUD_SERVICE_TOKEN,
+        CONF_CLOUD_SSECURITY,
+        CONF_CLOUD_USER_ID,
+        CONF_HOST,
+        CONF_NAME,
+        CONF_TOKEN,
+        DOMAIN,
+    )
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_HOST: "192.168.1.53",
+            CONF_TOKEN: "0" * 32,
+            CONF_NAME: "X20 Plus",
+            CONF_CLOUD_COUNTRY: "de",
+            CONF_CLOUD_SSECURITY: "ssecurity_value",
+            CONF_CLOUD_SERVICE_TOKEN: "service_token_value",
+            CONF_CLOUD_USER_ID: "user_id_value",
+        },
+        unique_id="AA:BB:CC:DD:EE:03",
+    )
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    return entry
 
 
 @pytest.fixture

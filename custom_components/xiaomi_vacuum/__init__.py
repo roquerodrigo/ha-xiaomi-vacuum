@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
     from .data import DeviceInfoLike, JsonObject, XiaomiVacuumConfigEntry
+    from .spec import ModelSpec
 
 PLATFORMS: list[Platform] = [
     Platform.VACUUM,
@@ -52,12 +53,14 @@ async def _setup_cloud(
     entry: XiaomiVacuumConfigEntry,
     coordinator: XiaomiVacuumDataUpdateCoordinator,
     client: XiaomiVacuumApiClient,
+    spec: ModelSpec,
 ) -> XiaomiVacuumMapCoordinator | None:
     """
     Resolve the cloud session, wire it into the client + coordinator.
 
-    Returns the map coordinator (None when no session, or when the session is
-    invalid and reauth has been triggered). Raises ConfigEntryNotReady when the
+    Returns the map coordinator (None when no session, when the session is
+    invalid and reauth has been triggered, or when the model's map format cannot
+    be rendered yet). Raises ConfigEntryNotReady when the
     cloud is unreachable so Home Assistant retries the whole entry. The cloud
     also backs cloud-routed actions (e.g. the S20+ room-clean) via
     ``client.set_cloud``.
@@ -93,6 +96,9 @@ async def _setup_cloud(
     # Route multi-step actions (e.g. the S20+ room-clean) through the cloud for
     # reliability — local UDP routinely times out (-9999).
     client.set_cloud(cloud)
+    if spec.map_format != "xiaomi":
+        # Dreame maps are not rendered yet; the vacuum still reads their rooms.
+        return None
     return XiaomiVacuumMapCoordinator(hass, cloud=cloud, state_coordinator=coordinator)
 
 
@@ -153,7 +159,7 @@ async def async_setup_entry(
             token=entry.data[CONF_TOKEN],
             spec=spec,
         )
-    map_coordinator = await _setup_cloud(hass, entry, coordinator, client)
+    map_coordinator = await _setup_cloud(hass, entry, coordinator, client, spec)
 
     entry.runtime_data = XiaomiVacuumData(
         client=client,

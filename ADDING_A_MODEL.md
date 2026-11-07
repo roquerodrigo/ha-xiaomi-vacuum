@@ -70,7 +70,9 @@ mode-specific start actions, and a task-status property (`Property.TASK_STATUS`)
 that decides the cleaning job instead of the status table. Entities backed by
 one property (mop pad, mode, clean times, water level, map) are only created
 when the spec maps that property, so leave unmapped what the model packs into a
-Dreame bitfield.
+Dreame bitfield. Set `map_format="dreame"`: the map object property is still
+mapped, but the map is not rendered and the room list is decoded from its
+segment metadata instead of a room-information property.
 
 **Check the retail hardware, not just the spec.** Xiaomi reuses one spec
 template across a product line: the S40 Pro (`ov71gl`) publishes dust-arrest
@@ -219,6 +221,11 @@ Set `room_clean_strategy`:
   and `actions.start_custom_sweep`. This flow is routed through the cloud
   when a session is available — local UDP routinely times out on the
   multi-step sequence.
+- `"dreame_segment"` — Dreame-built models: the generic `start-clean` action
+  with the segment work mode (18) and a `{"selects": [[room, repeat, fan,
+  water, order], ...]}` room selection. Wire `actions.start_segment_clean`
+  with its `mode_piid` and `data_piid`. The X20+ acknowledges its
+  spec-published `start-room-sweep` but ignores it.
 
 If you can't capture the app flow, start with `"direct"` and verify with a
 real device; the S20+ ignored its spec-published direct action.

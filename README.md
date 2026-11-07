@@ -13,7 +13,7 @@ A [Home Assistant](https://www.home-assistant.io/) integration for the
 **Xiaomi Robot Vacuum X20 Max** (`xiaomi.vacuum.d109gl`), **Xiaomi Robot
 Vacuum S20+** (`xiaomi.vacuum.b108gl`), **Xiaomi Robot Vacuum S40 Pro**
 (`xiaomi.vacuum.ov71gl`) and **Xiaomi Robot Vacuum X20+** (`xiaomi.vacuum.c102gl`,
-basic support).
+no map image yet).
 
 Day-to-day control and state polling run **locally** over the MIoT protocol
 (`iot_class: local_polling`). The Xiaomi cloud is used for one-time setup —
@@ -32,9 +32,11 @@ for two cloud-only extras: the **map image** and **localized error messages**.
 >
 > The X20+ is built by Dreame and uses a different MIoT layout. It supports
 > start / pause / stop / dock / locate, fan speed, mop water level, status,
-> battery, consumables, errors, the mop-pad sensor and the dust-bin button.
-> Room cleaning, the map and the cleaning-mode / clean-times selects are not
-> available on it yet; pick the cleaning mode in Mi Home.
+> battery, consumables, errors, the mop-pad sensor, the dust-bin button and
+> room cleaning. Its room list is read from the cloud map, so it needs the
+> Xiaomi cloud login; rooms left unnamed in Mi Home are skipped. The map image
+> and the cleaning-mode / clean-times selects are not available on it yet; pick
+> the cleaning mode in Mi Home.
 
 ## Features
 

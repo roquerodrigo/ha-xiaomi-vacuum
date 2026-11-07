@@ -27,9 +27,19 @@ FaultKind = Literal["ids", "simple"]
 # - "config_then_custom": the app first marks the target rooms via
 #   `set-room-clean-configs` (setting their `on` flag), then fires
 #   `start-custom-sweep` with no params (S20+). Captured from the Mi Home app.
-# - "none": room cleaning is not wired for this model yet (X20+, pending the
-#   Dreame-style segment clean).
-RoomCleanStrategy = Literal["direct", "config_then_custom", "none"]
+# - "dreame_segment": the Dreame `start-clean` action with the segment work
+#   mode and a `{"selects": [[room, repeat, fan, water, order], ...]}` room
+#   selection (X20+). The spec's own `start-room-sweep` is acknowledged but
+#   ignored by the firmware.
+RoomCleanStrategy = Literal["direct", "config_then_custom", "dreame_segment"]
+
+# Format of the cloud map blob, which also decides where the room list comes
+# from.
+# - "xiaomi": rendered to the map image by xiaomi-vacuum-sdk; rooms come from
+#   the room-information property.
+# - "dreame": not rendered yet, so no map image; rooms are decoded from the
+#   map's segment metadata (X20+).
+MapFormat = Literal["xiaomi", "dreame"]
 
 #: Task-status value meaning "no job open". Dreame-built models publish a
 #: task-status property (0 completed, 1 auto clean, 2 zone, 3 room, 6+ the
@@ -77,7 +87,8 @@ _BASE_ENTITIES: frozenset[EntityKey] = frozenset(
 #: Entities backed by one property, created only when the model maps it. The
 #: Xiaomi in-house models map all of them; the X20+ packs its sweep/mop mode
 #: into a Dreame clean-setting bitfield, publishes no clean-times property, and
-#: has no map entity until its Dreame map format can be rendered.
+#: has no map entity until its Dreame map format can be rendered (see
+#: :attr:`ModelSpec.entities`).
 _PROPERTY_ENTITIES: dict[Property, EntityKey] = {
     Property.MAP_OBJ_NAME: EntityKey.MAP_IMAGE,
     Property.MOP_STATUS: EntityKey.MOP_PAD_SENSOR,
@@ -142,6 +153,7 @@ class ModelSpec:
     # every cleaning saved in Mi Home and would push the batched poll reply past
     # the single-datagram limit.
     user_define_sweep_config: MiotPropertyAddress | None = None
+    map_format: MapFormat = "xiaomi"
 
     def __post_init__(self) -> None:
         """Wrap the mutable dict fields in read-only views."""
@@ -212,6 +224,8 @@ class ModelSpec:
             for prop, key in _PROPERTY_ENTITIES.items()
             if prop in self.property_mapping
         )
+        if self.map_format != "xiaomi":
+            keys.discard(EntityKey.MAP_IMAGE)
         return frozenset(keys)
 
     @property
@@ -225,7 +239,7 @@ class ModelSpec:
                 actions.set_room_clean_configs is not None
                 and actions.start_custom_sweep is not None
             )
-        return False
+        return actions.start_segment_clean is not None
 
     def cleaning_job_signal(
         self, status: int | None, task_status: int | None = None
