@@ -2,9 +2,10 @@
 
 The X20+ is Dreame-built: its actions sit on different services from every
 in-house model (stop is the Dreame stop-clean 4/2, pause is 2/2, locate 7/1),
-it publishes no sweep/mop type, clean-times or map properties, and its task
-status (4.7) decides the cleaning job instead of the status table. Status
-sequences below are replayed from a trace of a real sweep-and-mop run.
+it publishes no sweep/mop type or clean-times properties, its task status (4.7)
+decides the cleaning job instead of the status table, rooms are cleaned through
+the Dreame start-clean and listed from the cloud map. Status sequences below are
+replayed from a trace of a real sweep-and-mop run.
 """
 
 from __future__ import annotations
@@ -12,7 +13,6 @@ from __future__ import annotations
 import pytest
 from homeassistant.components.vacuum.const import VacuumActivity
 from homeassistant.config_entries import ConfigEntryState
-from homeassistant.exceptions import ServiceValidationError
 from xiaomi_vacuum_sdk import ActionAddress
 
 # Top-level import triggers custom-component loading in the HA pytest harness.
@@ -57,6 +57,16 @@ async def test_c102_creates_the_dust_arrest_button(hass, setup_integration_c102)
 
 async def test_c102_has_no_map_entity(hass, setup_integration_c102):
     """The Dreame map format cannot be rendered yet, so no empty map entity."""
+    assert hass.states.async_all("image") == []
+
+
+async def test_c102_cloud_session_skips_the_map_renderer(
+    hass, setup_integration_c102_with_cloud, mock_cloud
+):
+    entry = setup_integration_c102_with_cloud
+    assert entry.state == ConfigEntryState.LOADED
+    assert entry.runtime_data.map_coordinator is None
+    assert entry.runtime_data.coordinator.cloud is mock_cloud
     assert hass.states.async_all("image") == []
 
 
@@ -125,11 +135,123 @@ async def test_c102_fan_speed_writes_the_zero_based_value(
     )
 
 
-async def test_c102_room_cleaning_is_refused_clearly(hass, setup_integration_c102):
-    entity = hass.data["entity_components"]["vacuum"].get_entity(VACUUM_ID)
-    with pytest.raises(ServiceValidationError) as err:
-        await entity.async_clean_segments(["1"])
-    assert err.value.translation_key == "room_cleaning_unsupported"
+def _vacuum(hass):
+    return hass.data["entity_components"]["vacuum"].get_entity(VACUUM_ID)
+
+
+async def test_c102_room_clean_sends_the_dreame_segment_clean(
+    hass, setup_integration_c102, mock_miot_device_c102
+):
+    """Rooms go in the given order, with the current fan speed and water level."""
+    mock_miot_device_c102.call_action.reset_mock()
+    await _vacuum(hass).async_clean_segments(["4", "1"])
+    mock_miot_device_c102.call_action.assert_called_once_with(
+        ActionAddress(siid=4, aiid=1),
+        [
+            {"piid": 1, "value": 18},
+            {"piid": 10, "value": '{"selects":[[4,1,1,2,1],[1,1,1,2,2]]}'},
+        ],
+    )
+    assert hass.states.get(VACUUM_ID).state == VacuumActivity.CLEANING
+
+
+async def test_c102_room_clean_needs_the_fan_speed_and_water_level(
+    hass, setup_integration_c102, mock_miot_device_c102
+):
+    """An unanswered settings read must not send a selection with nulls."""
+    from custom_components.xiaomi_vacuum.api import XiaomiVacuumApiClientError
+
+    mock_miot_device_c102.call_action.reset_mock()
+    mock_miot_device_c102.get_properties.side_effect = lambda mapping, **_: (
+        dict.fromkeys(mapping)
+    )
+    with pytest.raises(XiaomiVacuumApiClientError):
+        await _vacuum(hass).async_clean_segments(["1"])
+    mock_miot_device_c102.call_action.assert_not_called()
+
+
+async def test_c102_advertises_area_cleaning(hass, setup_integration_c102):
+    from homeassistant.components.vacuum.const import VacuumEntityFeature
+
+    assert _vacuum(hass).supported_features & VacuumEntityFeature.CLEAN_AREA
+
+
+async def test_area_cleaning_hidden_without_room_clean_actions(
+    hass, setup_integration_c102
+):
+    """A model missing its strategy's actions never offers clean_area."""
+    from dataclasses import replace
+
+    from homeassistant.components.vacuum.const import VacuumEntityFeature
+
+    spec = setup_integration_c102.runtime_data.spec
+    setup_integration_c102.runtime_data.spec = replace(
+        spec, actions=replace(spec.actions, start_segment_clean=None)
+    )
+    features = _vacuum(hass).supported_features
+    assert not features & VacuumEntityFeature.CLEAN_AREA
+    assert features & VacuumEntityFeature.START
+
+
+async def test_c102_room_clean_rejects_a_non_numeric_room(
+    hass, setup_integration_c102, mock_miot_device_c102
+):
+    from custom_components.xiaomi_vacuum.api import XiaomiVacuumApiClientError
+
+    mock_miot_device_c102.call_action.reset_mock()
+    with pytest.raises(XiaomiVacuumApiClientError):
+        await _vacuum(hass).async_clean_segments(["kitchen"])
+    mock_miot_device_c102.call_action.assert_not_called()
+
+
+async def test_c102_rooms_come_from_the_dreame_map(
+    hass, setup_integration_c102_with_cloud, mock_cloud, dreame_map, dreame_name
+):
+    """Unnamed segments (doorways the lidar mapped) are left out."""
+    mock_cloud.async_get_map_bytes.return_value = dreame_map(
+        {
+            "5": {"name": dreame_name("Escritório"), "type": 0},
+            "1": {"name": dreame_name("Living room"), "type": 0},
+            "4": {"type": 0},
+        }
+    )
+    segments = await _vacuum(hass).async_get_segments()
+    mock_cloud.async_get_map_bytes.assert_awaited_with("1234/567/map.bin")
+    assert [(s.id, s.name) for s in segments] == [
+        ("1", "Living room"),
+        ("5", "Escritório"),
+    ]
+
+
+async def test_c102_rooms_survive_a_cloud_failure(
+    hass, setup_integration_c102_with_cloud, mock_cloud, dreame_map, dreame_name
+):
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudConnectionError
+
+    mock_cloud.async_get_map_bytes.return_value = dreame_map(
+        {"1": {"name": dreame_name("Living room")}}
+    )
+    vacuum = _vacuum(hass)
+    first = await vacuum.async_get_segments()
+    mock_cloud.async_get_map_bytes.side_effect = XiaomiCloudConnectionError("down")
+    assert await vacuum.async_get_segments() == first
+    mock_cloud.async_get_map_bytes.side_effect = None
+    mock_cloud.async_get_map_bytes.return_value = None
+    assert await vacuum.async_get_segments() == first
+    mock_cloud.async_get_map_bytes.return_value = b"garbage"
+    assert await vacuum.async_get_segments() == first
+
+
+async def test_c102_rooms_need_the_cloud(hass, setup_integration_c102):
+    assert await _vacuum(hass).async_get_segments() == []
+
+
+async def test_c102_rooms_need_the_map_object(
+    hass, setup_integration_c102_with_cloud, mock_cloud
+):
+    await _report(hass, setup_integration_c102_with_cloud, map_obj_name=None)
+    assert await _vacuum(hass).async_get_segments() == []
+    mock_cloud.async_get_map_bytes.assert_not_awaited()
 
 
 async def test_c102_cleaning_follows_the_task_status_through_a_mop_run(
@@ -179,6 +301,10 @@ def test_c102_spec_registers_the_dock_actions_as_commands():
 
 
 def test_c102_entities_skip_the_unmapped_properties():
+    """The map object is mapped for the rooms, but the Dreame map is not drawn."""
+    from custom_components.xiaomi_vacuum.spec import Property
+
+    assert Property.MAP_OBJ_NAME in C102GL.property_mapping
     entities = C102GL.entities
     assert EntityKey.MOP_PAD_SENSOR in entities
     assert EntityKey.MOP_WATER_LEVEL_SELECT in entities

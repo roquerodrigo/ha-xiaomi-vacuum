@@ -54,6 +54,10 @@ _DEVICE_TIMEOUT_SECONDS = 10.0
 # past that limit and leave every poll unanswered.
 _STANDALONE_PROPERTIES = frozenset({Property.ROOM_INFORMATION})
 
+# Dreame work mode that cleans the selected segments, and the passes per room.
+_DREAME_SEGMENT_WORK_MODE = 18
+_DREAME_SEGMENT_REPEATS = 1
+
 
 class XiaomiVacuumApiClient:
     """Local MIoT client backed by ``xiaomi-vacuum-sdk`` for one model."""
@@ -215,12 +219,13 @@ class XiaomiVacuumApiClient:
           ``set-room-clean-configs``, then fire ``start-custom-sweep``. The
           spec's ``start-vacuum-room-sweep`` (aiid 13) exists but the robot
           ignores it and returns to the dock.
+        * ``dreame_segment`` (X20+) — fire the Dreame ``start-clean`` with the
+          segment work mode and a room selection carrying the current fan speed
+          and water level. The spec's ``start-room-sweep`` is acknowledged but
+          ignored.
         """
         strategy = self._spec.room_clean_strategy
         actions = self._spec.actions
-        if strategy == "none":
-            msg = f"Room cleaning is not supported on the {self._spec.name}"
-            raise XiaomiVacuumApiClientError(msg)
         if strategy == "direct":
             if actions.start_room_sweep is None:
                 msg = "direct room-clean strategy but no start_room_sweep action"
@@ -234,6 +239,9 @@ class XiaomiVacuumApiClient:
             ]
             LOGGER.debug("Calling start-vacuum-room-sweep with payload: %s", payload)
             await self._run_action(self._client.call_action(_address(action), payload))
+            return
+        if strategy == "dreame_segment":
+            await self._async_clean_dreame_segments(segment_ids)
             return
 
         # config_then_custom (S20+)
@@ -271,6 +279,47 @@ class XiaomiVacuumApiClient:
         await self._call_action_cloud_or_local(
             start_action["siid"], start_action["aiid"], []
         )
+
+    async def _async_clean_dreame_segments(self, segment_ids: list[str]) -> None:
+        """Start a Dreame segment clean of the given rooms, in the given order."""
+        action = self._spec.actions.start_segment_clean
+        if action is None:
+            msg = "dreame_segment room-clean strategy but no start_segment_clean action"
+            raise XiaomiVacuumApiClientError(msg)
+        try:
+            rooms = [int(segment_id) for segment_id in segment_ids]
+        except ValueError as exception:
+            msg = f"Failed to clean rooms: invalid room id in {segment_ids}"
+            raise XiaomiVacuumApiClientError(msg) from exception
+        # The selection repeats the fan speed and water level per room; the
+        # current settings keep the clean consistent with the app's choice.
+        settings = await self._run(
+            self._client.get_properties(
+                {
+                    name: self._properties[name]
+                    for name in (Property.FAN_SPEED, Property.MOP_WATER_LEVEL)
+                    if name in self._properties
+                }
+            )
+        )
+        fan = settings.get(Property.FAN_SPEED)
+        water = settings.get(Property.MOP_WATER_LEVEL)
+        if fan is None or water is None:
+            msg = "Failed to clean rooms: could not read the fan speed and water level"
+            raise XiaomiVacuumApiClientError(msg)
+        selects: list[JsonValue] = [
+            [room, _DREAME_SEGMENT_REPEATS, fan, water, order]
+            for order, room in enumerate(rooms, start=1)
+        ]
+        payload: list[JsonValue] = [
+            {"piid": action["mode_piid"], "value": _DREAME_SEGMENT_WORK_MODE},
+            {
+                "piid": action["data_piid"],
+                "value": json.dumps({"selects": selects}, separators=(",", ":")),
+            },
+        ]
+        LOGGER.debug("Calling Dreame start-clean with payload: %s", payload)
+        await self._run_action(self._client.call_action(_address(action), payload))
 
     async def async_clean_zones(
         self, zones: Sequence[CleaningZone], repeats: int | None = None

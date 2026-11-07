@@ -224,9 +224,6 @@
         "send_command_params_unsupported": {
             "message": "Komanda {command} ne prihvata parametre."
         },
-        "room_cleaning_unsupported": {
-            "message": "Čišćenje prostorija još nije podržano na modelu {model}."
-        },
         "zone_cleaning_unsupported": {
             "message": "Čišćenje zona nije podržano na modelu {model}."
         },

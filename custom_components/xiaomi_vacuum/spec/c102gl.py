@@ -21,7 +21,10 @@ its layout shares almost nothing with the in-house models:
   recharges included, so it decides the cleaning job and blocks fresh starts
 - the status follows the selected mode while cleaning: 1 sweep only, 7 mop
   only, 12 sweep and mop
-- room cleaning and the map use Dreame formats and are not wired yet
+- room cleaning goes through the Dreame ``start-clean`` (4/1) with the segment
+  work mode; the spec's ``start-room-sweep`` (2/3) is acknowledged but ignored
+- the map is a Dreame blob: not rendered yet, but its segment metadata gives
+  the room list
 """
 
 from __future__ import annotations
@@ -59,6 +62,8 @@ _PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
     Property.SIDE_BRUSH_LIFE: {"siid": 10, "piid": 2},
     Property.FILTER_LIFE: {"siid": 11, "piid": 1},
     Property.MOP_LIFE: {"siid": 18, "piid": 1},
+    # {"object_name": ..., "md5": ...} of the current map in the Xiaomi cloud.
+    Property.MAP_OBJ_NAME: {"siid": 6, "piid": 8},
 }
 
 _ACTIONS = ModelActions(
@@ -72,6 +77,8 @@ _ACTIONS = ModelActions(
     start_mop_wash={"siid": 2, "aiid": 6},
     start_dry={"siid": 2, "aiid": 8},
     stop_dry={"siid": 2, "aiid": 9},
+    # Dreame start-clean: piid 1 work mode, piid 10 clean-extend data.
+    start_segment_clean={"siid": 4, "aiid": 1, "mode_piid": 1, "data_piid": 10},
 )
 
 # Canonical code per activity first (status_code_for): 1 CLEANING, 2 IDLE,
@@ -222,7 +229,7 @@ C102GL = ModelSpec(
         "stop_dry": _require_action(_ACTIONS.stop_dry, "stop_dry"),
     },
     fault_kind="simple",
-    room_clean_strategy="none",
+    room_clean_strategy="dreame_segment",
     # Routine prompts, not faults:
     # - 68 is published while the robot sits in the dock with its mop pads on
     #   (fully charged, drying) and clears as soon as it leaves or the pads
@@ -230,4 +237,5 @@ C102GL = ModelSpec(
     # - 114 asks to rinse the dock's mop-washing tray after a mop job, seen
     #   while drying.
     notice_fault_codes=frozenset({68, 114}),
+    map_format="dreame",
 )

@@ -498,3 +498,17 @@ async def test_custom_cleanings_without_support_raise(mock_miot_device):
             CustomCleaning(identifier=1, name="Any")
         )
     mock_miot_device.call_action.assert_not_called()
+
+
+async def test_c102_clean_segments_without_the_segment_action_raises(
+    mock_miot_device_c102,
+):
+    from dataclasses import replace
+
+    from custom_components.xiaomi_vacuum.spec import C102GL
+
+    spec = replace(C102GL, actions=replace(C102GL.actions, start_segment_clean=None))
+    client = _client(mock_miot_device_c102, spec=spec)
+    with pytest.raises(XiaomiVacuumApiClientError):
+        await client.async_clean_segments(["1"])
+    mock_miot_device_c102.call_action.assert_not_called()

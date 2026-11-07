@@ -23,3 +23,15 @@ class MiotActionInputAddress(MiotActionAddress):
     """A :class:`MiotActionAddress` that also takes a property as its input."""
 
     in_piid: int
+
+
+class MiotSegmentCleanAddress(MiotActionAddress):
+    """
+    A Dreame ``start-clean`` action: work mode plus clean-extend data inputs.
+
+    Room cleaning sends the segment work mode on ``mode_piid`` and the JSON
+    room selection on ``data_piid`` in one call.
+    """
+
+    mode_piid: int
+    data_piid: int
