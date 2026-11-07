@@ -101,13 +101,15 @@ class XiaomiCloud:
         # A dedicated session (own cookie jar) keeps the Xiaomi account cookies
         # set during login out of Home Assistant's shared client session, where
         # any integration hitting a Xiaomi domain would silently replay them.
-        session = async_create_clientsession(self._hass)
+        # It shares Home Assistant's connector, so it is released with detach();
+        # Home Assistant forbids close() on the sessions it creates.
+        session = async_create_clientsession(self._hass, auto_cleanup=False)
         try:
             return await self._async_poll_qr_login_in_session(
                 session, long_polling_url, timeout
             )
         finally:
-            await session.close()
+            session.detach()
 
     async def _async_poll_qr_login_in_session(  # noqa: PLR0911
         self,
