@@ -83,12 +83,22 @@ class MapCalibration(TypedDict):
     border: int
 
 
+class MapRoom(TypedDict):
+    """A named room decoded from the map, keyed by the id room-clean takes."""
+
+    id: str
+    name: str
+
+
 class RenderedMap(TypedDict):
-    """One rendered map: the PNG plus the calibration its render used."""
+    """One rendered map: the PNG, the calibration its render used, its rooms."""
 
     png: bytes
     # None for a PNG restored from a cache written before calibration existed.
     calibration: MapCalibration | None
+    # Named rooms carried by the map itself (Dreame format); the Xiaomi models
+    # publish theirs in a property instead, so their maps carry none.
+    rooms: NotRequired[list[MapRoom]]
 
 
 class CloudSessionTokens(TypedDict):

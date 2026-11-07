@@ -26,7 +26,7 @@ def _cloud(map_bytes=b"BIN"):
     return cloud
 
 
-MAP_DATA = SimpleNamespace(width=115, height=241)
+MAP_DATA = SimpleNamespace(width=115, height=241, segments=())
 
 # The real projection the SDK renderer would have drawn with, so the
 # calibration the coordinator derives is checked against the genuine type.
@@ -51,7 +51,8 @@ CALIBRATION = {
 
 
 def _rendered(png=b"FAKEPNG", calibration=CALIBRATION):
-    return {"png": png, "calibration": calibration}
+    # Xiaomi maps carry no rooms; theirs come from a property.
+    return {"png": png, "calibration": calibration, "rooms": []}
 
 
 def _fake_renderer(coord, png=b"FAKEPNG", error=None):
@@ -279,7 +280,7 @@ def test_render_blob_keeps_only_the_calibration_not_the_parsed_map(hass):
     coord = XiaomiVacuumMapCoordinator(hass, _cloud(), _state_coord())
     _fake_renderer(coord)
     rendered = coord._render_blob(b"raw", "xiaomi.vacuum.d109gl", "1")
-    assert set(rendered) == {"png", "calibration"}
+    assert set(rendered) == {"png", "calibration", "rooms"}
     assert set(rendered["calibration"]) == set(CALIBRATION)
 
 

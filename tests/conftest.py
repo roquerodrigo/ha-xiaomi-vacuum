@@ -18,7 +18,7 @@ pytest_plugins = "pytest_homeassistant_custom_component"
 # with, so the coordinator derives its calibration from a realistic shape.
 RENDERED_MAP = SimpleNamespace(
     png=b"png-bytes",
-    map_data=SimpleNamespace(width=115, height=241),
+    map_data=SimpleNamespace(width=115, height=241, segments=()),
     coordinates=CoordinateSystem(
         origin_x=-2750.0,
         origin_y=-7800.0,
@@ -328,6 +328,7 @@ def build_dreame_map(
 
     width, height = 4, 3
     header = bytearray(27)
+    header[17:19] = (50).to_bytes(2, "little")  # millimetres per cell
     header[19:21] = width.to_bytes(2, "little")
     header[21:23] = height.to_bytes(2, "little")
     trailer = b"" if rooms is None else json.dumps({"seg_inf": rooms}).encode()
@@ -386,6 +387,9 @@ async def setup_integration_c102_with_cloud(
 
     # The sample state carries the docked-with-mop notice (fault 68).
     mock_cloud.async_fault_text = AsyncMock(return_value=None)
+    mock_cloud.async_get_map_bytes = AsyncMock(
+        return_value=build_dreame_map({"1": {"name": b64_name("Living room")}})
+    )
 
     from custom_components.xiaomi_vacuum.const import (
         CONF_CLOUD_COUNTRY,

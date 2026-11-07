@@ -70,9 +70,9 @@ mode-specific start actions, and a task-status property (`Property.TASK_STATUS`)
 that decides the cleaning job instead of the status table. Entities backed by
 one property (mop pad, mode, clean times, water level, map) are only created
 when the spec maps that property, so leave unmapped what the model packs into a
-Dreame bitfield. Set `map_format="dreame"`: the map object property is still
-mapped, but the map is not rendered and the room list is decoded from its
-segment metadata instead of a room-information property.
+Dreame bitfield. Set `map_format="dreame"`: the map is decoded by the SDK's
+`DreameMapDecoder` instead of the Xiaomi decryptor, and the room list comes
+from its segment metadata instead of a room-information property.
 
 **Check the retail hardware, not just the spec.** Xiaomi reuses one spec
 template across a product line: the S40 Pro (`ov71gl`) publishes dust-arrest

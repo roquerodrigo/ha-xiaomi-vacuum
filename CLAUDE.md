@@ -3,7 +3,7 @@
 Home Assistant custom integration for the **Xiaomi Robot Vacuum X20 Max**
 (`xiaomi.vacuum.d109gl`), **Xiaomi Robot Vacuum S20+** (`xiaomi.vacuum.b108gl`),
 **Xiaomi Robot Vacuum S40 Pro** (`xiaomi.vacuum.ov71gl`) and the Dreame-built
-**Xiaomi Robot Vacuum X20+** (`xiaomi.vacuum.c102gl`, no map image yet), domain
+**Xiaomi Robot Vacuum X20+** (`xiaomi.vacuum.c102gl`), domain
 `xiaomi_vacuum`. Public repo, HACS-distributed.
 
 Read `README.md` for the user-facing feature list and setup flow,
@@ -20,7 +20,8 @@ here.
   `iot_class: local_polling` over MIoT via `xiaomi-vacuum-sdk`. The Xiaomi cloud
   (`custom_components/xiaomi_vacuum/cloud/`) is used only for the QR-login
   setup flow, the map image, localized error text, and the X20+ room list
-  (decoded from its Dreame cloud map in `vacuum/dreame_rooms.py`).
+  (decoded from its Dreame cloud map, `spec.map_format == "dreame"`, by the
+  SDK's `DreameMapDecoder`).
 - **Entity platforms**, each its own subpackage under
   `custom_components/xiaomi_vacuum/`: `vacuum/`, `image/`, `sensor/`,
   `binary_sensor/`, `select/`, `button/`. Every concrete entity is its own

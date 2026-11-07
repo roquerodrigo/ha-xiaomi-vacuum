@@ -33,12 +33,12 @@ FaultKind = Literal["ids", "simple"]
 #   ignored by the firmware.
 RoomCleanStrategy = Literal["direct", "config_then_custom", "dreame_segment"]
 
-# Format of the cloud map blob, which also decides where the room list comes
-# from.
-# - "xiaomi": rendered to the map image by xiaomi-vacuum-sdk; rooms come from
-#   the room-information property.
-# - "dreame": not rendered yet, so no map image; rooms are decoded from the
-#   map's segment metadata (X20+).
+# Format of the cloud map blob, which picks the xiaomi-vacuum-sdk decoder and
+# where the room list comes from.
+# - "xiaomi": encrypted Xiaomi JSON payload; rooms come from the
+#   room-information property.
+# - "dreame": Dreame frame (pixel grid plus JSON trailer); rooms are decoded
+#   from the map's segment metadata (X20+).
 MapFormat = Literal["xiaomi", "dreame"]
 
 #: Task-status value meaning "no job open". Dreame-built models publish a
@@ -86,9 +86,7 @@ _BASE_ENTITIES: frozenset[EntityKey] = frozenset(
 
 #: Entities backed by one property, created only when the model maps it. The
 #: Xiaomi in-house models map all of them; the X20+ packs its sweep/mop mode
-#: into a Dreame clean-setting bitfield, publishes no clean-times property, and
-#: has no map entity until its Dreame map format can be rendered (see
-#: :attr:`ModelSpec.entities`).
+#: into a Dreame clean-setting bitfield and publishes no clean-times property.
 _PROPERTY_ENTITIES: dict[Property, EntityKey] = {
     Property.MAP_OBJ_NAME: EntityKey.MAP_IMAGE,
     Property.MOP_STATUS: EntityKey.MOP_PAD_SENSOR,
@@ -224,8 +222,6 @@ class ModelSpec:
             for prop, key in _PROPERTY_ENTITIES.items()
             if prop in self.property_mapping
         )
-        if self.map_format != "xiaomi":
-            keys.discard(EntityKey.MAP_IMAGE)
         return frozenset(keys)
 
     @property
