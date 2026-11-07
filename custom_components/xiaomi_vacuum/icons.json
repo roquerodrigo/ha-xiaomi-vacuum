@@ -21,6 +21,30 @@
             },
             "main_brush_life": {
                 "default": "mdi:broom"
+            },
+            "main_brush_time_left": {
+                "default": "mdi:timer-sand"
+            },
+            "side_brush_time_left": {
+                "default": "mdi:timer-sand"
+            },
+            "filter_time_left": {
+                "default": "mdi:timer-sand"
+            },
+            "mop_time_left": {
+                "default": "mdi:timer-sand"
+            },
+            "drying_time_left": {
+                "default": "mdi:fan-clock"
+            },
+            "total_clean_time": {
+                "default": "mdi:timer-outline"
+            },
+            "total_clean_count": {
+                "default": "mdi:counter"
+            },
+            "total_clean_area": {
+                "default": "mdi:texture-box"
             }
         },
         "select": {
@@ -43,6 +67,49 @@
         "button": {
             "dust_arrest": {
                 "default": "mdi:delete-empty"
+            },
+            "start_mop_wash": {
+                "default": "mdi:water-sync"
+            },
+            "stop_mop_wash": {
+                "default": "mdi:water-off"
+            },
+            "start_dry": {
+                "default": "mdi:fan"
+            },
+            "stop_dry": {
+                "default": "mdi:fan-off"
+            },
+            "reset_main_brush": {
+                "default": "mdi:broom"
+            },
+            "reset_side_brush": {
+                "default": "mdi:broom"
+            },
+            "reset_filter": {
+                "default": "mdi:air-filter"
+            },
+            "reset_mop": {
+                "default": "mdi:water-percent"
+            }
+        },
+        "switch": {
+            "child_lock": {
+                "default": "mdi:lock"
+            },
+            "carpet_boost": {
+                "default": "mdi:rug"
+            },
+            "resume_after_charge": {
+                "default": "mdi:battery-sync"
+            },
+            "do_not_disturb": {
+                "default": "mdi:minus-circle"
+            }
+        },
+        "number": {
+            "volume": {
+                "default": "mdi:volume-high"
             }
         }
     },

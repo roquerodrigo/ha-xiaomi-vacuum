@@ -69,9 +69,30 @@ def _authored_entity_keys() -> set[tuple[str, str]]:
     }
 
 
+async def _add_x20_plus(hass, make_miot_instance) -> None:
+    """Set up an X20+ next to the X20 Max, adding its Dreame-only entities."""
+    from unittest.mock import patch
+
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.xiaomi_vacuum.const import CONF_HOST, CONF_NAME, CONF_TOKEN
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_HOST: "192.168.1.53", CONF_TOKEN: "0" * 32, CONF_NAME: "X20 Plus"},
+        unique_id="AA:BB:CC:DD:EE:03",
+    )
+    entry.add_to_hass(hass)
+    with patch("custom_components.xiaomi_vacuum.api.client.MiotClient") as cls:
+        cls.return_value = make_miot_instance("xiaomi.vacuum.c102gl")
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+
 async def test_entity_translation_keys_and_authored_names_agree(
     hass,
     setup_integration_with_cloud,
+    make_miot_instance,
 ):
     """
     Every translation key an entity asks for is authored, and vice versa.
@@ -82,10 +103,12 @@ async def test_entity_translation_keys_and_authored_names_agree(
     locales against each other cannot catch this either — a key missing from
     both sides matches, and the entity falls back to its device-class name
     while the authored one never shows. The cloud-backed X20 Max fixture
-    creates the full entity roster (the map image entity included), so its
-    registry covers every authored key.
+    (the map image entity included) plus an X20+ for the Dreame-only extras
+    create the full entity roster, so their registry covers every authored key.
     """
     from homeassistant.helpers import entity_registry as er
+
+    await _add_x20_plus(hass, make_miot_instance)
 
     registry = er.async_get(hass)
     requested = {

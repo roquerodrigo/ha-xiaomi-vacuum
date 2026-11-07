@@ -13,6 +13,7 @@ from __future__ import annotations
 import pytest
 from homeassistant.components.vacuum.const import VacuumActivity
 from homeassistant.config_entries import ConfigEntryState
+from homeassistant.exceptions import ServiceValidationError
 from xiaomi_vacuum_sdk import ActionAddress
 
 # Top-level import triggers custom-component loading in the HA pytest harness.
@@ -40,19 +41,192 @@ async def test_c102_picks_the_right_spec(hass, setup_integration_c102):
     assert spec.capabilities == frozenset({Capability.DUST_ARREST})
 
 
-async def test_c102_creates_only_the_mop_water_level_select(
+MODE_ID = "select.x20_plus_mode"
+
+
+async def test_c102_creates_the_mode_and_water_level_selects(
     hass, setup_integration_c102
 ):
-    """Mode and clean times live in a packed Dreame bitfield: no selects yet."""
-    states = hass.states.async_all("select")
-    assert [s.entity_id for s in states] == ["select.x20_plus_mop_water_level"]
-    assert states[0].attributes["options"] == ["level_1", "level_2", "level_3"]
-    assert states[0].state == "level_2"
+    """There is no clean-times property, so no clean-times select."""
+    states = {s.entity_id: s for s in hass.states.async_all("select")}
+    assert set(states) == {MODE_ID, "select.x20_plus_mop_water_level"}
+    water = states["select.x20_plus_mop_water_level"]
+    assert water.attributes["options"] == ["level_1", "level_2", "level_3"]
+    assert water.state == "level_2"
 
 
-async def test_c102_creates_the_dust_arrest_button(hass, setup_integration_c102):
-    buttons = hass.states.async_all("button")
-    assert [b.entity_id for b in buttons] == ["button.x20_plus_collect_dust"]
+async def test_c102_mode_reads_the_low_bits_of_the_clean_setting(
+    hass, setup_integration_c102
+):
+    state = hass.states.get(MODE_ID)
+    assert state.attributes["options"] == [
+        "sweep_mop",
+        "mop",
+        "sweep",
+        "sweep_before_mopping",
+    ]
+    assert state.state == "sweep_before_mopping"
+
+
+async def test_c102_mode_write_keeps_the_other_settings(
+    hass, setup_integration_c102, mock_miot_device_c102
+):
+    """Only the two mode bits change; wash frequency and water level stay."""
+    from xiaomi_vacuum_sdk import PropertyAddress
+
+    await hass.services.async_call(
+        "select",
+        "select_option",
+        {"entity_id": MODE_ID, "option": "sweep"},
+        blocking=True,
+    )
+    mock_miot_device_c102.set_property.assert_any_call(
+        PropertyAddress(siid=4, piid=23), 133122
+    )
+    assert hass.states.get(MODE_ID).state == "sweep"
+
+
+async def test_c102_mop_modes_need_the_pads(hass, setup_integration_c102):
+    await _report(hass, setup_integration_c102, mop_status=0)
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            "select",
+            "select_option",
+            {"entity_id": MODE_ID, "option": "mop"},
+            blocking=True,
+        )
+
+
+async def test_c102_creates_the_dock_and_reset_buttons(hass, setup_integration_c102):
+    """No stop-mop-wash action on this model, so no button for it."""
+    entity_ids = {b.entity_id for b in hass.states.async_all("button")}
+    assert entity_ids == {
+        "button.x20_plus_collect_dust",
+        "button.x20_plus_wash_mop",
+        "button.x20_plus_dry_mop",
+        "button.x20_plus_stop_drying_mop",
+        "button.x20_plus_reset_main_brush",
+        "button.x20_plus_reset_side_brush",
+        "button.x20_plus_reset_filter",
+        "button.x20_plus_reset_mop",
+    }
+
+
+@pytest.mark.parametrize(
+    ("button", "address"),
+    [
+        ("wash_mop", ActionAddress(siid=2, aiid=6)),
+        ("dry_mop", ActionAddress(siid=2, aiid=8)),
+        ("stop_drying_mop", ActionAddress(siid=2, aiid=9)),
+        ("reset_main_brush", ActionAddress(siid=9, aiid=1)),
+        ("reset_side_brush", ActionAddress(siid=10, aiid=1)),
+        ("reset_filter", ActionAddress(siid=11, aiid=1)),
+        ("reset_mop", ActionAddress(siid=18, aiid=1)),
+    ],
+)
+async def test_c102_buttons_fire_their_actions(
+    hass, setup_integration_c102, mock_miot_device_c102, button, address
+):
+    mock_miot_device_c102.call_action.reset_mock()
+    await hass.services.async_call(
+        "button", "press", {"entity_id": f"button.x20_plus_{button}"}, blocking=True
+    )
+    mock_miot_device_c102.call_action.assert_called_once_with(address)
+
+
+@pytest.mark.parametrize(
+    ("entity_id", "expected"),
+    [
+        ("sensor.x20_plus_main_brush_time_left", "120"),
+        ("sensor.x20_plus_side_brush_time_left", "80"),
+        ("sensor.x20_plus_filter_time_left", "300"),
+        ("sensor.x20_plus_mop_time_left", "40"),
+        ("sensor.x20_plus_drying_time_left", "0"),
+        ("sensor.x20_plus_total_cleanings", "878"),
+        ("sensor.x20_plus_total_cleaned_area", "16233"),
+    ],
+)
+async def test_c102_extra_sensors(hass, setup_integration_c102, entity_id, expected):
+    assert hass.states.get(entity_id).state == expected
+
+
+async def test_c102_total_clean_time_shows_in_hours(hass, setup_integration_c102):
+    state = hass.states.get("sensor.x20_plus_total_cleaning_time")
+    assert state.attributes["unit_of_measurement"] == "h"
+    assert float(state.state) == pytest.approx(23000 / 60, abs=0.01)
+
+
+async def test_c102_unknown_sensor_value(hass, setup_integration_c102):
+    await _report(hass, setup_integration_c102, drying_time_left=None)
+    state = hass.states.get("sensor.x20_plus_drying_time_left")
+    assert state.state == "unknown"
+
+
+@pytest.mark.parametrize(
+    ("entity_id", "state"),
+    [
+        ("switch.x20_plus_child_lock", "off"),
+        ("switch.x20_plus_carpet_boost", "on"),
+        ("switch.x20_plus_resume_after_charging", "on"),
+        ("switch.x20_plus_do_not_disturb", "on"),
+    ],
+)
+async def test_c102_switches_follow_the_device(
+    hass, setup_integration_c102, entity_id, state
+):
+    assert hass.states.get(entity_id).state == state
+
+
+@pytest.mark.parametrize(
+    ("entity_id", "service", "write"),
+    [
+        ("switch.x20_plus_child_lock", "turn_on", ((4, 27), 1)),
+        ("switch.x20_plus_carpet_boost", "turn_off", ((4, 12), 0)),
+        ("switch.x20_plus_resume_after_charging", "turn_off", ((4, 11), 0)),
+        # The do-not-disturb flag is a real bool on the device.
+        ("switch.x20_plus_do_not_disturb", "turn_off", ((5, 1), False)),
+    ],
+)
+@pytest.mark.usefixtures("setup_integration_c102")
+async def test_c102_switches_write_the_device_type(
+    hass, mock_miot_device_c102, entity_id, service, write
+):
+    from xiaomi_vacuum_sdk import PropertyAddress
+
+    mock_miot_device_c102.set_property.reset_mock()
+    await hass.services.async_call(
+        "switch", service, {"entity_id": entity_id}, blocking=True
+    )
+    (siid, piid), value = write
+    (sent_address, sent_value), _ = mock_miot_device_c102.set_property.call_args
+    assert sent_address == PropertyAddress(siid=siid, piid=piid)
+    assert sent_value == value
+    assert type(sent_value) is type(value)
+    assert hass.states.get(entity_id).state == ("on" if service == "turn_on" else "off")
+
+
+async def test_c102_switch_unknown_state(hass, setup_integration_c102):
+    await _report(hass, setup_integration_c102, child_lock=None)
+    assert hass.states.get("switch.x20_plus_child_lock").state == "unknown"
+
+
+async def test_c102_volume(hass, setup_integration_c102, mock_miot_device_c102):
+    from xiaomi_vacuum_sdk import PropertyAddress
+
+    state = hass.states.get("number.x20_plus_volume")
+    assert float(state.state) == 75
+    await hass.services.async_call(
+        "number",
+        "set_value",
+        {"entity_id": "number.x20_plus_volume", "value": 40},
+        blocking=True,
+    )
+    mock_miot_device_c102.set_property.assert_any_call(
+        PropertyAddress(siid=7, piid=1), 40
+    )
+    assert float(hass.states.get("number.x20_plus_volume").state) == 40
+    await _report(hass, setup_integration_c102, volume=None)
+    assert hass.states.get("number.x20_plus_volume").state == "unknown"
 
 
 async def test_c102_without_cloud_has_no_map_image(hass, setup_integration_c102):
@@ -320,9 +494,10 @@ def test_c102_entities_skip_the_unmapped_properties():
     assert EntityKey.MOP_PAD_SENSOR in entities
     assert EntityKey.MOP_WATER_LEVEL_SELECT in entities
     assert EntityKey.DUST_ARREST_BUTTON in entities
+    assert EntityKey.SWEEP_MOP_TYPE_SELECT in entities
     for key in (
-        EntityKey.SWEEP_MOP_TYPE_SELECT,
         EntityKey.CLEAN_TIMES_SELECT,
+        EntityKey.STOP_MOP_WASH_BUTTON,
         EntityKey.SWEEP_ROUTE_SELECT,
         EntityKey.OBSTACLE_AVOIDANCE_SELECT,
     ):

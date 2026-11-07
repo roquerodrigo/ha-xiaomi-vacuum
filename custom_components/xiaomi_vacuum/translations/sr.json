@@ -150,11 +150,59 @@
             },
             "main_brush_life": {
                 "name": "Век главне четке"
+            },
+            "main_brush_time_left": {
+                "name": "Преостало време главне четке"
+            },
+            "side_brush_time_left": {
+                "name": "Преостало време бочне четке"
+            },
+            "filter_time_left": {
+                "name": "Преостало време филтера"
+            },
+            "mop_time_left": {
+                "name": "Преостало време крпе"
+            },
+            "drying_time_left": {
+                "name": "Преостало време сушења"
+            },
+            "total_clean_time": {
+                "name": "Укупно време чишћења"
+            },
+            "total_clean_count": {
+                "name": "Укупан број чишћења"
+            },
+            "total_clean_area": {
+                "name": "Укупна очишћена површина"
             }
         },
         "button": {
             "dust_arrest": {
                 "name": "Сакупљање прашине"
+            },
+            "start_mop_wash": {
+                "name": "Опери крпу"
+            },
+            "stop_mop_wash": {
+                "name": "Заустави прање крпе"
+            },
+            "start_dry": {
+                "name": "Осуши крпу"
+            },
+            "stop_dry": {
+                "name": "Заустави сушење крпе"
+            },
+            "reset_main_brush": {
+                "name": "Ресетуј главну четку"
+            },
+            "reset_side_brush": {
+                "name": "Ресетуј бочну четку"
+            },
+            "reset_filter": {
+                "name": "Ресетуј филтер"
+            },
+            "reset_mop": {
+                "name": "Ресетуј крпу"
             }
         },
         "binary_sensor": {
@@ -211,6 +259,25 @@
                     "less_collisions": "Мање судара",
                     "high_coverage": "Висока покривеност"
                 }
+            }
+        },
+        "switch": {
+            "child_lock": {
+                "name": "Закључавање за децу"
+            },
+            "carpet_boost": {
+                "name": "Појачање на тепиху"
+            },
+            "resume_after_charge": {
+                "name": "Настави након пуњења"
+            },
+            "do_not_disturb": {
+                "name": "Не узнемиравај"
+            }
+        },
+        "number": {
+            "volume": {
+                "name": "Јачина звука"
             }
         }
     },

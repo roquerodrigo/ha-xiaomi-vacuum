@@ -24,7 +24,7 @@ here.
   SDK's `DreameMapDecoder`).
 - **Entity platforms**, each its own subpackage under
   `custom_components/xiaomi_vacuum/`: `vacuum/`, `image/`, `sensor/`,
-  `binary_sensor/`, `select/`, `button/`. Every concrete entity is its own
+  `binary_sensor/`, `select/`, `button/`, `switch/`, `number/`. Every concrete entity is its own
   class in its own file (see `CODE_STYLE.md` — no generic
   `EntityDescription`-with-`value_fn` pattern).
 - **`api/`** wraps the local MIoT client; **`cloud/`** wraps the Xiaomi cloud
@@ -35,8 +35,9 @@ here.
   whitelist, fault representation, and room-clean strategy. Capabilities
   (`DUST_ARREST` / `SWEEP_ROUTE` / `OBSTACLE_AVOIDANCE`) are **derived** from
   the spec, not declared; the set of entities to create (`spec.entities`) is in
-  turn derived from the capability set, the mapped properties and a base
-  roster. Platforms filter
+  turn derived from the capability set, the mapped properties, the defined
+  optional actions and a base roster. `spec.property_masks` lets a property
+  own only some bits of a packed device value (the X20+ cleaning mode). Platforms filter
   their `_*_CLASSES` registries by `EntityKey in spec.entities`, so adding a
   new model is a data-only change: one module plus a `registry.py` line (see
   `ADDING_A_MODEL.md`). The spec is selected from the device model at setup and
