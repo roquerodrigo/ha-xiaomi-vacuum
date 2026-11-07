@@ -14,12 +14,11 @@ from homeassistant.components.vacuum.const import (
     VacuumEntityFeature,
 )
 from homeassistant.exceptions import ServiceValidationError
+from homeassistant.helpers.translation import async_get_translations
 
 from ..api import CleaningZone  # noqa: TID252
-from ..cloud import XiaomiCloudError  # noqa: TID252
 from ..const import DOMAIN, LOGGER  # noqa: TID252
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
-from .dreame_rooms import dreame_map_object_name, parse_dreame_rooms
 from .start_custom_cleaning import async_update_custom_cleaning_options
 
 if TYPE_CHECKING:
@@ -60,8 +59,6 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
 
     _attr_name = None
     _attr_translation_key = "xiaomi_vacuum"
-    # Last room list decoded from a Dreame map, served while the cloud is down.
-    _dreame_segments: tuple[Segment, ...] = ()
 
     @property
     def spec(self) -> ModelSpec:
@@ -222,29 +219,30 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         # offline since startup (offline-tolerant setup).
         data: VacuumState | None = self.coordinator.data
         if self.spec.map_format == "dreame":
-            return await self._async_get_dreame_segments(data)
+            return await self._async_map_segments()
         raw = data.get("room_information") if data else None
         return _parse_segments(raw)
 
-    async def _async_get_dreame_segments(
-        self, data: VacuumState | None
-    ) -> list[Segment]:
-        """Download the current Dreame map and decode its rooms."""
-        cloud = self.coordinator.cloud
-        object_name = dreame_map_object_name(data.get("map_obj_name") if data else None)
-        if cloud is None or object_name is None:
-            LOGGER.debug("No cloud session or map object; cannot list Dreame rooms")
-            return list(self._dreame_segments)
-        try:
-            raw = await cloud.async_get_map_bytes(object_name)
-        except XiaomiCloudError as exception:
-            LOGGER.warning("Failed to download the map for the rooms: %s", exception)
-            return list(self._dreame_segments)
-        if raw:
-            segments = await self.hass.async_add_executor_job(parse_dreame_rooms, raw)
-            if segments:
-                self._dreame_segments = tuple(segments)
-        return list(self._dreame_segments)
+    async def _async_map_segments(self) -> list[Segment]:
+        """
+        Rooms the map coordinator decoded from the latest Dreame map.
+
+        A segment the user never named is still a room in the app, which calls
+        it "Room <id>"; it gets the same label, translated.
+        """
+        map_coordinator = self.coordinator.config_entry.runtime_data.map_coordinator
+        rendered = map_coordinator.data if map_coordinator is not None else None
+        rooms = rendered.get("rooms", []) if rendered else []
+        if all(room["name"] for room in rooms):
+            return [Segment(id=room["id"], name=room["name"]) for room in rooms]
+        translations = await async_get_translations(
+            self.hass, self.hass.config.language, "common", {DOMAIN}
+        )
+        label = translations.get(f"component.{DOMAIN}.common.unnamed_room", "{id}")
+        return [
+            Segment(id=room["id"], name=room["name"] or label.format(id=room["id"]))
+            for room in rooms
+        ]
 
     async def async_clean_segments(
         self,

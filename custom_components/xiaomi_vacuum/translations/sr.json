@@ -265,5 +265,8 @@
                 }
             }
         }
+    },
+    "common": {
+        "unnamed_room": "Соба {id}"
     }
 }

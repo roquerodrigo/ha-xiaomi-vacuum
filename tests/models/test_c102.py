@@ -55,19 +55,32 @@ async def test_c102_creates_the_dust_arrest_button(hass, setup_integration_c102)
     assert [b.entity_id for b in buttons] == ["button.x20_plus_collect_dust"]
 
 
-async def test_c102_has_no_map_entity(hass, setup_integration_c102):
-    """The Dreame map format cannot be rendered yet, so no empty map entity."""
-    assert hass.states.async_all("image") == []
+async def test_c102_without_cloud_has_no_map_image(hass, setup_integration_c102):
+    """The map needs the cloud session; without it the entity never gets data."""
+    assert setup_integration_c102.runtime_data.map_coordinator is None
 
 
-async def test_c102_cloud_session_skips_the_map_renderer(
+async def test_c102_renders_the_dreame_map(
     hass, setup_integration_c102_with_cloud, mock_cloud
 ):
+    """The Dreame blob goes through the SDK's Dreame decoder, not the Xiaomi one."""
     entry = setup_integration_c102_with_cloud
     assert entry.state == ConfigEntryState.LOADED
-    assert entry.runtime_data.map_coordinator is None
-    assert entry.runtime_data.coordinator.cloud is mock_cloud
-    assert hass.states.async_all("image") == []
+    mock_cloud.async_get_map_bytes.assert_any_await("1234/567/map.bin")
+    rendered = entry.runtime_data.map_coordinator.data
+    assert rendered["png"].startswith(b"\x89PNG")
+    assert rendered["calibration"]["resolution"] == 50
+    assert hass.states.get("image.x20_plus_map") is not None
+
+
+async def test_c102_undecodable_map_keeps_the_last_image(
+    hass, setup_integration_c102_with_cloud, mock_cloud
+):
+    coordinator = setup_integration_c102_with_cloud.runtime_data.map_coordinator
+    before = coordinator.data
+    mock_cloud.async_get_map_bytes.return_value = b"AAAA,encrypted"
+    await coordinator.async_refresh()
+    assert coordinator.data == before
 
 
 async def test_c102_mop_pad_follows_the_waterbox_status(hass, setup_integration_c102):
@@ -204,54 +217,55 @@ async def test_c102_room_clean_rejects_a_non_numeric_room(
     mock_miot_device_c102.call_action.assert_not_called()
 
 
-async def test_c102_rooms_come_from_the_dreame_map(
+async def test_c102_rooms_come_from_the_map_coordinator(
     hass, setup_integration_c102_with_cloud, mock_cloud, dreame_map, dreame_name
 ):
-    """Unnamed segments (doorways the lidar mapped) are left out."""
+    """No second download: the rooms ride along with the rendered map."""
+    coordinator = setup_integration_c102_with_cloud.runtime_data.map_coordinator
     mock_cloud.async_get_map_bytes.return_value = dreame_map(
         {
             "5": {"name": dreame_name("Escritório"), "type": 0},
             "1": {"name": dreame_name("Living room"), "type": 0},
-            "4": {"type": 0},
+            # Never named: the app lists it as "Room 4", so HA does too.
+            "4": {"nei_id": [1]},
         }
     )
+    await coordinator.async_refresh()
+    mock_cloud.async_get_map_bytes.reset_mock()
     segments = await _vacuum(hass).async_get_segments()
-    mock_cloud.async_get_map_bytes.assert_awaited_with("1234/567/map.bin")
+    mock_cloud.async_get_map_bytes.assert_not_awaited()
     assert [(s.id, s.name) for s in segments] == [
         ("1", "Living room"),
+        ("4", "Room 4"),
         ("5", "Escritório"),
     ]
 
 
-async def test_c102_rooms_survive_a_cloud_failure(
-    hass, setup_integration_c102_with_cloud, mock_cloud, dreame_map, dreame_name
+async def test_c102_rooms_survive_an_undecodable_map(
+    hass, setup_integration_c102_with_cloud, mock_cloud
 ):
-    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudConnectionError
-
-    mock_cloud.async_get_map_bytes.return_value = dreame_map(
-        {"1": {"name": dreame_name("Living room")}}
-    )
-    vacuum = _vacuum(hass)
-    first = await vacuum.async_get_segments()
-    mock_cloud.async_get_map_bytes.side_effect = XiaomiCloudConnectionError("down")
-    assert await vacuum.async_get_segments() == first
-    mock_cloud.async_get_map_bytes.side_effect = None
-    mock_cloud.async_get_map_bytes.return_value = None
-    assert await vacuum.async_get_segments() == first
+    coordinator = setup_integration_c102_with_cloud.runtime_data.map_coordinator
+    first = await _vacuum(hass).async_get_segments()
+    assert [s.name for s in first] == ["Living room"]
     mock_cloud.async_get_map_bytes.return_value = b"garbage"
-    assert await vacuum.async_get_segments() == first
+    await coordinator.async_refresh()
+    assert await _vacuum(hass).async_get_segments() == first
 
 
 async def test_c102_rooms_need_the_cloud(hass, setup_integration_c102):
     assert await _vacuum(hass).async_get_segments() == []
 
 
-async def test_c102_rooms_need_the_map_object(
-    hass, setup_integration_c102_with_cloud, mock_cloud
+async def test_c102_rooms_are_restored_with_the_cached_map(
+    hass, setup_integration_c102_with_cloud
 ):
-    await _report(hass, setup_integration_c102_with_cloud, map_obj_name=None)
-    assert await _vacuum(hass).async_get_segments() == []
-    mock_cloud.async_get_map_bytes.assert_not_awaited()
+    """The rooms are saved with the PNG, so they survive a restart."""
+    coordinator = setup_integration_c102_with_cloud.runtime_data.map_coordinator
+    stored = await coordinator._store.async_load()
+    assert stored["rooms"] == [{"id": "1", "name": "Living room"}]
+    coordinator.async_set_updated_data(None)
+    await coordinator.async_load_cached()
+    assert coordinator.data["rooms"] == [{"id": "1", "name": "Living room"}]
 
 
 async def test_c102_cleaning_follows_the_task_status_through_a_mop_run(
@@ -301,16 +315,12 @@ def test_c102_spec_registers_the_dock_actions_as_commands():
 
 
 def test_c102_entities_skip_the_unmapped_properties():
-    """The map object is mapped for the rooms, but the Dreame map is not drawn."""
-    from custom_components.xiaomi_vacuum.spec import Property
-
-    assert Property.MAP_OBJ_NAME in C102GL.property_mapping
     entities = C102GL.entities
+    assert EntityKey.MAP_IMAGE in entities
     assert EntityKey.MOP_PAD_SENSOR in entities
     assert EntityKey.MOP_WATER_LEVEL_SELECT in entities
     assert EntityKey.DUST_ARREST_BUTTON in entities
     for key in (
-        EntityKey.MAP_IMAGE,
         EntityKey.SWEEP_MOP_TYPE_SELECT,
         EntityKey.CLEAN_TIMES_SELECT,
         EntityKey.SWEEP_ROUTE_SELECT,
