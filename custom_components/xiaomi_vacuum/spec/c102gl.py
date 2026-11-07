@@ -13,10 +13,11 @@ its layout shares almost nothing with the in-house models:
   a Xiaomi six-digit id
 - pause is ``stop-sweeping`` (2/2); stop is the Dreame ``stop-clean`` (4/2); a
   paused job resumes through ``start-sweep`` again
-- no mode-specific start actions: a clean runs in the mode selected in the app,
-  which the firmware packs into the clean-setting bitfield (4.23, bits 0-1)
-  together with the wash frequency and water level, so there is no sweep/mop
-  type or clean-times select yet
+- no mode-specific start actions: a clean runs in the selected mode, which the
+  firmware packs into the low two bits of the clean-setting bitfield (4.23)
+  together with the wash frequency and water level; the mode select reads and
+  writes only those bits (``property_masks``). There is no clean-times
+  property
 - task status (4.7) stays non-zero for the whole job, mid-job washes and
   recharges included, so it decides the cleaning job and blocks fresh starts
 - the status follows the selected mode while cleaning: 1 sweep only, 7 mop
@@ -64,7 +65,30 @@ _PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
     Property.MOP_LIFE: {"siid": 18, "piid": 1},
     # {"object_name": ..., "md5": ...} of the current map in the Xiaomi cloud.
     Property.MAP_OBJ_NAME: {"siid": 6, "piid": 8},
+    # Cleaning mode: low two bits of the Dreame clean-setting (see _MODE_MASK).
+    # The spec lists 4.23 without access, but the firmware accepts writes.
+    Property.SWEEP_MOP_TYPE: {"siid": 4, "piid": 23},
+    # Hours left on each consumable (the life level is on the sibling piid).
+    Property.MAIN_BRUSH_TIME_LEFT: {"siid": 9, "piid": 1},
+    Property.SIDE_BRUSH_TIME_LEFT: {"siid": 10, "piid": 1},
+    Property.FILTER_TIME_LEFT: {"siid": 11, "piid": 2},
+    Property.MOP_TIME_LEFT: {"siid": 18, "piid": 2},
+    # Minutes of mop-pad drying left, 0 when not drying.
+    Property.DRYING_TIME_LEFT: {"siid": 2, "piid": 5},
+    # Lifetime totals, updated when the robot docks after a job.
+    Property.TOTAL_CLEAN_TIME: {"siid": 12, "piid": 2},  # minutes
+    Property.TOTAL_CLEAN_COUNT: {"siid": 12, "piid": 3},
+    Property.TOTAL_CLEAN_AREA: {"siid": 12, "piid": 4},  # square metres
+    # uint8 0/1 switches.
+    Property.RESUME_AFTER_CHARGE: {"siid": 4, "piid": 11},
+    Property.CARPET_BOOST: {"siid": 4, "piid": 12},
+    Property.CHILD_LOCK: {"siid": 4, "piid": 27},
+    # bool; the quiet hours themselves are 5.2 / 5.3 ("HH:MM").
+    Property.DO_NOT_DISTURB: {"siid": 5, "piid": 1},
+    Property.VOLUME: {"siid": 7, "piid": 1},  # 0-100
 }
+
+_MODE_MASK = 0x03
 
 _ACTIONS = ModelActions(
     start_sweep={"siid": 2, "aiid": 1},
@@ -79,6 +103,10 @@ _ACTIONS = ModelActions(
     stop_dry={"siid": 2, "aiid": 9},
     # Dreame start-clean: piid 1 work mode, piid 10 clean-extend data.
     start_segment_clean={"siid": 4, "aiid": 1, "mode_piid": 1, "data_piid": 10},
+    reset_main_brush={"siid": 9, "aiid": 1},
+    reset_side_brush={"siid": 10, "aiid": 1},
+    reset_filter={"siid": 11, "aiid": 1},
+    reset_mop={"siid": 18, "aiid": 1},
 )
 
 # Canonical code per activity first (status_code_for): 1 CLEANING, 2 IDLE,
@@ -213,7 +241,14 @@ C102GL = ModelSpec(
         "strong": 2,
         "full_speed": 3,
     },
-    sweep_mop_types={},
+    # Low two bits of 4.23; the robot lifts its mops for "sweep" and switches
+    # to it by itself when the pads are taken off.
+    sweep_mop_types={
+        "sweep_mop": 0,
+        "mop": 1,
+        "sweep": 2,
+        "sweep_before_mopping": 3,
+    },
     clean_times={},
     # Low / Medium / High; there is no "off" (sweep-only mode lifts the mops).
     mop_water_levels={
@@ -238,4 +273,5 @@ C102GL = ModelSpec(
     #   while drying.
     notice_fault_codes=frozenset({68, 114}),
     map_format="dreame",
+    property_masks={Property.SWEEP_MOP_TYPE: _MODE_MASK},
 )

@@ -72,7 +72,11 @@ one property (mop pad, mode, clean times, water level, map) are only created
 when the spec maps that property, so leave unmapped what the model packs into a
 Dreame bitfield. Set `map_format="dreame"`: the map is decoded by the SDK's
 `DreameMapDecoder` instead of the Xiaomi decryptor, and the room list comes
-from its segment metadata instead of a room-information property.
+from its segment metadata instead of a room-information property. A setting
+packed into some bits of a Dreame bitfield can still back an entity: map the
+property to the bitfield and give its bits in `property_masks` (the X20+ maps
+its cleaning mode to the low two bits of `4.23`). Optional actions such as the
+dock and consumable-reset actions create their buttons automatically.
 
 **Check the retail hardware, not just the spec.** Xiaomi reuses one spec
 template across a product line: the S40 Pro (`ov71gl`) publishes dust-arrest

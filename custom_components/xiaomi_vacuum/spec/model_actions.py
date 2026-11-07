@@ -45,6 +45,11 @@ class ModelActions:
     start_dry: MiotActionAddress | None = None
     stop_mop_wash: MiotActionAddress | None = None
     stop_dry: MiotActionAddress | None = None
+    # Consumable life resets; None when the model publishes no reset action.
+    reset_main_brush: MiotActionAddress | None = None
+    reset_side_brush: MiotActionAddress | None = None
+    reset_filter: MiotActionAddress | None = None
+    reset_mop: MiotActionAddress | None = None
 
 
 def _require_action(action: MiotActionAddress | None, name: str) -> MiotActionAddress:

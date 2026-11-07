@@ -150,11 +150,59 @@
             },
             "main_brush_life": {
                 "name": "Vida da escova principal"
+            },
+            "main_brush_time_left": {
+                "name": "Tempo restante da escova principal"
+            },
+            "side_brush_time_left": {
+                "name": "Tempo restante da escova lateral"
+            },
+            "filter_time_left": {
+                "name": "Tempo restante do filtro"
+            },
+            "mop_time_left": {
+                "name": "Tempo restante do mop"
+            },
+            "drying_time_left": {
+                "name": "Tempo de secagem restante"
+            },
+            "total_clean_time": {
+                "name": "Tempo total de limpeza"
+            },
+            "total_clean_count": {
+                "name": "Total de limpezas"
+            },
+            "total_clean_area": {
+                "name": "Área total limpa"
             }
         },
         "button": {
             "dust_arrest": {
                 "name": "Coletar pó"
+            },
+            "start_mop_wash": {
+                "name": "Lavar mop"
+            },
+            "stop_mop_wash": {
+                "name": "Parar lavagem do mop"
+            },
+            "start_dry": {
+                "name": "Secar mop"
+            },
+            "stop_dry": {
+                "name": "Parar secagem do mop"
+            },
+            "reset_main_brush": {
+                "name": "Redefinir escova principal"
+            },
+            "reset_side_brush": {
+                "name": "Redefinir escova lateral"
+            },
+            "reset_filter": {
+                "name": "Redefinir filtro"
+            },
+            "reset_mop": {
+                "name": "Redefinir mop"
             }
         },
         "binary_sensor": {
@@ -211,6 +259,25 @@
                     "less_collisions": "Menos colisões",
                     "high_coverage": "Maior cobertura"
                 }
+            }
+        },
+        "switch": {
+            "child_lock": {
+                "name": "Trava para crianças"
+            },
+            "carpet_boost": {
+                "name": "Reforço em tapetes"
+            },
+            "resume_after_charge": {
+                "name": "Retomar após carregar"
+            },
+            "do_not_disturb": {
+                "name": "Não perturbe"
+            }
+        },
+        "number": {
+            "volume": {
+                "name": "Volume"
             }
         }
     },

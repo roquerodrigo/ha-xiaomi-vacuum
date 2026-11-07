@@ -109,6 +109,21 @@ _SAMPLE_STATE_C102: dict[str, Any] = {
     "side_brush_life": 0,
     "filter_life": 0,
     "map_obj_name": '{"object_name":"1234/567/map.bin","md5":"abc"}',
+    # Raw clean-setting: mode bits 3 (sweep before mopping) under other settings.
+    "sweep_mop_type": 133123,
+    "main_brush_time_left": 120,
+    "side_brush_time_left": 80,
+    "filter_time_left": 300,
+    "mop_time_left": 40,
+    "drying_time_left": 0,
+    "total_clean_time": 23000,
+    "total_clean_count": 878,
+    "total_clean_area": 16233,
+    "resume_after_charge": 1,
+    "carpet_boost": 1,
+    "child_lock": 0,
+    "do_not_disturb": True,
+    "volume": 75,
 }
 
 _MODEL_MACS: dict[str, str] = {
@@ -167,6 +182,12 @@ def _make_miot_instance(model: str):
     )
     instance._spec = spec  # exposed for tests that assert on the spec
     return instance
+
+
+@pytest.fixture
+def make_miot_instance():
+    """Factory for a mocked MiotClient instance of any supported model."""
+    return _make_miot_instance
 
 
 @pytest.fixture

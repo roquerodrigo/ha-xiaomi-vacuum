@@ -93,6 +93,32 @@ _PROPERTY_ENTITIES: dict[Property, EntityKey] = {
     Property.SWEEP_MOP_TYPE: EntityKey.SWEEP_MOP_TYPE_SELECT,
     Property.CLEAN_TIMES: EntityKey.CLEAN_TIMES_SELECT,
     Property.MOP_WATER_LEVEL: EntityKey.MOP_WATER_LEVEL_SELECT,
+    Property.MAIN_BRUSH_TIME_LEFT: EntityKey.MAIN_BRUSH_TIME_LEFT_SENSOR,
+    Property.SIDE_BRUSH_TIME_LEFT: EntityKey.SIDE_BRUSH_TIME_LEFT_SENSOR,
+    Property.FILTER_TIME_LEFT: EntityKey.FILTER_TIME_LEFT_SENSOR,
+    Property.MOP_TIME_LEFT: EntityKey.MOP_TIME_LEFT_SENSOR,
+    Property.DRYING_TIME_LEFT: EntityKey.DRYING_TIME_LEFT_SENSOR,
+    Property.TOTAL_CLEAN_TIME: EntityKey.TOTAL_CLEAN_TIME_SENSOR,
+    Property.TOTAL_CLEAN_COUNT: EntityKey.TOTAL_CLEAN_COUNT_SENSOR,
+    Property.TOTAL_CLEAN_AREA: EntityKey.TOTAL_CLEAN_AREA_SENSOR,
+    Property.CHILD_LOCK: EntityKey.CHILD_LOCK_SWITCH,
+    Property.CARPET_BOOST: EntityKey.CARPET_BOOST_SWITCH,
+    Property.RESUME_AFTER_CHARGE: EntityKey.RESUME_AFTER_CHARGE_SWITCH,
+    Property.DO_NOT_DISTURB: EntityKey.DO_NOT_DISTURB_SWITCH,
+    Property.VOLUME: EntityKey.VOLUME_NUMBER,
+}
+
+#: Button entities backed by one optional :class:`ModelActions` field, created
+#: only when the model defines that action.
+_ACTION_ENTITIES: dict[str, EntityKey] = {
+    "start_mop_wash": EntityKey.START_MOP_WASH_BUTTON,
+    "stop_mop_wash": EntityKey.STOP_MOP_WASH_BUTTON,
+    "start_dry": EntityKey.START_DRY_BUTTON,
+    "stop_dry": EntityKey.STOP_DRY_BUTTON,
+    "reset_main_brush": EntityKey.RESET_MAIN_BRUSH_BUTTON,
+    "reset_side_brush": EntityKey.RESET_SIDE_BRUSH_BUTTON,
+    "reset_filter": EntityKey.RESET_FILTER_BUTTON,
+    "reset_mop": EntityKey.RESET_MOP_BUTTON,
 }
 
 #: Names of the dict-typed fields wrapped in read-only views by
@@ -108,6 +134,7 @@ MAPPING_FIELDS: tuple[str, ...] = (
     "send_commands",
     "sweep_routes",
     "obstacle_avoidances",
+    "property_masks",
 )
 
 
@@ -152,6 +179,11 @@ class ModelSpec:
     # the single-datagram limit.
     user_define_sweep_config: MiotPropertyAddress | None = None
     map_format: MapFormat = "xiaomi"
+    # Properties that live in some bits of a packed device value: the mask
+    # picks the bits (e.g. the X20+ cleaning mode in the low two bits of its
+    # clean-setting). Reads expose only those bits, shifted down; writes keep
+    # every other bit as the device reports it.
+    property_masks: dict[Property, int] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Wrap the mutable dict fields in read-only views."""
@@ -221,6 +253,11 @@ class ModelSpec:
             key
             for prop, key in _PROPERTY_ENTITIES.items()
             if prop in self.property_mapping
+        )
+        keys.update(
+            key
+            for action, key in _ACTION_ENTITIES.items()
+            if getattr(self.actions, action) is not None
         )
         return frozenset(keys)
 

@@ -126,6 +126,10 @@ class XiaomiVacuumApiClient:
         values: dict[str, PropertyValue] = {}
         for properties in self._property_requests:
             values |= await self._run(self._client.get_properties(properties))
+        for name, mask in self._spec.property_masks.items():
+            raw = values.get(name)
+            if isinstance(raw, int) and not isinstance(raw, bool):
+                values[name] = (raw & mask) >> _mask_shift(mask)
         LOGGER.debug("Parsed state: %s", values)
         return cast("VacuumState", values)
 
@@ -165,6 +169,10 @@ class XiaomiVacuumApiClient:
             self._client.call_action(_address(self._spec.actions.identify))
         )
 
+    async def async_run_action(self, action: MiotActionAddress) -> None:
+        """Invoke a parameterless spec action (dock and consumable buttons)."""
+        await self._run_action(self._client.call_action(_address(action)))
+
     async def async_call_action(self, siid: int, aiid: int) -> None:
         """Invoke an arbitrary MIoT action (backs the send_command service)."""
         await self._run_action(
@@ -185,7 +193,7 @@ class XiaomiVacuumApiClient:
         if fan_speed not in speeds:
             msg = f"Unknown fan speed: {fan_speed}"
             raise XiaomiVacuumApiClientError(msg)
-        await self.async_set_property(Property.FAN_SPEED, speeds[fan_speed])
+        await self.async_set_property(Property.FAN_SPEED, value=speeds[fan_speed])
 
     async def async_set_sweep_mop_type(self, mode: str) -> None:
         """Set sweep/mop mode (sweep / mop / sweep_mop / sweep_before_mopping)."""
@@ -193,14 +201,29 @@ class XiaomiVacuumApiClient:
         if mode not in types:
             msg = f"Unknown sweep_mop_type: {mode}"
             raise XiaomiVacuumApiClientError(msg)
-        await self.async_set_property(Property.SWEEP_MOP_TYPE, types[mode])
+        await self.async_set_property(Property.SWEEP_MOP_TYPE, value=types[mode])
 
-    async def async_set_property(self, name: Property, value: int) -> None:
-        """Set a MIoT property by mapping name (raw integer value)."""
+    async def async_set_property(self, name: Property, *, value: bool | int) -> None:
+        """
+        Set a MIoT property by mapping name.
+
+        A masked property (see ``ModelSpec.property_masks``) only owns some bits
+        of the device value, so the current value is read first and the other
+        bits are written back unchanged.
+        """
         address = self._properties.get(name)
         if address is None:
             msg = f"Unknown property: {name}"
             raise XiaomiVacuumApiClientError(msg)
+        mask = self._spec.property_masks.get(name)
+        if mask is not None:
+            current = (
+                await self._run(self._client.get_properties({name: address}))
+            ).get(name)
+            if not isinstance(current, int) or isinstance(current, bool):
+                msg = f"Failed to set {name}: could not read its current value"
+                raise XiaomiVacuumApiClientError(msg)
+            value = (current & ~mask) | ((int(value) << _mask_shift(mask)) & mask)
         await self._run(self._client.set_property(address, value))
 
     async def async_clean_segments(
@@ -336,7 +359,7 @@ class XiaomiVacuumApiClient:
             msg = "Failed to clean zones: this model has no zone-sweep action"
             raise XiaomiVacuumApiClientError(msg)
         if repeats is not None:
-            await self.async_set_property(Property.CLEAN_TIMES, repeats)
+            await self.async_set_property(Property.CLEAN_TIMES, value=repeats)
         blocks = json.dumps([zone.to_block() for zone in zones], separators=(",", ":"))
         payload: list[JsonValue] = [{"piid": action["in_piid"], "value": blocks}]
         LOGGER.debug("Calling start-zone-sweep with payload: %s", payload)
@@ -427,6 +450,11 @@ class XiaomiVacuumApiClient:
                 ActionAddress(siid=siid, aiid=aiid), cast("list[JsonValue]", params)
             )
         )
+
+
+def _mask_shift(mask: int) -> int:
+    """Bit position of the lowest set bit of ``mask``."""
+    return (mask & -mask).bit_length() - 1
 
 
 def _address(action: MiotActionAddress) -> ActionAddress:

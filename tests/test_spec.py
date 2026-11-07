@@ -248,6 +248,7 @@ def test_spec_fields_are_immutable():
         "send_commands": ("boom", {"siid": 0, "aiid": 0}),
         "sweep_routes": ("quick", 99),
         "obstacle_avoidances": ("less_collisions", 99),
+        "property_masks": (Property.SWEEP_MOP_TYPE, 0x03),
     }
     assert set(mutations) == set(MAPPING_FIELDS)
     for field_name, (key, value) in mutations.items():

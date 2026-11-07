@@ -56,6 +56,6 @@ class _XiaomiVacuumSelect(XiaomiVacuumEntity, SelectEntity):
         """Set the option on the device, with optimistic update."""
         client = self.coordinator.config_entry.runtime_data.client
         value = self._slug_to_value[option]
-        await client.async_set_property(self._property_name, value)
+        await client.async_set_property(self._property_name, value=value)
         self._patch_state(**{self._property_name: value})
         self._schedule_refresh()

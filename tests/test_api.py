@@ -176,11 +176,11 @@ async def test_async_set_sweep_mop_type_writes_property(mock_miot_device):
 
 async def test_async_set_property_unknown_name_raises(mock_miot_device):
     with pytest.raises(XiaomiVacuumApiClientError, match="Unknown property"):
-        await _client(mock_miot_device).async_set_property("does_not_exist", 1)
+        await _client(mock_miot_device).async_set_property("does_not_exist", value=1)
 
 
 async def test_async_set_property_writes_value(mock_miot_device):
-    await _client(mock_miot_device).async_set_property("clean_times", 2)
+    await _client(mock_miot_device).async_set_property("clean_times", value=2)
     prop = D109GL.property_mapping["clean_times"]
     mock_miot_device.set_property.assert_called_with(
         PropertyAddress(siid=prop["siid"], piid=prop["piid"]), 2
@@ -512,3 +512,47 @@ async def test_c102_clean_segments_without_the_segment_action_raises(
     with pytest.raises(XiaomiVacuumApiClientError):
         await client.async_clean_segments(["1"])
     mock_miot_device_c102.call_action.assert_not_called()
+
+
+async def test_masked_property_read_on_bool_or_missing_is_left_alone(
+    mock_miot_device_c102,
+):
+    from dataclasses import replace
+
+    from custom_components.xiaomi_vacuum.spec import C102GL, Property
+
+    spec = replace(C102GL, property_masks={Property.SWEEP_MOP_TYPE: 0x0C})
+    client = _client(mock_miot_device_c102, spec=spec)
+    mock_miot_device_c102.get_properties.side_effect = None
+    mock_miot_device_c102.get_properties.return_value = {"sweep_mop_type": 0b1110}
+    assert (await client.async_get_state())["sweep_mop_type"] == 0b11
+    mock_miot_device_c102.get_properties.return_value = {"sweep_mop_type": True}
+    assert (await client.async_get_state())["sweep_mop_type"] is True
+
+
+async def test_masked_property_write_shifts_into_the_mask(mock_miot_device_c102):
+    from dataclasses import replace
+
+    from xiaomi_vacuum_sdk import PropertyAddress
+
+    from custom_components.xiaomi_vacuum.spec import C102GL, Property
+
+    spec = replace(C102GL, property_masks={Property.SWEEP_MOP_TYPE: 0x0C})
+    client = _client(mock_miot_device_c102, spec=spec)
+    mock_miot_device_c102.get_properties.side_effect = None
+    mock_miot_device_c102.get_properties.return_value = {"sweep_mop_type": 0b110011}
+    await client.async_set_property(Property.SWEEP_MOP_TYPE, value=0b01)
+    mock_miot_device_c102.set_property.assert_called_once_with(
+        PropertyAddress(siid=4, piid=23), 0b110111
+    )
+
+
+async def test_masked_property_write_needs_the_current_value(mock_miot_device_c102):
+    from custom_components.xiaomi_vacuum.spec import C102GL, Property
+
+    client = _client(mock_miot_device_c102, spec=C102GL)
+    mock_miot_device_c102.get_properties.side_effect = None
+    mock_miot_device_c102.get_properties.return_value = {"sweep_mop_type": None}
+    with pytest.raises(XiaomiVacuumApiClientError):
+        await client.async_set_property(Property.SWEEP_MOP_TYPE, value=2)
+    mock_miot_device_c102.set_property.assert_not_called()

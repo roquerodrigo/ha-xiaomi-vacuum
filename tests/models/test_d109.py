@@ -46,12 +46,16 @@ async def test_d109_creates_all_five_selects(hass, setup_integration):
     assert "select.vacuum_obstacle_avoidance" in entity_ids
 
 
-async def test_d109_creates_dust_arrest_button(hass, setup_integration):
-    """The X20 Max auto-dust dock button must be created."""
-    buttons = hass.states.async_all("button")
-    entity_ids = {s.entity_id for s in buttons}
-    assert len(buttons) == 1
-    assert "button.vacuum_collect_dust" in entity_ids
+async def test_d109_creates_the_dock_buttons(hass, setup_integration):
+    """The auto-empty and auto-wash dock get one button per dock action."""
+    entity_ids = {s.entity_id for s in hass.states.async_all("button")}
+    assert entity_ids == {
+        "button.vacuum_collect_dust",
+        "button.vacuum_wash_mop",
+        "button.vacuum_stop_washing_mop",
+        "button.vacuum_dry_mop",
+        "button.vacuum_stop_drying_mop",
+    }
 
 
 async def test_d109_mop_water_level_includes_off_option(hass, setup_integration):

@@ -35,8 +35,9 @@ for two cloud-only extras: the **map image** and **localized error messages**.
 > cleaning and the map image. Its room list is read from the cloud map, so it
 > needs the Xiaomi cloud login; rooms left unnamed in Mi Home are skipped. The
 > map shows the saved floor plan and dock (no live robot position or path
-> yet). The cleaning-mode / clean-times selects are not available on it yet;
-> pick the cleaning mode in Mi Home.
+> yet). It has no clean-times select. It adds consumable hours-left, drying and
+> lifetime sensors, dock and consumable-reset buttons, child lock / carpet
+> boost / resume / do-not-disturb switches and a volume control.
 
 ## Features
 
@@ -142,6 +143,9 @@ text, and route the S20+ room clean through the cloud.
 | `sensor.<name>_main_brush_life` | `sensor` | Main brush remaining life (%) |
 | `sensor.<name>_side_brush_life` | `sensor` | Side brush remaining life (%) |
 | `sensor.<name>_filter_life` | `sensor` | Filter remaining life (%) |
+| `sensor.<name>_main_brush_time_left` | `sensor` | Hours left on the main brush (also side brush, filter, mop) — X20+ |
+| `sensor.<name>_drying_time_left` | `sensor` | Minutes of mop drying left — X20+ |
+| `sensor.<name>_total_cleaning_time` | `sensor` | Lifetime cleaning time (also total cleanings, total cleaned area) — X20+ |
 | `binary_sensor.<name>_battery_charging` | `binary_sensor` | Whether the battery is charging |
 | `binary_sensor.<name>_mop_pad` | `binary_sensor` | Whether the mop pad is attached |
 | `binary_sensor.<name>_cleaning_in_progress` | `binary_sensor` | Whether a cleaning job is underway, including mop washes and recharges mid-job |
@@ -150,7 +154,11 @@ text, and route the S20+ room clean through the cloud.
 | `select.<name>_mop_water_level` | `select` | Off / Level 1–3 |
 | `select.<name>_sweep_route` | `select` | Quick / Standard / Deep — X20 Max and S40 Pro |
 | `select.<name>_obstacle_avoidance` | `select` | Less collisions / High coverage — X20 Max and S40 Pro |
-| `button.<name>_collect_dust` | `button` | Tells the dock to empty the dust bin — X20 Max only |
+| `button.<name>_collect_dust` | `button` | Tells the dock to empty the dust bin — X20 Max and X20+ |
+| `button.<name>_wash_mop` | `button` | Wash / stop washing / dry / stop drying the mop in the dock — X20 Max and X20+ (no stop washing) |
+| `button.<name>_reset_main_brush` | `button` | Reset a consumable after replacing it (also side brush, filter, mop) — X20+ |
+| `switch.<name>_child_lock` | `switch` | Child lock (also carpet boost, resume after charging, do not disturb) — X20+ |
+| `number.<name>_volume` | `number` | Voice volume, 0–100 % — X20+ |
 
 The vacuum entity also exposes raw MIoT diagnostics as extra state attributes
 under the `xiaomi_vacuum` key.

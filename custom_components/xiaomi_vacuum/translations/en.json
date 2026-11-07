@@ -150,11 +150,59 @@
             },
             "main_brush_life": {
                 "name": "Main brush life"
+            },
+            "main_brush_time_left": {
+                "name": "Main brush time left"
+            },
+            "side_brush_time_left": {
+                "name": "Side brush time left"
+            },
+            "filter_time_left": {
+                "name": "Filter time left"
+            },
+            "mop_time_left": {
+                "name": "Mop time left"
+            },
+            "drying_time_left": {
+                "name": "Drying time left"
+            },
+            "total_clean_time": {
+                "name": "Total cleaning time"
+            },
+            "total_clean_count": {
+                "name": "Total cleanings"
+            },
+            "total_clean_area": {
+                "name": "Total cleaned area"
             }
         },
         "button": {
             "dust_arrest": {
                 "name": "Collect dust"
+            },
+            "start_mop_wash": {
+                "name": "Wash mop"
+            },
+            "stop_mop_wash": {
+                "name": "Stop washing mop"
+            },
+            "start_dry": {
+                "name": "Dry mop"
+            },
+            "stop_dry": {
+                "name": "Stop drying mop"
+            },
+            "reset_main_brush": {
+                "name": "Reset main brush"
+            },
+            "reset_side_brush": {
+                "name": "Reset side brush"
+            },
+            "reset_filter": {
+                "name": "Reset filter"
+            },
+            "reset_mop": {
+                "name": "Reset mop"
             }
         },
         "binary_sensor": {
@@ -211,6 +259,25 @@
                     "less_collisions": "Less collisions",
                     "high_coverage": "High coverage"
                 }
+            }
+        },
+        "switch": {
+            "child_lock": {
+                "name": "Child lock"
+            },
+            "carpet_boost": {
+                "name": "Carpet boost"
+            },
+            "resume_after_charge": {
+                "name": "Resume after charging"
+            },
+            "do_not_disturb": {
+                "name": "Do not disturb"
+            }
+        },
+        "number": {
+            "volume": {
+                "name": "Volume"
             }
         }
     },
