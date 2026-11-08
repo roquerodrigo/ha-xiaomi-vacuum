@@ -233,8 +233,6 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         map_coordinator = self.coordinator.config_entry.runtime_data.map_coordinator
         rendered = map_coordinator.data if map_coordinator is not None else None
         rooms = rendered.get("rooms", []) if rendered else []
-        if all(room["name"] for room in rooms):
-            return [Segment(id=room["id"], name=room["name"]) for room in rooms]
         translations = await async_get_translations(
             self.hass, self.hass.config.language, "common", {DOMAIN}
         )
