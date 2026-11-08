@@ -60,6 +60,10 @@ SAMPLE_STATE: dict[str, Any] = {
     "main_brush_life": 71,
     "side_brush_life": 90,
     "filter_life": 70,
+    "mop_time_left": 68,
+    "main_brush_time_left": 213,
+    "side_brush_time_left": 180,
+    "filter_time_left": 105,
     # No map yet: the cloud fixtures publish one when a test needs it.
     "map_obj_name": None,
 }

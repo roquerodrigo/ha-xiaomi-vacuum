@@ -48,6 +48,11 @@ _PROPERTY_MAPPING: dict[Property, MiotPropertyBinding] = {
     Property.MAIN_BRUSH_LIFE: {"siid": 12, "piid": 1},
     Property.SIDE_BRUSH_LIFE: {"siid": 13, "piid": 1},
     Property.FILTER_LIFE: {"siid": 14, "piid": 1},
+    # Hours left on each consumable, next to its life level.
+    Property.MOP_TIME_LEFT: {"siid": 9, "piid": 2},
+    Property.MAIN_BRUSH_TIME_LEFT: {"siid": 12, "piid": 2},
+    Property.SIDE_BRUSH_TIME_LEFT: {"siid": 13, "piid": 2},
+    Property.FILTER_TIME_LEFT: {"siid": 14, "piid": 2},
     # The custom cleanings list grows with every cleaning saved in Mi Home and
     # would push the batched poll reply past the single-datagram limit.
     Property.USER_DEFINE_SWEEP_CONFIG: {"siid": 2, "piid": 42, "polled": False},
@@ -71,6 +76,10 @@ _ACTIONS = ModelActions(
     start_dry={"siid": 2, "aiid": 20},
     stop_mop_wash={"siid": 2, "aiid": 31},
     stop_dry={"siid": 2, "aiid": 32},
+    reset_mop={"siid": 9, "aiid": 1},
+    reset_main_brush={"siid": 12, "aiid": 1},
+    reset_side_brush={"siid": 13, "aiid": 1},
+    reset_filter={"siid": 14, "aiid": 1},
 )
 
 # Slugs follow what the robot physically does, as the Mi Home strings describe

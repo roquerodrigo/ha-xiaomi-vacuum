@@ -25,6 +25,8 @@ async def test_b108_picks_the_right_spec(hass, setup_integration_b108):
     assert EntityKey.DUST_ARREST_BUTTON not in spec.entities
     assert EntityKey.SWEEP_ROUTE_SELECT not in spec.entities
     assert EntityKey.OBSTACLE_AVOIDANCE_SELECT not in spec.entities
+    assert EntityKey.FILTER_TIME_LEFT_SENSOR not in spec.entities
+    assert EntityKey.RESET_FILTER_BUTTON not in spec.entities
 
 
 async def test_b108_creates_only_three_selects(hass, setup_integration_b108):

@@ -65,9 +65,25 @@ async def test_ov71_creates_all_five_selects(hass, setup_integration_ov71):
     assert "select.s40_pro_obstacle_avoidance" in entity_ids
 
 
-async def test_ov71_has_no_dust_arrest_button(hass, setup_integration_ov71):
-    """Plain charging dock: the dust-arrest button must not be created."""
-    assert hass.states.async_all("button") == []
+async def test_ov71_has_only_the_consumable_reset_buttons(hass, setup_integration_ov71):
+    """Plain charging dock: no dock buttons, only the life resets."""
+    entity_ids = {s.entity_id for s in hass.states.async_all("button")}
+    assert entity_ids == {
+        "button.s40_pro_reset_main_brush",
+        "button.s40_pro_reset_side_brush",
+        "button.s40_pro_reset_filter",
+        "button.s40_pro_reset_mop",
+    }
+
+
+async def test_ov71_inherits_the_consumable_hours_left(hass, setup_integration_ov71):
+    """Its own spec publishes them at the X20 Max's addresses."""
+    for consumable in ("mop", "main_brush", "side_brush", "filter"):
+        state = hass.states.get(f"sensor.s40_pro_{consumable}_time_left")
+        assert state is not None
+        assert state.state not in ("unknown", "unavailable")
+    assert OV71GL.actions.reset_mop == {"siid": 9, "aiid": 1}
+    assert OV71GL.actions.reset_filter == {"siid": 14, "aiid": 1}
 
 
 async def test_ov71_has_no_dock_actions(hass, setup_integration_ov71):
