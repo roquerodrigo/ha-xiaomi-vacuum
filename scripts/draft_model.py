@@ -51,6 +51,7 @@ MiotSpecProperty = TypedDict(
         "iid": int,
         "type": str,
         "description": str,
+        "format": str,
         "value-list": list[ValueListEntry],
     },
     total=False,
@@ -133,7 +134,8 @@ _BRUSH_PROPERTIES: dict[tuple[str, str], Property] = {
     ("side", "brush-left-time"): Property.SIDE_BRUSH_TIME_LEFT,
 }
 
-#: (service type, action type) → the ``ModelActions`` field, in order of preference.
+#: (service type, action type) → the ``ModelActions`` field. When a spec has
+#: several candidates for one field, the first one in the spec's order wins.
 _ACTIONS: dict[tuple[str, str], str] = {
     ("vacuum", "start-sweep"): "start_sweep",
     ("vacuum", "stop-sweeping"): "stop_sweeping",
@@ -163,6 +165,19 @@ _BRUSH_ACTIONS: dict[str, str] = {
     "main": "reset_main_brush",
     "side": "reset_side_brush",
 }
+
+#: ``ModelActions`` fields without a default: the module does not load without them.
+_REQUIRED_ACTIONS: tuple[str, ...] = (
+    "start_sweep",
+    "stop_sweeping",
+    "return_home",
+    "pause_sweeping",
+    "continue_sweep",
+    "identify",
+)
+
+#: The charging-state slug the battery and charging entities look for.
+_CHARGING_SLUG = "charging"
 
 #: Actions taking the input property named by their first ``in`` piid.
 _INPUT_ACTIONS = frozenset({"start_zone_sweep", "start_user_define_sweep"})
@@ -229,6 +244,7 @@ class Draft:
     status: dict[int, StatusSlug | str] = field(default_factory=dict)
     value_tables: dict[str, dict[str, int]] = field(default_factory=dict)
     charging_states: dict[int, str] = field(default_factory=dict)
+    booleans: set[Property] = field(default_factory=set)
     todos: list[str] = field(default_factory=list)
 
 
@@ -301,18 +317,39 @@ def draft(instance: MiotSpecInstance) -> Draft:
             }
     if result.dreame_start_clean is not None:
         _adopt_dreame_layout(result)
+    if charging := specs.get(Property.CHARGING_STATE):
+        result.charging_states = {
+            entry["value"]: slug(entry["description"])
+            for entry in _value_list(charging)
+        }
+    _note_what_needs_a_human(result)
+    return result
+
+
+def _note_what_needs_a_human(result: Draft) -> None:
+    """Add a TODO for everything the spec alone cannot settle."""
     if dock := sorted(_DOCK_ACTIONS & set(result.actions)):
         result.todos.append(
             f"{', '.join(dock)} come from the spec template: drop the ones the "
             "retail dock has no hardware for (the S40 Pro lists them on a plain "
             "charging dock)"
         )
-    if charging := specs.get(Property.CHARGING_STATE):
-        result.charging_states = {
-            entry["value"]: slug(entry["description"])
-            for entry in _value_list(charging)
-        }
-    return result
+    if result.charging_states and _CHARGING_SLUG not in result.charging_states.values():
+        result.todos.append(
+            f"no charging state is {_CHARGING_SLUG!r}: rename the one meaning "
+            "charging, or the charging sensor stays off"
+        )
+    result.todos.extend(
+        f"required action {name} not found in the spec: find its address (e.g. "
+        "in a Mi Home capture), the module does not load without it"
+        for name in _REQUIRED_ACTIONS
+        if name not in result.actions
+    )
+    if result.room_sweep is not None and result.room_sweep[2] is None:
+        result.todos.append(
+            "the spec's start-vacuum-room-sweep takes no input: find how the app "
+            "passes the rooms before wiring room cleaning"
+        )
 
 
 def _adopt_dreame_layout(result: Draft) -> None:
@@ -354,6 +391,15 @@ def _draft_service(
         if name is not None and name not in result.properties:
             result.properties[name] = (siid, prop["iid"])
             specs[name] = prop
+            if prop.get("format") == "bool":
+                result.booleans.add(name)
+    _draft_actions(result, service, service_type, side)
+
+
+def _draft_actions(
+    result: Draft, service: MiotSpecService, service_type: str, side: str | None
+) -> None:
+    siid = service["iid"]
     for action in service.get("actions", []):
         action_type = _short_type(action["type"])
         inputs = action.get("in") or []
@@ -415,11 +461,13 @@ def render(model: str, result: Draft) -> str:
         "_PROPERTY_MAPPING: dict[Property, MiotPropertyBinding] = {",
     ]
     for name, (siid, piid) in result.properties.items():
-        polled = (
-            ', "polled": False' if name is Property.USER_DEFINE_SWEEP_CONFIG else ""
-        )
+        encoding = ""
+        if name in result.booleans:
+            encoding += ', "boolean": True'
+        if name is Property.USER_DEFINE_SWEEP_CONFIG:
+            encoding += ', "polled": False'
         lines.append(
-            f'    Property.{name.name}: {{"siid": {siid}, "piid": {piid}{polled}}},'
+            f'    Property.{name.name}: {{"siid": {siid}, "piid": {piid}{encoding}}},'
         )
     lines += ["}", "", "_ACTIONS = ModelActions("]
     for field_name, (siid, aiid, input_piid) in result.actions.items():
@@ -460,11 +508,11 @@ def render(model: str, result: Draft) -> str:
             "    # TODO: map the map-name property (6.8 on the X20+, unpublished).",
             "    map_format=DreameMapFormat(),",
         ]
-    elif result.room_sweep is not None:
+    elif result.room_sweep is not None and result.room_sweep[2] is not None:
         siid, aiid, input_piid = result.room_sweep
         lines += [
             "    # TODO: confirm the robot honours the spec's room sweep; the S20+",
-            "    # and the Dreame-built X20+ ignore theirs (ADDING_A_MODEL.md §3.5).",
+            "    # and the Dreame-built X20+ ignore theirs (ADDING_A_MODEL.md §3.7).",
             (
                 "    room_cleaning=DirectRoomSweep("
                 f'{{"siid": {siid}, "aiid": {aiid}, "in_piid": {input_piid}}}),'
