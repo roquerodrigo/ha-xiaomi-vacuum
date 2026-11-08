@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import ExitStack, contextmanager
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -241,6 +242,22 @@ async def _setup_model_entry(hass, model: str):
     await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     return entry
+
+
+@pytest.fixture
+async def setup_model(hass, enable_custom_integrations):
+    """
+    Set up any model by its model string: ``entry, device = await setup_model(m)``.
+
+    ``device`` is the mocked MiotClient instance, patched until the test ends.
+    """
+    with ExitStack() as stack:
+
+        async def setup(model: str):
+            device = stack.enter_context(contextmanager(_patch_miot_client)(model))
+            return await _setup_model_entry(hass, model), device
+
+        yield setup
 
 
 @pytest.fixture(params=sorted(MODEL_FIXTURES))
