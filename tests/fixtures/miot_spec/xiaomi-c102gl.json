@@ -1,0 +1,1767 @@
+{
+ "type": "urn:miot-spec-v2:device:vacuum:0000A006:xiaomi-c102gl:1",
+ "description": "Robot Cleaner",
+ "services": [
+  {
+   "iid": 1,
+   "type": "urn:miot-spec-v2:service:device-information:00007801:xiaomi-c102gl:1",
+   "description": "Device Information",
+   "properties": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:property:manufacturer:00000001:xiaomi-c102gl:1",
+     "description": "Device Manufacturer",
+     "format": "string",
+     "access": [
+      "read"
+     ]
+    },
+    {
+     "iid": 2,
+     "type": "urn:miot-spec-v2:property:model:00000002:xiaomi-c102gl:1",
+     "description": "Device Model",
+     "format": "string",
+     "access": [
+      "read"
+     ]
+    },
+    {
+     "iid": 3,
+     "type": "urn:miot-spec-v2:property:serial-number:00000003:xiaomi-c102gl:1",
+     "description": "Device ID",
+     "format": "string",
+     "access": [
+      "read"
+     ]
+    },
+    {
+     "iid": 4,
+     "type": "urn:miot-spec-v2:property:firmware-revision:00000005:xiaomi-c102gl:1",
+     "description": "Current Firmware Version",
+     "format": "string",
+     "access": [
+      "read"
+     ]
+    },
+    {
+     "iid": 5,
+     "type": "urn:miot-spec-v2:property:serial-no:000000FF:xiaomi-c102gl:1",
+     "description": "Serial Number",
+     "format": "string",
+     "access": [
+      "read",
+      "notify"
+     ]
+    }
+   ]
+  },
+  {
+   "iid": 2,
+   "type": "urn:miot-spec-v2:service:vacuum:00007810:xiaomi-c102gl:1",
+   "description": "Robot Cleaner",
+   "properties": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:property:status:00000007:xiaomi-c102gl:1",
+     "description": "Status",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-list": [
+      {
+       "value": 1,
+       "description": "Sweeping"
+      },
+      {
+       "value": 2,
+       "description": "Idle"
+      },
+      {
+       "value": 3,
+       "description": "Paused"
+      },
+      {
+       "value": 4,
+       "description": "Error"
+      },
+      {
+       "value": 5,
+       "description": "Go Charging"
+      },
+      {
+       "value": 6,
+       "description": "Charging"
+      },
+      {
+       "value": 7,
+       "description": "Mopping"
+      },
+      {
+       "value": 8,
+       "description": "Drying"
+      },
+      {
+       "value": 9,
+       "description": "Washing"
+      },
+      {
+       "value": 10,
+       "description": "Go Washing"
+      },
+      {
+       "value": 11,
+       "description": "Building"
+      },
+      {
+       "value": 12,
+       "description": "Sweeping And Mopping"
+      },
+      {
+       "value": 13,
+       "description": "Charging Completed"
+      },
+      {
+       "value": 14,
+       "description": "Upgrading"
+      },
+      {
+       "value": 19,
+       "description": "WaterInspecting"
+      },
+      {
+       "value": 21,
+       "description": "WashingMopPause"
+      },
+      {
+       "value": 22,
+       "description": "DustCollecting"
+      },
+      {
+       "value": 23,
+       "description": "RemoteClean"
+      }
+     ],
+     "gatt-access": []
+    },
+    {
+     "iid": 2,
+     "type": "urn:miot-spec-v2:property:fault:00000009:xiaomi-c102gl:1",
+     "description": "Device Fault",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-range": [
+      0,
+      255,
+      1
+     ],
+     "gatt-access": []
+    },
+    {
+     "iid": 3,
+     "type": "urn:miot-spec-v2:property:mode:00000008:xiaomi-c102gl:1",
+     "description": "Mode",
+     "format": "uint8",
+     "access": [
+      "read",
+      "write",
+      "notify"
+     ],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Silent"
+      },
+      {
+       "value": 1,
+       "description": "Basic"
+      },
+      {
+       "value": 2,
+       "description": "Strong"
+      },
+      {
+       "value": 3,
+       "description": "Full Speed"
+      }
+     ],
+     "gatt-access": []
+    },
+    {
+     "iid": 4,
+     "type": "urn:miot-spec-v2:property:room-ids:00000073:xiaomi-c102gl:1",
+     "description": "Room IDs",
+     "format": "string",
+     "access": []
+    },
+    {
+     "iid": 5,
+     "type": "urn:miot-spec-v2:property:dry-left-time:00000174:xiaomi-c102gl:1",
+     "description": "Dry Left Time",
+     "format": "uint16",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "unit": "minutes",
+     "value-range": [
+      0,
+      9999,
+      1
+     ]
+    }
+   ],
+   "actions": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:action:start-sweep:00002804:xiaomi-c102gl:1",
+     "description": "Start Sweep",
+     "in": [],
+     "out": []
+    },
+    {
+     "iid": 2,
+     "type": "urn:miot-spec-v2:action:stop-sweeping:00002805:xiaomi-c102gl:1",
+     "description": "Stop Sweeping",
+     "in": [],
+     "out": []
+    },
+    {
+     "iid": 3,
+     "type": "urn:miot-spec-v2:action:start-room-sweep:00002826:xiaomi-c102gl:1",
+     "description": "Start Room Sweep",
+     "in": [
+      4
+     ],
+     "out": []
+    },
+    {
+     "iid": 4,
+     "type": "urn:miot-spec-v2:action:start-dust-arrest:00002873:xiaomi-c102gl:1",
+     "description": "Start Dust Arrest",
+     "in": [],
+     "out": []
+    },
+    {
+     "iid": 6,
+     "type": "urn:miot-spec-v2:action:start-mop-wash:00002875:xiaomi-c102gl:1",
+     "description": "Start Mop Wash",
+     "in": [],
+     "out": []
+    },
+    {
+     "iid": 8,
+     "type": "urn:miot-spec-v2:action:start-dry:00002877:xiaomi-c102gl:1",
+     "description": "Start Dry",
+     "in": [],
+     "out": []
+    },
+    {
+     "iid": 9,
+     "type": "urn:miot-spec-v2:action:stop-dry:00002878:xiaomi-c102gl:1",
+     "description": "Stop Dry",
+     "in": [],
+     "out": []
+    },
+    {
+     "iid": 10,
+     "type": "urn:miot-spec-v2:action:start-eject:00002879:xiaomi-c102gl:1",
+     "description": "Start Eject",
+     "in": [],
+     "out": []
+    }
+   ],
+   "events": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:event:dust-arrest-complete:0000503D:xiaomi-c102gl:1",
+     "description": "Dust Arrest Complete",
+     "arguments": []
+    },
+    {
+     "iid": 2,
+     "type": "urn:miot-spec-v2:event:mop-wash-complete:0000503E:xiaomi-c102gl:1",
+     "description": "Mop Wash Complete",
+     "arguments": []
+    },
+    {
+     "iid": 3,
+     "type": "urn:miot-spec-v2:event:dry-complete:0000503F:xiaomi-c102gl:1",
+     "description": "Dry Complete",
+     "arguments": []
+    },
+    {
+     "iid": 4,
+     "type": "urn:miot-spec-v2:event:eject-complete:00005040:xiaomi-c102gl:1",
+     "description": "Eject Complete",
+     "arguments": []
+    }
+   ]
+  },
+  {
+   "iid": 3,
+   "type": "urn:miot-spec-v2:service:battery:00007805:xiaomi-c102gl:1",
+   "description": "Battery",
+   "properties": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:property:battery-level:00000014:xiaomi-c102gl:1",
+     "description": "Battery Level",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "unit": "percentage",
+     "value-range": [
+      0,
+      100,
+      1
+     ]
+    },
+    {
+     "iid": 2,
+     "type": "urn:miot-spec-v2:property:charging-state:00000015:xiaomi-c102gl:1",
+     "description": "Charging State",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-list": [
+      {
+       "value": 1,
+       "description": "Charging"
+      },
+      {
+       "value": 2,
+       "description": "Not Charging"
+      },
+      {
+       "value": 5,
+       "description": "Go Charging"
+      }
+     ],
+     "gatt-access": []
+    }
+   ],
+   "actions": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:action:start-charge:00002802:xiaomi-c102gl:1",
+     "description": "Start Charge",
+     "in": [],
+     "out": []
+    }
+   ],
+   "events": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:event:low-battery:00005003:xiaomi-c102gl:1",
+     "description": "Low Battery",
+     "arguments": []
+    }
+   ]
+  },
+  {
+   "iid": 9,
+   "type": "urn:miot-spec-v2:service:brush-cleaner:0000784C:xiaomi-c102gl:1",
+   "description": "Main Cleaning Brush",
+   "properties": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:property:brush-left-time:00000086:xiaomi-c102gl:1",
+     "description": "Brush Left Time",
+     "format": "uint16",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "unit": "hours",
+     "value-range": [
+      0,
+      300,
+      1
+     ],
+     "gatt-access": []
+    },
+    {
+     "iid": 2,
+     "type": "urn:miot-spec-v2:property:brush-life-level:00000085:xiaomi-c102gl:1",
+     "description": "Brush Life Level",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "unit": "percentage",
+     "value-range": [
+      0,
+      100,
+      1
+     ]
+    }
+   ],
+   "actions": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:action:reset-brush-life:00002830:xiaomi-c102gl:1",
+     "description": "Reset Brush Life",
+     "in": [],
+     "out": []
+    }
+   ]
+  },
+  {
+   "iid": 10,
+   "type": "urn:miot-spec-v2:service:brush-cleaner:0000784C:xiaomi-c102gl:1",
+   "description": "Side Cleaning Brush",
+   "properties": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:property:brush-left-time:00000086:xiaomi-c102gl:1",
+     "description": "Brush Left Time",
+     "format": "uint16",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "unit": "hours",
+     "value-range": [
+      0,
+      200,
+      1
+     ],
+     "gatt-access": []
+    },
+    {
+     "iid": 2,
+     "type": "urn:miot-spec-v2:property:brush-life-level:00000085:xiaomi-c102gl:1",
+     "description": "Brush Life Level",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "unit": "percentage",
+     "value-range": [
+      0,
+      100,
+      1
+     ]
+    }
+   ],
+   "actions": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:action:reset-brush-life:00002830:xiaomi-c102gl:1",
+     "description": "Reset Brush Life",
+     "in": [],
+     "out": []
+    }
+   ]
+  },
+  {
+   "iid": 11,
+   "type": "urn:miot-spec-v2:service:filter:0000780B:xiaomi-c102gl:1",
+   "description": "Filter",
+   "properties": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:property:filter-life-level:0000001E:xiaomi-c102gl:1",
+     "description": "Filter Life Level",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "unit": "percentage",
+     "value-range": [
+      0,
+      100,
+      1
+     ]
+    },
+    {
+     "iid": 2,
+     "type": "urn:miot-spec-v2:property:filter-left-time:0000001F:xiaomi-c102gl:1",
+     "description": "Filter Left Time",
+     "format": "uint16",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "unit": "hours",
+     "value-range": [
+      0,
+      1000,
+      1
+     ]
+    }
+   ],
+   "actions": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:action:reset-filter-life:00002803:xiaomi-c102gl:1",
+     "description": "Reset Filter Life",
+     "in": [],
+     "out": []
+    }
+   ]
+  },
+  {
+   "iid": 18,
+   "type": "urn:miot-spec-v2:service:mop:000078C2:xiaomi-c102gl:1",
+   "description": "Mop",
+   "properties": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:property:mop-life-level:00000175:xiaomi-c102gl:1",
+     "description": "Mop Life Level",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "unit": "percentage",
+     "value-range": [
+      0,
+      100,
+      1
+     ]
+    },
+    {
+     "iid": 2,
+     "type": "urn:miot-spec-v2:property:mop-left-time:00000176:xiaomi-c102gl:1",
+     "description": "Mop Left Time",
+     "format": "uint16",
+     "access": [
+      "notify",
+      "read"
+     ],
+     "unit": "hours",
+     "value-range": [
+      0,
+      9999,
+      1
+     ]
+    }
+   ],
+   "actions": [
+    {
+     "iid": 1,
+     "type": "urn:miot-spec-v2:action:reset-mop-life:0000287B:xiaomi-c102gl:1",
+     "description": "Reset Mop Life",
+     "in": [],
+     "out": []
+    }
+   ]
+  },
+  {
+   "iid": 4,
+   "type": "urn:xiaomi-spec:service:vacuum-extend:00007801:xiaomi-c102gl:1",
+   "description": "vacuum-extend",
+   "properties": [
+    {
+     "iid": 1,
+     "type": "urn:xiaomi-spec:property:work-mode:00000001:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint32",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-range": [
+      0,
+      50,
+      1
+     ]
+    },
+    {
+     "iid": 2,
+     "type": "urn:xiaomi-spec:property:cleaning-time:00000002:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint32",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "unit": "minutes",
+     "value-range": [
+      0,
+      32767,
+      1
+     ]
+    },
+    {
+     "iid": 3,
+     "type": "urn:xiaomi-spec:property:cleaning-area:00000003:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint32",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-range": [
+      0,
+      32767,
+      1
+     ]
+    },
+    {
+     "iid": 4,
+     "type": "urn:xiaomi-spec:property:cleaning-mode:00000004:xiaomi-c102gl:1",
+     "description": "",
+     "format": "int8",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Quiet"
+      },
+      {
+       "value": 1,
+       "description": "Standard"
+      },
+      {
+       "value": 2,
+       "description": "Medium"
+      },
+      {
+       "value": 3,
+       "description": "Strong"
+      }
+     ]
+    },
+    {
+     "iid": 5,
+     "type": "urn:xiaomi-spec:property:mop-mode:00000005:xiaomi-c102gl:1",
+     "description": "",
+     "format": "int8",
+     "access": [
+      "read",
+      "notify",
+      "write"
+     ],
+     "value-list": [
+      {
+       "value": 1,
+       "description": "Low"
+      },
+      {
+       "value": 2,
+       "description": "Medium"
+      },
+      {
+       "value": 3,
+       "description": "High"
+      }
+     ]
+    },
+    {
+     "iid": 6,
+     "type": "urn:xiaomi-spec:property:waterbox-status:00000006:xiaomi-c102gl:1",
+     "description": "",
+     "format": "int8",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "No"
+      },
+      {
+       "value": 1,
+       "description": "Yes"
+      }
+     ]
+    },
+    {
+     "iid": 7,
+     "type": "urn:xiaomi-spec:property:task-status:00000007:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 8,
+     "type": "urn:xiaomi-spec:property:clean-start-time:00000008:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "notify"
+     ]
+    },
+    {
+     "iid": 9,
+     "type": "urn:xiaomi-spec:property:clean-log-filename:00000009:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "notify"
+     ]
+    },
+    {
+     "iid": 10,
+     "type": "urn:xiaomi-spec:property:clean-extend-data:0000000a:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "write"
+     ]
+    },
+    {
+     "iid": 11,
+     "type": "urn:xiaomi-spec:property:break-point-restart:0000000b:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify",
+      "write"
+     ],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Close"
+      },
+      {
+       "value": 1,
+       "description": "Open"
+      }
+     ]
+    },
+    {
+     "iid": 12,
+     "type": "urn:xiaomi-spec:property:carpet-press:0000000c:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify",
+      "write"
+     ],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Close"
+      },
+      {
+       "value": 1,
+       "description": "Open"
+      }
+     ]
+    },
+    {
+     "iid": 13,
+     "type": "urn:xiaomi-spec:property:cleanlog-status:0000000d:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint16",
+     "access": [],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Interrupt"
+      },
+      {
+       "value": 1,
+       "description": "Complete"
+      }
+     ]
+    },
+    {
+     "iid": 14,
+     "type": "urn:xiaomi-spec:property:serial-number:0000000e:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "read",
+      "notify"
+     ]
+    },
+    {
+     "iid": 15,
+     "type": "urn:xiaomi-spec:property:remote-state:0000000f:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "write"
+     ]
+    },
+    {
+     "iid": 16,
+     "type": "urn:xiaomi-spec:property:clean-rags-tip:00000010:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint32",
+     "access": [
+      "read",
+      "notify",
+      "write"
+     ],
+     "unit": "minutes",
+     "value-range": [
+      0,
+      120,
+      1
+     ]
+    },
+    {
+     "iid": 17,
+     "type": "urn:xiaomi-spec:property:keep-sweeper-time:00000011:xiaomi-c102gl:1",
+     "description": "",
+     "format": "int32",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "unit": "minutes",
+     "value-range": [
+      -1,
+      1000000,
+      1
+     ]
+    },
+    {
+     "iid": 18,
+     "type": "urn:xiaomi-spec:property:faults:00000012:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "read",
+      "notify"
+     ]
+    },
+    {
+     "iid": 19,
+     "type": "urn:xiaomi-spec:property:nation-matched:00000013:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "read",
+      "notify"
+     ]
+    },
+    {
+     "iid": 20,
+     "type": "urn:xiaomi-spec:property:relocation-status:00000014:xiaomi-c102gl:1",
+     "description": "",
+     "format": "int32",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-range": [
+      0,
+      1000000,
+      1
+     ]
+    },
+    {
+     "iid": 21,
+     "type": "urn:xiaomi-spec:property:laser-switch:00000015:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Close"
+      },
+      {
+       "value": 1,
+       "description": "Open"
+      }
+     ]
+    },
+    {
+     "iid": 22,
+     "type": "urn:xiaomi-spec:property:camera-switch:00000016:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Close"
+      },
+      {
+       "value": 1,
+       "description": "Open"
+      }
+     ]
+    },
+    {
+     "iid": 23,
+     "type": "urn:xiaomi-spec:property:clean-setting:00000017:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint32",
+     "access": [],
+     "value-range": [
+      0,
+      999999999,
+      1
+     ]
+    },
+    {
+     "iid": 24,
+     "type": "urn:xiaomi-spec:property:stop-map:00000018:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Close"
+      },
+      {
+       "value": 1,
+       "description": "Open"
+      }
+     ]
+    },
+    {
+     "iid": 25,
+     "type": "urn:xiaomi-spec:property:wash-station:00000019:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 26,
+     "type": "urn:xiaomi-spec:property:custom-enable:0000001a:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Close"
+      },
+      {
+       "value": 1,
+       "description": "Open"
+      }
+     ]
+    },
+    {
+     "iid": 27,
+     "type": "urn:xiaomi-spec:property:child-lock:0000001b:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify",
+      "write"
+     ],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Close"
+      },
+      {
+       "value": 1,
+       "description": "Open"
+      }
+     ]
+    },
+    {
+     "iid": 28,
+     "type": "urn:xiaomi-spec:property:sensitivity:0000001c:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-list": [
+      {
+       "value": 1,
+       "description": "Low"
+      },
+      {
+       "value": 2,
+       "description": "Mid"
+      },
+      {
+       "value": 3,
+       "description": "High"
+      }
+     ]
+    },
+    {
+     "iid": 29,
+     "type": "urn:xiaomi-spec:property:mop-way:0000001d:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Close"
+      },
+      {
+       "value": 1,
+       "description": "Open"
+      }
+     ]
+    },
+    {
+     "iid": 30,
+     "type": "urn:xiaomi-spec:property:clean-cancel:0000001e:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 31,
+     "type": "urn:xiaomi-spec:property:y-clean:0000001f:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Close"
+      },
+      {
+       "value": 1,
+       "description": "Open"
+      }
+     ]
+    },
+    {
+     "iid": 32,
+     "type": "urn:xiaomi-spec:property:electric-water:00000020:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Close"
+      },
+      {
+       "value": 1,
+       "description": "Open"
+      }
+     ]
+    },
+    {
+     "iid": 33,
+     "type": "urn:xiaomi-spec:property:carpet-recognition:00000021:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 34,
+     "type": "urn:xiaomi-spec:property:smart-wash-switch:00000022:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Close"
+      },
+      {
+       "value": 1,
+       "description": "Open"
+      }
+     ]
+    },
+    {
+     "iid": 35,
+     "type": "urn:xiaomi-spec:property:warn-status:00000023:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 36,
+     "type": "urn:xiaomi-spec:property:carpet-excape:00000024:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-list": [
+      {
+       "value": 1,
+       "description": "Escape"
+      },
+      {
+       "value": 2,
+       "description": "Auto"
+      }
+     ]
+    },
+    {
+     "iid": 37,
+     "type": "urn:xiaomi-spec:property:clean-fluid-switch:00000025:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-list": [
+      {
+       "value": 0,
+       "description": "Close"
+      },
+      {
+       "value": 1,
+       "description": "Open"
+      }
+     ]
+    },
+    {
+     "iid": 38,
+     "type": "urn:xiaomi-spec:property:capability:00000026:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint32",
+     "access": [],
+     "value-range": [
+      0,
+      999999999,
+      1
+     ]
+    },
+    {
+     "iid": 39,
+     "type": "urn:xiaomi-spec:property:save-water-tips:00000027:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 40,
+     "type": "urn:xiaomi-spec:property:drying-time:00000028:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 41,
+     "type": "urn:xiaomi-spec:property:no-water-info:00000029:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 42,
+     "type": "urn:xiaomi-spec:property:cruise-map-id:0000002a:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint32",
+     "access": [],
+     "value-range": [
+      0,
+      999999999,
+      1
+     ]
+    },
+    {
+     "iid": 43,
+     "type": "urn:xiaomi-spec:property:cruise-map-name:0000002b:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": []
+    },
+    {
+     "iid": 44,
+     "type": "urn:xiaomi-spec:property:cruise-task-type:0000002c:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 45,
+     "type": "urn:xiaomi-spec:property:auto-install-mop:0000002d:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 46,
+     "type": "urn:xiaomi-spec:property:mop-wash-mode:0000002e:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 47,
+     "type": "urn:xiaomi-spec:property:clean-disable-mode:0000002f:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 48,
+     "type": "urn:xiaomi-spec:property:clean-quick:00000030:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint32",
+     "access": [],
+     "value-range": [
+      0,
+      999999999,
+      1
+     ]
+    },
+    {
+     "iid": 49,
+     "type": "urn:xiaomi-spec:property:reloc-enable:00000031:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 50,
+     "type": "urn:xiaomi-spec:property:clean-switch-set:00000032:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": []
+    },
+    {
+     "iid": 51,
+     "type": "urn:xiaomi-spec:property:auto-water:00000033:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 52,
+     "type": "urn:xiaomi-spec:property:mop-in-station:00000034:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 53,
+     "type": "urn:xiaomi-spec:property:mop-pad-installed:00000035:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 54,
+     "type": "urn:xiaomi-spec:property:water-self-check:00000036:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 55,
+     "type": "urn:xiaomi-spec:property:dry-stop-remind:00000037:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    },
+    {
+     "iid": 56,
+     "type": "urn:xiaomi-spec:property:int-message-prompt:00000038:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    }
+   ],
+   "actions": [
+    {
+     "iid": 1,
+     "type": "urn:xiaomi-spec:action:start-clean:00002801:xiaomi-c102gl:1",
+     "description": "start-clean",
+     "in": [
+      10
+     ],
+     "out": []
+    },
+    {
+     "iid": 2,
+     "type": "urn:xiaomi-spec:action:stop-clean:00002802:xiaomi-c102gl:1",
+     "description": "stop-clean",
+     "in": [],
+     "out": []
+    }
+   ],
+   "events": [
+    {
+     "iid": 1,
+     "type": "urn:xiaomi-spec:event:cleanup-completed:00005001:xiaomi-c102gl:1",
+     "description": "cleanup-completed",
+     "arguments": []
+    },
+    {
+     "iid": 2,
+     "type": "urn:xiaomi-spec:event:finish-withwaternox:00005002:xiaomi-c102gl:1",
+     "description": "finish-withwaternox",
+     "arguments": []
+    },
+    {
+     "iid": 3,
+     "type": "urn:xiaomi-spec:event:finish-clean:00005003:xiaomi-c102gl:1",
+     "description": "finish-clean",
+     "arguments": []
+    }
+   ]
+  },
+  {
+   "iid": 5,
+   "type": "urn:xiaomi-spec:service:do-not-disturb:00007802:xiaomi-c102gl:1",
+   "description": "do-not-disturb",
+   "properties": [
+    {
+     "iid": 1,
+     "type": "urn:xiaomi-spec:property:enable:00000001:xiaomi-c102gl:1",
+     "description": "",
+     "format": "bool",
+     "access": [
+      "read",
+      "notify",
+      "write"
+     ]
+    },
+    {
+     "iid": 2,
+     "type": "urn:xiaomi-spec:property:start-time:00000002:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "read",
+      "notify",
+      "write"
+     ]
+    },
+    {
+     "iid": 3,
+     "type": "urn:xiaomi-spec:property:end-time:00000003:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "notify",
+      "write",
+      "read"
+     ]
+    }
+   ]
+  },
+  {
+   "iid": 6,
+   "type": "urn:xiaomi-spec:service:map:00007803:xiaomi-c102gl:1",
+   "description": "map",
+   "properties": [
+    {
+     "iid": 1,
+     "type": "urn:xiaomi-spec:property:map-data:00000001:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "notify"
+     ]
+    },
+    {
+     "iid": 2,
+     "type": "urn:xiaomi-spec:property:frame-info:00000002:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": []
+    },
+    {
+     "iid": 3,
+     "type": "urn:xiaomi-spec:property:object-name:00000003:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "notify"
+     ]
+    },
+    {
+     "iid": 4,
+     "type": "urn:xiaomi-spec:property:map-extend-data:00000004:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": []
+    },
+    {
+     "iid": 5,
+     "type": "urn:xiaomi-spec:property:robot-time:00000005:xiaomi-c102gl:1",
+     "description": "",
+     "format": "int64",
+     "access": [
+      "notify"
+     ],
+     "value-range": [
+      0,
+      999999999999999,
+      1
+     ]
+    },
+    {
+     "iid": 6,
+     "type": "urn:xiaomi-spec:property:result-code:00000006:xiaomi-c102gl:1",
+     "description": "",
+     "format": "int16",
+     "access": [
+      "notify"
+     ],
+     "value-range": [
+      -10000,
+      10000,
+      1
+     ]
+    }
+   ],
+   "actions": [
+    {
+     "iid": 1,
+     "type": "urn:xiaomi-spec:action:map-req:00002801:xiaomi-c102gl:1",
+     "description": "map-req",
+     "in": [
+      2
+     ],
+     "out": [
+      1,
+      3,
+      5
+     ]
+    },
+    {
+     "iid": 2,
+     "type": "urn:xiaomi-spec:action:update-map:00002802:xiaomi-c102gl:1",
+     "description": "update-map",
+     "in": [
+      4
+     ],
+     "out": [
+      6
+     ]
+    }
+   ]
+  },
+  {
+   "iid": 7,
+   "type": "urn:xiaomi-spec:service:audio:00007804:xiaomi-c102gl:1",
+   "description": "audio",
+   "properties": [
+    {
+     "iid": 1,
+     "type": "urn:xiaomi-spec:property:volume:00000001:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [
+      "read",
+      "notify",
+      "write"
+     ],
+     "value-range": [
+      0,
+      100,
+      1
+     ]
+    },
+    {
+     "iid": 2,
+     "type": "urn:xiaomi-spec:property:voice-packet-id:00000002:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "read",
+      "notify",
+      "write"
+     ]
+    },
+    {
+     "iid": 3,
+     "type": "urn:xiaomi-spec:property:voice-change-state:00000003:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "read",
+      "notify"
+     ]
+    },
+    {
+     "iid": 4,
+     "type": "urn:xiaomi-spec:property:set-voice:00000004:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "write"
+     ]
+    }
+   ],
+   "actions": [
+    {
+     "iid": 1,
+     "type": "urn:xiaomi-spec:action:position:00002801:xiaomi-c102gl:1",
+     "description": "position",
+     "in": [],
+     "out": []
+    },
+    {
+     "iid": 2,
+     "type": "urn:xiaomi-spec:action:play-sound:00002802:xiaomi-c102gl:1",
+     "description": "play-sound",
+     "in": [],
+     "out": []
+    }
+   ]
+  },
+  {
+   "iid": 8,
+   "type": "urn:xiaomi-spec:service:time:00007805:xiaomi-c102gl:1",
+   "description": "time",
+   "properties": [
+    {
+     "iid": 1,
+     "type": "urn:xiaomi-spec:property:time-zone:00000001:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "read",
+      "notify"
+     ]
+    },
+    {
+     "iid": 2,
+     "type": "urn:xiaomi-spec:property:timer-clean:00000002:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": [
+      "read",
+      "notify",
+      "write"
+     ]
+    },
+    {
+     "iid": 3,
+     "type": "urn:xiaomi-spec:property:timer-id:00000003:xiaomi-c102gl:1",
+     "description": "",
+     "format": "string",
+     "access": []
+    },
+    {
+     "iid": 4,
+     "type": "urn:xiaomi-spec:property:timer-cancel-reason:00000004:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint8",
+     "access": [],
+     "value-range": [
+      0,
+      255,
+      1
+     ]
+    }
+   ],
+   "actions": [
+    {
+     "iid": 1,
+     "type": "urn:xiaomi-spec:action:delete-timer:00002801:xiaomi-c102gl:1",
+     "description": "delete-timer",
+     "in": [
+      3
+     ],
+     "out": []
+    }
+   ]
+  },
+  {
+   "iid": 12,
+   "type": "urn:xiaomi-spec:service:clean-logs:00007806:xiaomi-c102gl:1",
+   "description": "clean-logs",
+   "properties": [
+    {
+     "iid": 1,
+     "type": "urn:xiaomi-spec:property:first-clean-time:00000001:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint32",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-range": [
+      0,
+      4294967295,
+      1
+     ]
+    },
+    {
+     "iid": 2,
+     "type": "urn:xiaomi-spec:property:total-clean-time:00000002:xiaomi-c102gl:1",
+     "description": "total-clean-time",
+     "format": "uint32",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "unit": "minutes",
+     "value-range": [
+      0,
+      4294967295,
+      1
+     ],
+     "gatt-access": []
+    },
+    {
+     "iid": 3,
+     "type": "urn:xiaomi-spec:property:total-clean-times:00000003:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint32",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-range": [
+      0,
+      4294967295,
+      1
+     ]
+    },
+    {
+     "iid": 4,
+     "type": "urn:xiaomi-spec:property:total-clean-area:00000004:xiaomi-c102gl:1",
+     "description": "",
+     "format": "uint32",
+     "access": [
+      "read",
+      "notify"
+     ],
+     "value-range": [
+      0,
+      4294967295,
+      1
+     ]
+    }
+   ]
+  },
+  {
+   "iid": 13,
+   "type": "urn:xiaomi-spec:service:vslam-extend:00007807:xiaomi-c102gl:1",
+   "description": "vslam-extend"
+  },
+  {
+   "iid": 14,
+   "type": "urn:xiaomi-spec:service:robot-config:00007808:xiaomi-c102gl:1",
+   "description": "robot-config"
+  },
+  {
+   "iid": 15,
+   "type": "urn:xiaomi-spec:service:collect-dust:00007809:xiaomi-c102gl:1",
+   "description": "collect-dust"
+  },
+  {
+   "iid": 16,
+   "type": "urn:xiaomi-spec:service:sensor:0000780a:xiaomi-c102gl:1",
+   "description": "sensor"
+  },
+  {
+   "iid": 17,
+   "type": "urn:xiaomi-spec:service:waterbox-sieve:0000780b:xiaomi-c102gl:1",
+   "description": "waterbox-sieve"
+  }
+ ]
+}
