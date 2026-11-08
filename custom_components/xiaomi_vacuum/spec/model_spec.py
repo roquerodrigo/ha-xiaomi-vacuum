@@ -4,18 +4,20 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Literal, TypedDict
+from typing import TYPE_CHECKING, Literal
 
 from .capability import Capability
 from .cleaning_job_signal import CleaningJobSignal
 from .entity_key import EntityKey
 from .property import Property
+from .status_catalog import CANONICAL_STATUSES, STATUS_MEANINGS
 
 if TYPE_CHECKING:
     from homeassistant.components.vacuum.const import VacuumActivity
 
     from .addresses import MiotActionAddress, MiotPropertyAddress
     from .model_actions import ModelActions
+    from .status_slug import StatusSlug
 
 # How the live fault is read. d109gl publishes a `Fault Ids` JSON list
 # ({"fault":[codes]}); b108gl publishes a plain `fault` uint32 (0 == healthy).
@@ -46,15 +48,6 @@ MapFormat = Literal["xiaomi", "dreame"]
 #: matching paused states, ...) that, unlike the status, stays non-zero for the
 #: whole job: through mid-job mop washes, recharges and the drive back.
 TASK_STATUS_COMPLETED = 0
-
-
-class StatusDef(TypedDict):
-    """Per-status-code metadata: HA activity, slug, idle flag and job signal."""
-
-    activity: VacuumActivity
-    slug: str
-    is_idle: bool
-    cleaning_job: CleaningJobSignal
 
 
 #: Maps each optional :class:`Capability` to the :class:`EntityKey` it gates.
@@ -146,7 +139,7 @@ class ModelSpec:
     name: str
     property_mapping: dict[Property, MiotPropertyAddress]
     actions: ModelActions
-    status: dict[int, StatusDef]
+    status: dict[int, StatusSlug]
     fan_speeds: dict[str, int]
     sweep_mop_types: dict[str, int]
     clean_times: dict[str, int]
@@ -196,37 +189,50 @@ class ModelSpec:
 
     @property
     def status_to_activity(self) -> dict[int, VacuumActivity]:
-        """Status code → HA activity, derived from :attr:`status`."""
-        return {code: s["activity"] for code, s in self.status.items()}
+        """Status code → HA activity."""
+        return {
+            code: STATUS_MEANINGS[slug].activity for code, slug in self.status.items()
+        }
 
     @property
     def status_slugs(self) -> dict[int, str]:
-        """Status code → translation slug, derived from :attr:`status`."""
-        return {code: s["slug"] for code, s in self.status.items()}
+        """Status code → translation slug."""
+        return {code: str(slug) for code, slug in self.status.items()}
 
     @property
     def idle_statuses(self) -> frozenset[int]:
         """Status codes that count as parked/idle (a fresh start is safe)."""
-        return frozenset(code for code, s in self.status.items() if s["is_idle"])
+        return frozenset(
+            code for code, slug in self.status.items() if STATUS_MEANINGS[slug].is_idle
+        )
 
     @property
     def cleaning_job_signals(self) -> dict[int, CleaningJobSignal]:
         """Status code → what it reveals about the cleaning job."""
-        return {code: s["cleaning_job"] for code, s in self.status.items()}
+        return {
+            code: STATUS_MEANINGS[slug].cleaning_job
+            for code, slug in self.status.items()
+        }
 
     def status_code_for(self, activity: VacuumActivity) -> int:
         """
-        First status code whose activity matches ``activity``.
+        Return the status code an optimistic UI patch reports for ``activity``.
 
-        Used by optimistic UI patches so a command reports the same activity the
-        device will confirm on the next poll, without the platform hard-coding
-        per-model status codes (X20 Max and S20+ already diverge elsewhere).
-        Order is insertion order of :attr:`status`, which lists the canonical
-        representative (e.g. ``sweeping`` for CLEANING) first.
+        A command reports the same activity the device will confirm on the next
+        poll, without the platform hard-coding per-model status codes: the code
+        of the activity's canonical slug, else the first code with that activity.
         """
-        for code, definition in self.status.items():
-            if definition["activity"] is activity:
+        canonical = CANONICAL_STATUSES.get(activity)
+        matches = [
+            code
+            for code, slug in self.status.items()
+            if STATUS_MEANINGS[slug].activity is activity
+        ]
+        for code in matches:
+            if self.status[code] is canonical:
                 return code
+        if matches:
+            return matches[0]
         msg = f"No status code maps to activity {activity!r}"
         raise ValueError(msg)
 

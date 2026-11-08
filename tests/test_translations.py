@@ -8,6 +8,7 @@ from pathlib import Path
 import pytest
 
 from custom_components.xiaomi_vacuum.const import DOMAIN
+from custom_components.xiaomi_vacuum.spec import StatusSlug
 
 TRANSLATIONS_DIR = (
     Path(__file__).parent.parent
@@ -124,6 +125,12 @@ async def test_entity_translation_keys_and_authored_names_agree(
     assert not authored - requested, (
         f"en.json defines keys no entity asks for: {sorted(authored - requested)}"
     )
+
+
+def test_every_status_slug_is_translated():
+    english = json.loads((TRANSLATIONS_DIR / "en.json").read_text(encoding="utf-8"))
+    states = english["entity"]["sensor"]["status"]["state"]
+    assert set(StatusSlug) <= set(states)
 
 
 def test_no_empty_translation_values():

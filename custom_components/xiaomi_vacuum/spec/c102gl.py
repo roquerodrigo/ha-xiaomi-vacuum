@@ -32,12 +32,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from homeassistant.components.vacuum.const import VacuumActivity
-
-from .cleaning_job_signal import CleaningJobSignal
 from .model_actions import ModelActions, _require_action
-from .model_spec import ModelSpec, StatusDef
+from .model_spec import ModelSpec
 from .property import Property
+from .status_slug import StatusSlug
 
 if TYPE_CHECKING:
     from .addresses import MiotPropertyAddress
@@ -109,123 +107,29 @@ _ACTIONS = ModelActions(
     reset_mop={"siid": 18, "aiid": 1},
 )
 
-# Canonical code per activity first (status_code_for): 1 CLEANING, 2 IDLE,
-# 3 PAUSED, 5 RETURNING, 6 DOCKED. Charging (6), Go Charging (5) and Washing (9)
-# occur both inside a job and after it; the task status settles those, so the
-# signals below only matter until it has been polled. They match the slugs'
-# signals on the other models.
-_STATUS: dict[int, StatusDef] = {
-    1: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "sweeping",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    2: {
-        "activity": VacuumActivity.IDLE,
-        "slug": "idle",
-        "is_idle": True,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    3: {
-        "activity": VacuumActivity.PAUSED,
-        "slug": "paused",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    5: {
-        "activity": VacuumActivity.RETURNING,
-        "slug": "go_charging",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    6: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "charging",
-        "is_idle": True,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    # The ERROR activity comes from an active fault, never from the status.
-    4: {
-        "activity": VacuumActivity.IDLE,
-        "slug": "error",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.INCONCLUSIVE,
-    },
-    7: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "mopping",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    8: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "drying",
-        "is_idle": True,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    # Mop wash in the dock: before leaving, between rooms and after the job.
-    9: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "go_wash",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.INCONCLUSIVE,
-    },
-    # Driving back to wash the mops mid-job.
-    10: {
-        "activity": VacuumActivity.RETURNING,
-        "slug": "wash_break",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    11: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "building_map",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    12: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "sweeping_and_mopping",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    13: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "charged",
-        "is_idle": True,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    14: {
-        "activity": VacuumActivity.IDLE,
-        "slug": "updating",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    19: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "water_inspecting",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.INCONCLUSIVE,
-    },
-    21: {
-        "activity": VacuumActivity.PAUSED,
-        "slug": "washing_paused",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    22: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "dust_collecting",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.INCONCLUSIVE,
-    },
-    23: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "remote",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
+# Charging (6), Go Charging (5) and Washing (9) occur both inside a job and after
+# it; the task status settles those, so the slugs' cleaning-job signals only
+# matter until it has been polled. 9 washes the mops in the dock (before leaving,
+# between rooms, after the job); 10 drives back to wash them mid-job.
+_STATUS: dict[int, StatusSlug] = {
+    1: StatusSlug.SWEEPING,
+    2: StatusSlug.IDLE,
+    3: StatusSlug.PAUSED,
+    5: StatusSlug.GO_CHARGING,
+    6: StatusSlug.CHARGING,
+    4: StatusSlug.ERROR,
+    7: StatusSlug.MOPPING,
+    8: StatusSlug.DRYING,
+    9: StatusSlug.GO_WASH,
+    10: StatusSlug.WASH_BREAK,
+    11: StatusSlug.BUILDING_MAP,
+    12: StatusSlug.SWEEPING_AND_MOPPING,
+    13: StatusSlug.CHARGED,
+    14: StatusSlug.UPDATING,
+    19: StatusSlug.WATER_INSPECTING,
+    21: StatusSlug.WASHING_PAUSED,
+    22: StatusSlug.DUST_COLLECTING,
+    23: StatusSlug.REMOTE,
 }
 
 C102GL = ModelSpec(
