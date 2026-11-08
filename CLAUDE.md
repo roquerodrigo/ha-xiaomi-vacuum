@@ -10,6 +10,10 @@ Marketplace.
 Read `README.md` for the user-facing feature list and setup flow,
 `XIAOMI_VACUUM_API.md` for the device's MIoT API reference, and
 `ADDING_A_MODEL.md` for the step-by-step on extending support to a new vacuum.
+Two project skills under `.claude/skills/` drive the common changes:
+**`add-model`** (supporting a new `xiaomi.vacuum.*` model) and **`add-feature`**
+(a new entity, service or `send_command`, or exposing a property or action).
+Use them for that work.
 **Always read `CODE_STYLE.md` before adding or restructuring code** — it is
 the enforced style guide (one class per file/entity, strict typing, naming,
 property conventions, etc.) and takes precedence over anything not covered

@@ -15,6 +15,9 @@ Pull requests are the best way to propose changes to the codebase.
 
 1. Fork the repo and create your branch from `main`.
 2. If you've changed something, update the documentation.
+   Adding a vacuum model or a feature? Follow [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md);
+   Claude Code users get the same steps from the
+   `add-model` and `add-feature` project skills in `.claude/skills/`.
 3. Make sure your code lints (`uv run ruff format .`, `uv run ruff check . --fix`, `uv run mypy custom_components/xiaomi_vacuum`).
 4. Test you contribution.
 5. Issue that pull request!
