@@ -143,6 +143,11 @@ def _service(instance, service_type):
     )
 
 
+def test_the_product_name_is_left_as_a_todo(draft_model):
+    result = draft_model.draft(_instance("xiaomi-d109gl"))
+    assert any("<product name>" in todo for todo in result.todos)
+
+
 def test_a_missing_required_action_is_left_as_a_todo(draft_model):
     instance = _instance("xiaomi-d109gl")
     identify = _service(instance, "identify")

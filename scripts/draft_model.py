@@ -328,6 +328,10 @@ def draft(instance: MiotSpecInstance) -> Draft:
 
 def _note_what_needs_a_human(result: Draft) -> None:
     """Add a TODO for everything the spec alone cannot settle."""
+    result.todos.append(
+        "replace <product name> in the docstring and in name= with the retail "
+        "name (the spec only says what kind of device it is)"
+    )
     if dock := sorted(_DOCK_ACTIONS & set(result.actions)):
         result.todos.append(
             f"{', '.join(dock)} come from the spec template: drop the ones the "
