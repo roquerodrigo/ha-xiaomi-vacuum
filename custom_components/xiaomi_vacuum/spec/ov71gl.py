@@ -28,6 +28,7 @@ from dataclasses import replace
 
 from .d109gl import D109GL
 from .model_actions import _require_action
+from .property import Property
 from .status_slug import StatusSlug
 
 _ACTIONS = replace(
@@ -81,7 +82,11 @@ OV71GL = replace(
         "start_sweep_mop": _require_action(_ACTIONS.start_sweep_mop, "start_sweep_mop"),
         "continue_sweep": _ACTIONS.continue_sweep,
     },
-    user_define_sweep_config=None,
+    property_mapping={
+        name: binding
+        for name, binding in D109GL.property_mapping.items()
+        if name is not Property.USER_DEFINE_SWEEP_CONFIG
+    },
     ignored_fault_codes=_PHANTOM_FAULTS,
     notice_fault_codes=_NOTICE_FAULTS,
 )

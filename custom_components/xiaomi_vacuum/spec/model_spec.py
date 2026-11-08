@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from homeassistant.components.vacuum.const import VacuumActivity
 
     from ..data import VacuumState  # noqa: TID252
-    from .addresses import MiotActionAddress, MiotPropertyAddress
+    from .addresses import MiotActionAddress, MiotPropertyBinding
     from .fault_reading import FaultReading
     from .model_actions import ModelActions
     from .room_cleaning import RoomCleaning
@@ -110,7 +110,6 @@ MAPPING_FIELDS: tuple[str, ...] = (
     "send_commands",
     "sweep_routes",
     "obstacle_avoidances",
-    "property_masks",
 )
 
 
@@ -120,7 +119,7 @@ class ModelSpec:
 
     model: str
     name: str
-    property_mapping: dict[Property, MiotPropertyAddress]
+    property_mapping: dict[Property, MiotPropertyBinding]
     actions: ModelActions
     status: dict[int, StatusSlug]
     fan_speeds: dict[str, int]
@@ -148,17 +147,8 @@ class ModelSpec:
     # Error / Error code sensors but do not force VacuumActivity.ERROR, the way
     # other vacuum integrations treat dismissable warnings.
     notice_fault_codes: frozenset[int] = frozenset()
-    # The custom cleanings list is read on demand, not polled: it grows with
-    # every cleaning saved in Mi Home and would push the batched poll reply past
-    # the single-datagram limit.
-    user_define_sweep_config: MiotPropertyAddress | None = None
     room_cleaning: RoomCleaning | None = None
     map_format: MapFormat = _XIAOMI_MAP_FORMAT
-    # Properties that live in some bits of a packed device value: the mask
-    # picks the bits (e.g. the X20+ cleaning mode in the low two bits of its
-    # clean-setting). Reads expose only those bits, shifted down; writes keep
-    # every other bit as the device reports it.
-    property_masks: dict[Property, int] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         """Wrap the mutable dict fields in read-only views."""
@@ -168,6 +158,24 @@ class ModelSpec:
         # sanctioned way to normalise fields inside a frozen dataclass.
         for name in MAPPING_FIELDS:
             object.__setattr__(self, name, MappingProxyType(getattr(self, name)))
+
+    @property
+    def property_masks(self) -> dict[Property, int]:
+        """Property → the bits of its packed device value it owns."""
+        return {
+            name: binding["mask"]
+            for name, binding in self.property_mapping.items()
+            if "mask" in binding
+        }
+
+    @property
+    def polled_properties(self) -> dict[Property, MiotPropertyBinding]:
+        """The mapped properties read by the periodic poll."""
+        return {
+            name: binding
+            for name, binding in self.property_mapping.items()
+            if binding.get("polled", True)
+        }
 
     @property
     def status_to_activity(self) -> dict[int, VacuumActivity]:

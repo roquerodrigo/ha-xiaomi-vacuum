@@ -20,6 +20,7 @@ from .addresses import (
     MiotActionAddress,
     MiotActionInputAddress,
     MiotPropertyAddress,
+    MiotPropertyBinding,
     MiotSegmentCleanAddress,
 )
 from .b108gl import B108GL
@@ -73,6 +74,7 @@ __all__ = [
     "MiotActionAddress",
     "MiotActionInputAddress",
     "MiotPropertyAddress",
+    "MiotPropertyBinding",
     "MiotSegmentCleanAddress",
     "ModelActions",
     "ModelSpec",

@@ -66,7 +66,9 @@ class XiaomiVacuumApiClient:
             name: PropertyAddress(siid=address["siid"], piid=address["piid"])
             for name, address in spec.property_mapping.items()
         }
-        self._property_requests = _group_property_requests(self._properties)
+        self._property_requests = _group_property_requests(
+            {name: self._properties[name] for name in spec.polled_properties}
+        )
         # Cloud client, set by the integration after the cloud session resolves.
         # When present, multi-step flows that local UDP mishandles (e.g. the S20+
         # room-clean) are routed through the cloud for reliability — matching
@@ -206,17 +208,19 @@ class XiaomiVacuumApiClient:
 
     async def async_set_property(self, name: Property, *, value: bool | int) -> None:
         """
-        Set a MIoT property by mapping name.
+        Set a MIoT property by mapping name, encoded as its binding says.
 
-        A masked property (see ``ModelSpec.property_masks``) only owns some bits
-        of the device value, so the current value is read first and the other
-        bits are written back unchanged.
+        A ``boolean`` property is written as a bool, any other as an integer. A
+        masked property only owns some bits of the device value, so the current
+        value is read first and the other bits are written back unchanged.
         """
         address = self._properties.get(name)
         if address is None:
             msg = f"Unknown property: {name}"
             raise XiaomiVacuumApiClientError(msg)
-        mask = self._spec.property_masks.get(name)
+        binding = self._spec.property_mapping[name]
+        value = bool(value) if binding.get("boolean") else int(value)
+        mask = binding.get("mask")
         if mask is not None:
             current = (
                 await self._run(self._client.get_properties({name: address}))
@@ -284,15 +288,11 @@ class XiaomiVacuumApiClient:
 
     async def async_get_custom_cleanings(self) -> list[CustomCleaning]:
         """Read the custom cleanings saved in the Mi Home app."""
-        address = self._spec.user_define_sweep_config
+        address = self._properties.get(Property.USER_DEFINE_SWEEP_CONFIG)
         if address is None:
             msg = "Failed to read custom cleanings: this model has no custom cleanings"
             raise XiaomiVacuumApiClientError(msg)
-        values = await self._run(
-            self._client.get_properties(
-                {"config": PropertyAddress(siid=address["siid"], piid=address["piid"])}
-            )
-        )
+        values = await self._run(self._client.get_properties({"config": address}))
         return CustomCleaning.list_from_config(values.get("config"))
 
     async def async_start_custom_cleaning(self, cleaning: CustomCleaning) -> None:

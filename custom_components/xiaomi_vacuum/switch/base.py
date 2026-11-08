@@ -14,18 +14,11 @@ if TYPE_CHECKING:
 
 
 class _XiaomiVacuumSwitch(XiaomiVacuumEntity, SwitchEntity):
-    """
-    A MIoT on/off setting.
-
-    Most of them are uint8 ``0``/``1`` properties; ``_boolean`` marks the ones
-    published as a real bool, which the device expects to be written back as
-    one.
-    """
+    """A MIoT on/off setting, published as a bool or a ``0``/``1`` integer."""
 
     _attr_entity_category = EntityCategory.CONFIG
 
     _property_name: ClassVar[Property]
-    _boolean: ClassVar[bool] = False
 
     @property
     def unique_id(self) -> str:
@@ -47,8 +40,7 @@ class _XiaomiVacuumSwitch(XiaomiVacuumEntity, SwitchEntity):
         await self._async_write(on=False)
 
     async def _async_write(self, *, on: bool) -> None:
-        value: bool | int = on if self._boolean else int(on)
         client = self.coordinator.config_entry.runtime_data.client
-        await client.async_set_property(self._property_name, value=value)
-        self._patch_state(**{self._property_name: value})
+        await client.async_set_property(self._property_name, value=on)
+        self._patch_state(**{self._property_name: on})
         self._schedule_refresh()

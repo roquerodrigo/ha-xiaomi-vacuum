@@ -12,6 +12,23 @@ class MiotPropertyAddress(TypedDict):
     piid: int
 
 
+class MiotPropertyBinding(MiotPropertyAddress, total=False):
+    """
+    How one :class:`Property` sits on the device: its address and encoding.
+
+    ``mask`` makes the property own only those bits of a packed device value:
+    reads expose the bits shifted down, writes keep every other bit as the
+    device reports it (the X20+ cleaning mode in the low two bits of 4.23).
+    ``boolean`` marks a property published as a real bool, written back as one
+    instead of a ``0``/``1`` integer. ``polled`` set to False keeps a property
+    out of the periodic poll, read only on demand.
+    """
+
+    mask: int
+    boolean: bool
+    polled: bool
+
+
 class MiotActionAddress(TypedDict):
     """``{siid, aiid}`` address of a MIoT action."""
 

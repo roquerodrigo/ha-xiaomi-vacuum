@@ -12,4 +12,3 @@ class XiaomiVacuumDoNotDisturbSwitch(_XiaomiVacuumSwitch):
     _attr_translation_key = "do_not_disturb"
 
     _property_name = Property.DO_NOT_DISTURB
-    _boolean = True
