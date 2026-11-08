@@ -23,7 +23,7 @@ its layout shares almost nothing with the in-house models:
   only, 12 sweep and mop
 - room cleaning goes through the Dreame ``start-clean`` (4/1) with the segment
   work mode; the spec's ``start-room-sweep`` (2/3) is acknowledged but ignored
-- the map is a Dreame blob (``map_format="dreame"``): the SDK's Dreame decoder
+- the map is a Dreame blob (``DreameMapFormat``): the SDK's Dreame decoder
   draws it and its segment metadata gives the room list
 """
 

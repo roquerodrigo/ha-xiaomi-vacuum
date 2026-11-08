@@ -146,7 +146,7 @@ async def test_ov71_locate_uses_identify_service(
     mock_miot_device_ov71.call_action.assert_any_call(ActionAddress(siid=6, aiid=1))
 
 
-async def test_ov71_clean_segments_uses_direct_strategy(
+async def test_ov71_clean_segments_uses_the_direct_room_sweep(
     hass, setup_integration_ov71, mock_miot_device_ov71
 ):
     """Room clean fires start-vacuum-room-sweep (2/16) with the ids on piid 15."""

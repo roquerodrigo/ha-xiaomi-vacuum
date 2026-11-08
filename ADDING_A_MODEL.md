@@ -37,7 +37,8 @@ It picks the highest released spec version (`--version N` picks another one,
 - every property and action whose service and URN type the integration
   already knows (`vacuum:status`, `battery:battery-level`,
   `vacuum:start-sweep`, the brush services told apart by their
-  description, ...), with their SIID/PIID/AIID;
+  description, ...), with their SIID/PIID/AIID, marking the ones the spec
+  publishes as `bool` with `"boolean": True`;
 - the status codes to `StatusSlug` members, and the fan speed, mode, clean
   times, water level, route and obstacle-avoidance value lists to the slugs
   the translations already have;
@@ -47,7 +48,9 @@ It picks the highest released spec version (`--version N` picks another one,
 What it cannot decide is left as `# TODO:` comments, and `ruff` refuses to
 commit a TODO, so each one gets resolved: a brush service with no main/side
 description, a status description no slug covers, a value with no
-translation, the dock actions to keep, the room-cleaning flow to confirm.
+translation, charging states without a `charging` one, a required action the
+spec does not publish, the dock actions to keep, the room-cleaning flow to
+confirm.
 The draft is a starting point, not a verified spec — the rest of this guide
 is about verifying it.
 
@@ -66,8 +69,9 @@ honours. The S20+ room-clean flow was discovered this way; the spec's direct
 
 When the new model shares a supported model's layout, derive its spec from
 that model with `dataclasses.replace` and state only the differences instead
-of keeping the full draft. The S40 Pro (`ov71gl.py`) is the X20 Max with its
-dock actions set to `None` and three extra status codes:
+of keeping the full draft. The S40 Pro (`ov71gl.py`) is the X20 Max without
+the dock, zone and custom-cleaning actions (and the custom cleanings list),
+with three extra status codes and its own phantom and notice faults:
 
 ```python
 OV71GL = replace(
@@ -76,8 +80,13 @@ OV71GL = replace(
     name="Xiaomi Robot Vacuum S40 Pro",
     actions=replace(D109GL.actions, start_dust_arrest=None, ...),
     status={**D109GL.status, 22: StatusSlug.STATION_ASSISTING_CLEANING, ...},
+    ignored_fault_codes=frozenset({100027}),
 )
 ```
+
+A derived spec inherits everything its sibling gains later, so list in its
+docstring what it removes and why, and remove anything the new model has not
+been verified to support.
 
 The closest siblings: `d109gl.py` for a model with an auto-wash dock,
 `ov71gl.py` for an X20-Max-shaped spec without dock hardware, `b108gl.py` for
@@ -173,7 +182,8 @@ member, its `StatusMeaning` in `STATUS_MEANINGS`, and its translation under
 
 Optimistic UI patches report the code of the activity's canonical slug
 (`CANONICAL_STATUSES`: `sweeping`, `paused`, `idle`, `go_charging`,
-`charging`), so the order of `_STATUS` does not matter.
+`charging`). The order of `_STATUS` only matters for an activity whose
+canonical slug the model lacks: then the first code with that activity wins.
 
 ### 3.5 Faults
 
