@@ -135,3 +135,9 @@ async def test_setup_creates_every_entity_the_spec_lists(
         state = hass.states.get(entry.entity_id)
         assert state is not None
         assert state.state != "unavailable", entry.entity_id
+
+
+async def test_setup_model_sets_up_the_requested_model(hass, model, setup_model):
+    entry, device = await setup_model(model)
+    assert entry.runtime_data.spec is MODELS[model]
+    assert device.info.return_value.model == model
