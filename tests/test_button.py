@@ -49,12 +49,12 @@ def test_button_has_icon_and_no_category(hass, setup_integration):
     assert button_icons["dust_arrest"]["default"] == "mdi:delete-empty"
 
 
-async def test_api_client_async_start_dust_arrest(hass, mock_miot_device):
+async def test_api_client_runs_the_dust_arrest_action(hass, mock_miot_device):
     from custom_components.xiaomi_vacuum.api import XiaomiVacuumApiClient
 
     client = XiaomiVacuumApiClient(host="1.2.3.4", token="t" * 32, spec=D109GL)
-    await client.async_start_dust_arrest()
     a = D109GL.actions.start_dust_arrest
+    await client.async_run_action(a)
     mock_miot_device.call_action.assert_called_with(
         ActionAddress(siid=a["siid"], aiid=a["aiid"])
     )

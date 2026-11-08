@@ -32,7 +32,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .map_format import DreameMapFormat
-from .model_actions import ModelActions, _require_action
+from .model_actions import ModelActions
 from .model_spec import ModelSpec
 from .property import Property
 from .room_cleaning import DreameSegmentClean
@@ -158,12 +158,6 @@ C102GL = ModelSpec(
         "level_3": 3,
     },
     charging_state_slugs={1: "charging", 2: "not_charging", 5: "go_charging"},
-    send_commands={
-        "continue_sweep": _ACTIONS.continue_sweep,
-        "start_mop_wash": _require_action(_ACTIONS.start_mop_wash, "start_mop_wash"),
-        "start_dry": _require_action(_ACTIONS.start_dry, "start_dry"),
-        "stop_dry": _require_action(_ACTIONS.stop_dry, "stop_dry"),
-    },
     # Dreame start-clean: piid 1 work mode, piid 10 clean-extend data.
     room_cleaning=DreameSegmentClean(
         {"siid": 4, "aiid": 1, "mode_piid": 1, "data_piid": 10}

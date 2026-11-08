@@ -61,25 +61,23 @@ def test_d109_status_activity_values_are_all_vacuum_activities():
     )
 
 
-def test_b108_has_no_dock_only_capabilities():
-    from custom_components.xiaomi_vacuum.spec import Capability
+def test_b108_has_no_dock_only_entities():
+    from custom_components.xiaomi_vacuum.spec import EntityKey
 
-    caps = B108GL.capabilities
-    assert Capability.DUST_ARREST not in caps
-    assert Capability.SWEEP_ROUTE not in caps
-    assert Capability.OBSTACLE_AVOIDANCE not in caps
+    assert EntityKey.DUST_ARREST_BUTTON not in B108GL.entities
+    assert EntityKey.SWEEP_ROUTE_SELECT not in B108GL.entities
+    assert EntityKey.OBSTACLE_AVOIDANCE_SELECT not in B108GL.entities
     # The dock-only actions must be None on the S20+.
     assert B108GL.actions.start_dust_arrest is None
     assert B108GL.actions.start_mop_wash is None
 
 
-def test_d109_has_dock_only_capabilities():
-    from custom_components.xiaomi_vacuum.spec import Capability
+def test_d109_has_dock_only_entities():
+    from custom_components.xiaomi_vacuum.spec import EntityKey
 
-    caps = D109GL.capabilities
-    assert Capability.DUST_ARREST in caps
-    assert Capability.SWEEP_ROUTE in caps
-    assert Capability.OBSTACLE_AVOIDANCE in caps
+    assert EntityKey.DUST_ARREST_BUTTON in D109GL.entities
+    assert EntityKey.SWEEP_ROUTE_SELECT in D109GL.entities
+    assert EntityKey.OBSTACLE_AVOIDANCE_SELECT in D109GL.entities
 
 
 def test_mop_water_levels_include_off_on_both_models():
@@ -124,21 +122,7 @@ def test_spec_reverse_name_maps():
     assert D109GL.clean_times_names[3] == "three_times"
 
 
-def test_d109_capabilities_include_all_optional():
-    from custom_components.xiaomi_vacuum.spec import Capability
-
-    caps = D109GL.capabilities
-    assert Capability.DUST_ARREST in caps
-    assert Capability.SWEEP_ROUTE in caps
-    assert Capability.OBSTACLE_AVOIDANCE in caps
-
-
-def test_b108_capabilities_exclude_all_optional():
-
-    assert B108GL.capabilities == frozenset()
-
-
-def test_d109_entities_include_capability_gated_selects_and_button():
+def test_d109_entities_include_the_optional_selects_and_button():
     from custom_components.xiaomi_vacuum.spec import EntityKey
 
     entities = D109GL.entities
@@ -149,7 +133,7 @@ def test_d109_entities_include_capability_gated_selects_and_button():
     assert EntityKey.DUST_ARREST_BUTTON in entities
 
 
-def test_b108_entities_exclude_capability_gated_selects_and_button():
+def test_b108_entities_exclude_the_optional_selects_and_button():
     from custom_components.xiaomi_vacuum.spec import EntityKey
 
     entities = B108GL.entities
@@ -226,7 +210,6 @@ def test_spec_fields_are_immutable():
         "clean_times": ("one_time", 99),
         "mop_water_levels": ("level_1", 99),
         "charging_state_slugs": (1, "boom"),
-        "send_commands": ("boom", {"siid": 0, "aiid": 0}),
         "sweep_routes": ("quick", 99),
         "obstacle_avoidances": ("less_collisions", 99),
     }
@@ -266,23 +249,28 @@ def test_status_code_for_unknown_activity_raises():
         D109GL.status_code_for(VacuumActivity.ERROR)
 
 
-def test_require_action_returns_action_when_present():
-    from custom_components.xiaomi_vacuum.spec import _require_action
+def test_every_action_entity_and_send_command_names_a_model_action():
+    from dataclasses import fields
 
-    action = {"siid": 2, "aiid": 19}
-    assert _require_action(action, "start_mop_wash") is action
+    from custom_components.xiaomi_vacuum.spec import ModelActions
+    from custom_components.xiaomi_vacuum.spec.entity_requirements import (
+        ACTION_ENTITIES,
+    )
+    from custom_components.xiaomi_vacuum.spec.send_commands import (
+        SEND_COMMAND_ACTIONS,
+    )
+
+    action_names = {field.name for field in fields(ModelActions)}
+    assert set(ACTION_ENTITIES) <= action_names
+    assert set(SEND_COMMAND_ACTIONS) <= action_names
 
 
-def test_require_action_raises_at_import_time_when_absent():
-    """A model referencing an action it does not define is caught now, not later.
+def test_send_commands_follow_the_defined_actions():
+    from dataclasses import replace
 
-    Previously a bare ``typing.cast`` silenced the type checker, so a None would
-    be stored and fail with a ``TypeError`` only when the command was sent.
-    """
-    from custom_components.xiaomi_vacuum.spec import _require_action
-
-    with pytest.raises(ValueError, match="needs an action this model defines"):
-        _require_action(None, "start_mop_wash")
+    spec = replace(D109GL, actions=replace(D109GL.actions, stop_dry=None))
+    assert "stop_dry" not in spec.send_commands
+    assert spec.send_commands["start_dry"] == D109GL.actions.start_dry
 
 
 def test_custom_cleanings_wired_only_where_verified():

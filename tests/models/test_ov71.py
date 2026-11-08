@@ -18,8 +18,8 @@ from xiaomi_vacuum_sdk import ActionAddress
 
 from custom_components.xiaomi_vacuum.spec import (
     OV71GL,
-    Capability,
     DirectRoomSweep,
+    EntityKey,
     FaultIdsReading,
     Property,
 )
@@ -42,9 +42,9 @@ async def test_ov71_picks_the_right_spec(hass, setup_integration_ov71):
     assert spec.model == "xiaomi.vacuum.ov71gl"
     assert isinstance(spec.fault_reading, FaultIdsReading)
     assert isinstance(spec.room_cleaning, DirectRoomSweep)
-    assert Capability.SWEEP_ROUTE in spec.capabilities
-    assert Capability.OBSTACLE_AVOIDANCE in spec.capabilities
-    assert Capability.DUST_ARREST not in spec.capabilities
+    assert EntityKey.SWEEP_ROUTE_SELECT in spec.entities
+    assert EntityKey.OBSTACLE_AVOIDANCE_SELECT in spec.entities
+    assert EntityKey.DUST_ARREST_BUTTON not in spec.entities
 
 
 async def test_ov71_raises_no_unsupported_model_repair(hass, setup_integration_ov71):

@@ -6,12 +6,12 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from .capability import Capability
 from .cleaning_job_signal import CleaningJobSignal
-from .entity_key import EntityKey
+from .entity_requirements import ACTION_ENTITIES, BASE_ENTITIES, PROPERTY_ENTITIES
 from .fault_reading import FaultIdsReading, PlainFaultReading
 from .map_format import MapFormat, XiaomiMapFormat
 from .property import Property
+from .send_commands import SEND_COMMAND_ACTIONS
 from .status_catalog import CANONICAL_STATUSES, STATUS_MEANINGS
 
 if TYPE_CHECKING:
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
     from ..data import VacuumState  # noqa: TID252
     from .addresses import MiotActionAddress, MiotPropertyBinding
+    from .entity_key import EntityKey
     from .fault_reading import FaultReading
     from .model_actions import ModelActions
     from .room_cleaning import RoomCleaning
@@ -33,67 +34,6 @@ _XIAOMI_MAP_FORMAT = XiaomiMapFormat()
 TASK_STATUS_COMPLETED = 0
 
 
-#: Maps each optional :class:`Capability` to the :class:`EntityKey` it gates.
-_CAPABILITY_ENTITIES: dict[Capability, EntityKey] = {
-    Capability.DUST_ARREST: EntityKey.DUST_ARREST_BUTTON,
-    Capability.SWEEP_ROUTE: EntityKey.SWEEP_ROUTE_SELECT,
-    Capability.OBSTACLE_AVOIDANCE: EntityKey.OBSTACLE_AVOIDANCE_SELECT,
-}
-
-#: Entities every vacuum exposes: they derive from the status and the fault,
-#: which every model publishes.
-_BASE_ENTITIES: frozenset[EntityKey] = frozenset(
-    {
-        EntityKey.VACUUM,
-        EntityKey.STATUS_SENSOR,
-        EntityKey.ERROR_SENSOR,
-        EntityKey.ERROR_CODE_SENSOR,
-        EntityKey.CLEANING_SENSOR,
-    }
-)
-
-#: Entities backed by one property, created only when the model maps it, so a
-#: model without e.g. a side brush gets no side-brush sensor stuck at unknown.
-_PROPERTY_ENTITIES: dict[Property, EntityKey] = {
-    Property.BATTERY_LEVEL: EntityKey.BATTERY_SENSOR,
-    Property.CHARGING_STATE: EntityKey.BATTERY_CHARGING_SENSOR,
-    Property.MOP_LIFE: EntityKey.MOP_LIFE_SENSOR,
-    Property.MAIN_BRUSH_LIFE: EntityKey.MAIN_BRUSH_LIFE_SENSOR,
-    Property.SIDE_BRUSH_LIFE: EntityKey.SIDE_BRUSH_LIFE_SENSOR,
-    Property.FILTER_LIFE: EntityKey.FILTER_LIFE_SENSOR,
-    Property.MAP_OBJ_NAME: EntityKey.MAP_IMAGE,
-    Property.MOP_STATUS: EntityKey.MOP_PAD_SENSOR,
-    Property.SWEEP_MOP_TYPE: EntityKey.SWEEP_MOP_TYPE_SELECT,
-    Property.CLEAN_TIMES: EntityKey.CLEAN_TIMES_SELECT,
-    Property.MOP_WATER_LEVEL: EntityKey.MOP_WATER_LEVEL_SELECT,
-    Property.MAIN_BRUSH_TIME_LEFT: EntityKey.MAIN_BRUSH_TIME_LEFT_SENSOR,
-    Property.SIDE_BRUSH_TIME_LEFT: EntityKey.SIDE_BRUSH_TIME_LEFT_SENSOR,
-    Property.FILTER_TIME_LEFT: EntityKey.FILTER_TIME_LEFT_SENSOR,
-    Property.MOP_TIME_LEFT: EntityKey.MOP_TIME_LEFT_SENSOR,
-    Property.DRYING_TIME_LEFT: EntityKey.DRYING_TIME_LEFT_SENSOR,
-    Property.TOTAL_CLEAN_TIME: EntityKey.TOTAL_CLEAN_TIME_SENSOR,
-    Property.TOTAL_CLEAN_COUNT: EntityKey.TOTAL_CLEAN_COUNT_SENSOR,
-    Property.TOTAL_CLEAN_AREA: EntityKey.TOTAL_CLEAN_AREA_SENSOR,
-    Property.CHILD_LOCK: EntityKey.CHILD_LOCK_SWITCH,
-    Property.CARPET_BOOST: EntityKey.CARPET_BOOST_SWITCH,
-    Property.RESUME_AFTER_CHARGE: EntityKey.RESUME_AFTER_CHARGE_SWITCH,
-    Property.DO_NOT_DISTURB: EntityKey.DO_NOT_DISTURB_SWITCH,
-    Property.VOLUME: EntityKey.VOLUME_NUMBER,
-}
-
-#: Button entities backed by one optional :class:`ModelActions` field, created
-#: only when the model defines that action.
-_ACTION_ENTITIES: dict[str, EntityKey] = {
-    "start_mop_wash": EntityKey.START_MOP_WASH_BUTTON,
-    "stop_mop_wash": EntityKey.STOP_MOP_WASH_BUTTON,
-    "start_dry": EntityKey.START_DRY_BUTTON,
-    "stop_dry": EntityKey.STOP_DRY_BUTTON,
-    "reset_main_brush": EntityKey.RESET_MAIN_BRUSH_BUTTON,
-    "reset_side_brush": EntityKey.RESET_SIDE_BRUSH_BUTTON,
-    "reset_filter": EntityKey.RESET_FILTER_BUTTON,
-    "reset_mop": EntityKey.RESET_MOP_BUTTON,
-}
-
 #: Names of the dict-typed fields wrapped in read-only views by
 #: :meth:`ModelSpec.__post_init__`.
 MAPPING_FIELDS: tuple[str, ...] = (
@@ -104,7 +44,6 @@ MAPPING_FIELDS: tuple[str, ...] = (
     "clean_times",
     "mop_water_levels",
     "charging_state_slugs",
-    "send_commands",
     "sweep_routes",
     "obstacle_avoidances",
 )
@@ -119,7 +58,6 @@ class ModelSpec:
     property_mapping: dict[Property, MiotPropertyBinding]
     actions: ModelActions
     status: dict[int, StatusSlug]
-    send_commands: dict[str, MiotActionAddress]
     # Value tables of the matching properties, empty when the model does not
     # map the property. Kept on the spec — not module-level — so a vacuum
     # publishing a different table gets its own instead of the X20 Max's.
@@ -223,35 +161,30 @@ class ModelSpec:
         raise ValueError(msg)
 
     @property
-    def capabilities(self) -> frozenset[Capability]:
-        """The set of capabilities this model advertises, derived from its spec."""
-        caps: set[Capability] = set()
-        if self.actions.start_dust_arrest is not None:
-            caps.add(Capability.DUST_ARREST)
-        if Property.SWEEP_ROUTE in self.property_mapping:
-            caps.add(Capability.SWEEP_ROUTE)
-        if Property.OBSTACLE_AVOIDANCE_STRATEGY in self.property_mapping:
-            caps.add(Capability.OBSTACLE_AVOIDANCE)
-        return frozenset(caps)
-
-    @property
     def entities(self) -> frozenset[EntityKey]:
-        """Entities to create: base set, capability-gated and property-backed ones."""
-        keys = set(_BASE_ENTITIES)
-        for cap in self.capabilities:
-            if (key := _CAPABILITY_ENTITIES.get(cap)) is not None:
-                keys.add(key)
+        """Entities to create: the base set plus those whose requirement is met."""
+        keys = set(BASE_ENTITIES)
         keys.update(
             key
-            for prop, key in _PROPERTY_ENTITIES.items()
-            if prop in self.property_mapping
+            for name, key in PROPERTY_ENTITIES.items()
+            if name in self.property_mapping
         )
         keys.update(
             key
-            for action, key in _ACTION_ENTITIES.items()
+            for action, key in ACTION_ENTITIES.items()
             if getattr(self.actions, action) is not None
         )
         return frozenset(keys)
+
+    @property
+    def send_commands(self) -> dict[str, MiotActionAddress]:
+        """The ``send_command`` names this model accepts, with their actions."""
+        commands: dict[str, MiotActionAddress] = {}
+        for name in SEND_COMMAND_ACTIONS:
+            action: MiotActionAddress | None = getattr(self.actions, name)
+            if action is not None:
+                commands[name] = action
+        return commands
 
     @property
     def fault_reading(self) -> FaultReading:

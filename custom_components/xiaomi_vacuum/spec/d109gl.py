@@ -15,7 +15,7 @@ from .enumerations import (
     SWEEP_MOP_TYPES,
     SWEEP_ROUTES,
 )
-from .model_actions import ModelActions, _require_action
+from .model_actions import ModelActions
 from .model_spec import ModelSpec
 from .property import Property
 from .room_cleaning import DirectRoomSweep
@@ -120,18 +120,6 @@ D109GL = ModelSpec(
         "level_3": 3,
     },
     charging_state_slugs=dict(CHARGING_STATE_SLUGS),
-    send_commands={
-        "start_only_sweep": _require_action(
-            _ACTIONS.start_only_sweep, "start_only_sweep"
-        ),
-        "start_mop": _require_action(_ACTIONS.start_mop, "start_mop"),
-        "start_sweep_mop": _require_action(_ACTIONS.start_sweep_mop, "start_sweep_mop"),
-        "continue_sweep": _ACTIONS.continue_sweep,
-        "start_mop_wash": _require_action(_ACTIONS.start_mop_wash, "start_mop_wash"),
-        "stop_mop_wash": _require_action(_ACTIONS.stop_mop_wash, "stop_mop_wash"),
-        "start_dry": _require_action(_ACTIONS.start_dry, "start_dry"),
-        "stop_dry": _require_action(_ACTIONS.stop_dry, "stop_dry"),
-    },
     room_cleaning=DirectRoomSweep({"siid": 2, "aiid": 16, "in_piid": 15}),
     sweep_routes=dict(SWEEP_ROUTES),
     obstacle_avoidances=dict(OBSTACLE_AVOIDANCES),
