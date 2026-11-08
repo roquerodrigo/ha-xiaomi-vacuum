@@ -58,7 +58,7 @@ def test_slug_snake_cases_descriptions(draft_model, description, expected):
     assert draft_model.slug(description) == expected
 
 
-def test_x20_max_draft_reproduces_the_hand_written_spec(draft_model):
+def test_x20_max_draft_holds_every_hand_written_address(draft_model):
     result = draft_model.draft(_instance("xiaomi-d109gl"))
     for name, binding in D109GL.property_mapping.items():
         assert result.properties[name] == (binding["siid"], binding["piid"]), name
@@ -75,6 +75,20 @@ def test_x20_max_draft_reproduces_the_hand_written_spec(draft_model):
         assert values == dict(getattr(D109GL, table)), table
     # The latching Device Fault is dropped next to the live Fault Ids list.
     assert "fault" not in result.properties
+    # The published spec has more than the hand-written one wires: the hours left
+    # on each consumable and their reset actions.
+    assert set(result.properties) - set(D109GL.property_mapping) == {
+        "mop_time_left",
+        "main_brush_time_left",
+        "side_brush_time_left",
+        "filter_time_left",
+    }
+    assert set(result.actions) - set(_hand_written_actions(D109GL)) == {
+        "reset_mop",
+        "reset_main_brush",
+        "reset_side_brush",
+        "reset_filter",
+    }
 
 
 def test_x20_plus_draft_adopts_the_dreame_layout(draft_model):
@@ -91,6 +105,8 @@ def test_x20_plus_draft_adopts_the_dreame_layout(draft_model):
     assert result.status == dict(C102GL.status)
     assert result.value_tables["mop_water_levels"] == dict(C102GL.mop_water_levels)
     assert any("Dreame-built layout" in todo for todo in result.todos)
+    assert result.booleans == {"do_not_disturb"}
+    assert '"boolean": True' in draft_model.render("xiaomi.vacuum.x", result)
 
 
 @pytest.mark.parametrize("name", ["xiaomi-d109gl", "xiaomi-c102gl"])
@@ -116,3 +132,42 @@ def test_unknown_status_descriptions_are_left_as_todos(draft_model):
     assert "# TODO: 99 'Teleporting' has no StatusSlug" in draft_model.render(
         "xiaomi.vacuum.x", result
     )
+
+
+def _service(instance, service_type):
+    return next(
+        service
+        for service in instance["services"]
+        if service["type"].split(":")[3] == service_type
+    )
+
+
+def test_a_missing_required_action_is_left_as_a_todo(draft_model):
+    instance = _instance("xiaomi-d109gl")
+    identify = _service(instance, "identify")
+    identify["actions"] = []
+    result = draft_model.draft(instance)
+    assert "identify" not in result.actions
+    assert any("required action identify" in todo for todo in result.todos)
+
+
+def test_a_room_sweep_without_input_is_not_wired(draft_model):
+    instance = _instance("xiaomi-d109gl")
+    for action in _service(instance, "vacuum")["actions"]:
+        if action["type"].split(":")[3] == "start-vacuum-room-sweep":
+            action["in"] = []
+    result = draft_model.draft(instance)
+    assert any("takes no input" in todo for todo in result.todos)
+    assert "room_cleaning=" not in draft_model.render("xiaomi.vacuum.x", result)
+
+
+def test_charging_states_without_charging_are_left_as_a_todo(draft_model):
+    instance = _instance("xiaomi-d109gl")
+    for prop in _service(instance, "battery")["properties"]:
+        if prop["type"].split(":")[3] == "charging-state":
+            prop["value-list"] = [
+                {"value": 1, "description": "Is Charging"},
+                {"value": 2, "description": "Not Charging"},
+            ]
+    result = draft_model.draft(instance)
+    assert any("no charging state is 'charging'" in todo for todo in result.todos)
