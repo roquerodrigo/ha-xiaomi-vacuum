@@ -411,12 +411,6 @@ async def test_b108_continue_uses_vacuum_extend_service(mock_miot_device_b108):
     mock_miot_device_b108.call_action.assert_called_with(_action_address(a))
 
 
-async def test_b108_dust_arrest_raises(mock_miot_device_b108):
-    """S20+ has no auto-dust dock; the action must surface a clear error."""
-    with pytest.raises(XiaomiVacuumApiClientError, match="no dust-arrest"):
-        await _client(mock_miot_device_b108, spec=B108GL).async_start_dust_arrest()
-
-
 async def test_run_propagates_miot_error_as_communication_error(mock_miot_device):
     mock_miot_device.call_action.side_effect = MiotConnectionError("timeout")
     with pytest.raises(XiaomiVacuumApiClientCommunicationError):

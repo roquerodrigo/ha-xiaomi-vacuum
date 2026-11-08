@@ -27,7 +27,6 @@ from __future__ import annotations
 from dataclasses import replace
 
 from .d109gl import D109GL
-from .model_actions import _require_action
 from .property import Property
 from .status_slug import StatusSlug
 
@@ -74,14 +73,6 @@ OV71GL = replace(
     name="Xiaomi Robot Vacuum S40 Pro",
     actions=_ACTIONS,
     status=_STATUS,
-    send_commands={
-        "start_only_sweep": _require_action(
-            _ACTIONS.start_only_sweep, "start_only_sweep"
-        ),
-        "start_mop": _require_action(_ACTIONS.start_mop, "start_mop"),
-        "start_sweep_mop": _require_action(_ACTIONS.start_sweep_mop, "start_sweep_mop"),
-        "continue_sweep": _ACTIONS.continue_sweep,
-    },
     property_mapping={
         name: binding
         for name, binding in D109GL.property_mapping.items()

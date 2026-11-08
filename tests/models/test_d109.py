@@ -17,7 +17,7 @@ from xiaomi_vacuum_sdk import ActionAddress
 # without it `from custom_components.xiaomi_vacuum...` inside tests fails with
 # AttributeError until another test file imports the package first.
 from custom_components.xiaomi_vacuum.const import DOMAIN  # noqa: F401
-from custom_components.xiaomi_vacuum.spec import Capability, FaultIdsReading
+from custom_components.xiaomi_vacuum.spec import EntityKey, FaultIdsReading
 
 
 async def test_d109_setup_loads(hass, setup_integration):
@@ -29,9 +29,9 @@ async def test_d109_picks_the_right_spec(hass, setup_integration):
     spec = setup_integration.runtime_data.spec
     assert spec.model == "xiaomi.vacuum.d109gl"
     assert isinstance(spec.fault_reading, FaultIdsReading)
-    assert Capability.DUST_ARREST in spec.capabilities
-    assert Capability.SWEEP_ROUTE in spec.capabilities
-    assert Capability.OBSTACLE_AVOIDANCE in spec.capabilities
+    assert EntityKey.DUST_ARREST_BUTTON in spec.entities
+    assert EntityKey.SWEEP_ROUTE_SELECT in spec.entities
+    assert EntityKey.OBSTACLE_AVOIDANCE_SELECT in spec.entities
     # Mop-wash / dry dock actions exist on the X20 Max but are not a gating
     # capability (no entity is created from them); they're exposed only via
     # send_commands and asserted in test_d109_send_command_exposes_mop_wash_and_dry.

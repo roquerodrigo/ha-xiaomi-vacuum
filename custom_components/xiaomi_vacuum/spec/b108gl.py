@@ -26,7 +26,7 @@ from .enumerations import (
     FAN_SPEEDS,
     SWEEP_MOP_TYPES,
 )
-from .model_actions import ModelActions, _require_action
+from .model_actions import ModelActions
 from .model_spec import ModelSpec
 from .property import Property
 from .room_cleaning import ConfigThenCustomSweep
@@ -102,14 +102,6 @@ B108GL = ModelSpec(
         "level_3": 3,
     },
     charging_state_slugs=dict(CHARGING_STATE_SLUGS),
-    send_commands={
-        "start_only_sweep": _require_action(
-            _ACTIONS.start_only_sweep, "start_only_sweep"
-        ),
-        "start_mop": _require_action(_ACTIONS.start_mop, "start_mop"),
-        "start_sweep_mop": _require_action(_ACTIONS.start_sweep_mop, "start_sweep_mop"),
-        "continue_sweep": _ACTIONS.continue_sweep,
-    },
     # The spec's start-vacuum-room-sweep (aiid 13) is ignored by the robot,
     # which returns to the dock; the Mi Home app marks the rooms instead.
     room_cleaning=ConfigThenCustomSweep(

@@ -7,13 +7,7 @@ from .base import _XiaomiVacuumSelect
 
 
 class XiaomiVacuumObstacleAvoidanceSelect(_XiaomiVacuumSelect):
-    """
-    Select the obstacle-avoidance strategy.
-
-    Only created for models whose spec advertises
-    ``Capability.OBSTACLE_AVOIDANCE`` (the X20 Max); the S20+ has no such
-    property.
-    """
+    """Select the obstacle-avoidance strategy."""
 
     _attr_translation_key = "obstacle_avoidance_strategy"
 

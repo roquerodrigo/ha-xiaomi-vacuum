@@ -7,12 +7,7 @@ from .base import _XiaomiVacuumSelect
 
 
 class XiaomiVacuumSweepRouteSelect(_XiaomiVacuumSelect):
-    """
-    Select the route pattern the vacuum follows while cleaning.
-
-    Only created for models whose spec advertises ``Capability.SWEEP_ROUTE``
-    (the X20 Max); the S20+ has no such property.
-    """
+    """Select the route pattern the vacuum follows while cleaning."""
 
     _attr_translation_key = "sweep_route"
 

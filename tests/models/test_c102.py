@@ -20,7 +20,6 @@ from xiaomi_vacuum_sdk import ActionAddress
 from custom_components.xiaomi_vacuum.const import DOMAIN  # noqa: F401
 from custom_components.xiaomi_vacuum.spec import (
     C102GL,
-    Capability,
     EntityKey,
     PlainFaultReading,
 )
@@ -43,7 +42,9 @@ async def test_c102_picks_the_right_spec(hass, setup_integration_c102):
     spec = setup_integration_c102.runtime_data.spec
     assert spec is C102GL
     assert isinstance(spec.fault_reading, PlainFaultReading)
-    assert spec.capabilities == frozenset({Capability.DUST_ARREST})
+    assert EntityKey.DUST_ARREST_BUTTON in spec.entities
+    assert EntityKey.SWEEP_ROUTE_SELECT not in spec.entities
+    assert EntityKey.OBSTACLE_AVOIDANCE_SELECT not in spec.entities
 
 
 MODE_ID = "select.x20_plus_mode"

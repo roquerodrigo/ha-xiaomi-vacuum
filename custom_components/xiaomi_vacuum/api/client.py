@@ -182,14 +182,6 @@ class XiaomiVacuumApiClient:
             self._client.call_action(ActionAddress(siid=siid, aiid=aiid))
         )
 
-    async def async_start_dust_arrest(self) -> None:
-        """Trigger dock to empty the vacuum's dust bin (X20 Max only)."""
-        action = self._spec.actions.start_dust_arrest
-        if action is None:
-            msg = "This model has no dust-arrest dock"
-            raise XiaomiVacuumApiClientError(msg)
-        await self._run_action(self._client.call_action(_address(action)))
-
     async def async_set_fan_speed(self, fan_speed: str) -> None:
         """Set fan speed by label (Silent/Basic/Strong/Full Speed)."""
         speeds = self._spec.fan_speeds
