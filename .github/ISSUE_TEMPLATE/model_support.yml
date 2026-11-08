@@ -42,7 +42,7 @@ body:
     id: version
     attributes:
       label: Integration version
-      description: As shown in HACS.
+      description: As shown in the Home Assistant Marketplace.
       placeholder: 1.2.3
     validations:
       required: true

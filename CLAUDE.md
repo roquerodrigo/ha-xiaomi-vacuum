@@ -4,7 +4,8 @@ Home Assistant custom integration for the **Xiaomi Robot Vacuum X20 Max**
 (`xiaomi.vacuum.d109gl`), **Xiaomi Robot Vacuum S20+** (`xiaomi.vacuum.b108gl`),
 **Xiaomi Robot Vacuum S40 Pro** (`xiaomi.vacuum.ov71gl`) and the Dreame-built
 **Xiaomi Robot Vacuum X20+** (`xiaomi.vacuum.c102gl`), domain
-`xiaomi_vacuum`. Public repo, HACS-distributed.
+`xiaomi_vacuum`. Public repo, distributed through the Home Assistant
+Marketplace.
 
 Read `README.md` for the user-facing feature list and setup flow,
 `XIAOMI_VACUUM_API.md` for the device's MIoT API reference, and
@@ -53,8 +54,8 @@ here.
   (setup tolerates this and still serves the map) and `unsupported_model` when
   the handshake reports a model with no `ModelSpec`, which falls back to the
   default spec so local control keeps working.
-- **`translations/`** — `en.json` and `pt-BR.json`; all user-facing strings
-  live here, never hardcoded in Python.
+- **`translations/`** — `en.json`, `pt-BR.json`, `sr.json` and `sr-Latn.json`;
+  all user-facing strings live here, never hardcoded in Python.
 
 ## Environment & tooling
 
