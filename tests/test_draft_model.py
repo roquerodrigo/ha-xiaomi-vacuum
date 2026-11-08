@@ -14,6 +14,7 @@ from custom_components.xiaomi_vacuum.spec import (
     C102GL,
     D109GL,
     ModelActions,
+    Property,
     StatusSlug,
 )
 
@@ -171,3 +172,29 @@ def test_charging_states_without_charging_are_left_as_a_todo(draft_model):
             ]
     result = draft_model.draft(instance)
     assert any("no charging state is 'charging'" in todo for todo in result.todos)
+
+
+#: Properties and actions the draft deliberately never maps, with the reason. A
+#: new one belongs in the generator's tables unless the spec cannot locate it.
+_NOT_DRAFTED: frozenset[str] = frozenset()
+
+
+def test_the_generator_knows_every_property(draft_model):
+    drafted = {
+        *draft_model._PROPERTIES.values(),
+        *draft_model._BRUSH_PROPERTIES.values(),
+    }
+    missing = {name.value for name in Property if name not in drafted}
+    assert missing <= _NOT_DRAFTED, (
+        f"teach scripts/draft_model.py where {sorted(missing)} live "
+        "(_PROPERTIES), or list them in _NOT_DRAFTED with the reason"
+    )
+
+
+def test_the_generator_knows_every_action(draft_model):
+    drafted = {*draft_model._ACTIONS.values(), *draft_model._BRUSH_ACTIONS.values()}
+    missing = {field.name for field in fields(ModelActions)} - drafted
+    assert missing <= _NOT_DRAFTED, (
+        f"teach scripts/draft_model.py where {sorted(missing)} live "
+        "(_ACTIONS), or list them in _NOT_DRAFTED with the reason"
+    )
