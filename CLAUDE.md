@@ -17,8 +17,11 @@ here.
 
 - **Local control, cloud-assisted setup.** Day-to-day polling/control is
   `iot_class: local_polling` over MIoT via `xiaomi-vacuum-sdk`. The Xiaomi cloud
-  (`custom_components/xiaomi_vacuum/cloud/`) is used only for the QR-login
-  setup flow, the map image, and localized error text.
+  (`custom_components/xiaomi_vacuum/cloud/`) is used for the QR-login
+  setup flow, the map image, localized error text, and the room-clean actions
+  (`set-room-clean-configs` + `start-custom-sweep`), which go through the cloud
+  when a session exists because local UDP mishandles that multi-step flow;
+  they fall back to local when the cloud is unavailable.
 - **Entity platforms**, each its own subpackage under
   `custom_components/xiaomi_vacuum/`: `vacuum/`, `image/`, `sensor/`,
   `binary_sensor/`, `select/`, `button/`. Every concrete entity is its own
@@ -48,7 +51,8 @@ here.
   (setup tolerates this and still serves the map) and `unsupported_model` when
   the handshake reports a model with no `ModelSpec`, which falls back to the
   default spec so local control keeps working.
-- **`translations/`** — `en.json` and `pt-BR.json`; all user-facing strings
+- **`translations/`** — `en.json`, `pt-BR.json`, `sr.json` and
+  `sr-Latn.json`; all user-facing strings
   live here, never hardcoded in Python.
 
 ## Environment & tooling
@@ -91,11 +95,13 @@ uv run pytest
 
 ## CI (`.github/workflows/`, one file per concern)
 
-Every job calls a reusable workflow from `roquerodrigo/workflows`, tracking
+Most jobs call a reusable workflow from `roquerodrigo/workflows`, tracking
 `@main` (no version pinning — the workflows repo is same-owner and changes
-there take effect here immediately). The one exception is the release job,
-which runs the [Release Autopilot](https://github.com/marketplace/actions/release-autopilot)
-action at `@latest`.
+there take effect here immediately). The exceptions run same-owner actions at
+`@latest`: the `validate` job runs `roquerodrigo/home-assistant-autopilot`, and
+the release job runs the [Release Autopilot](https://github.com/marketplace/actions/release-autopilot)
+action and then `home-assistant-autopilot` (`command: publish`) to attach the
+release asset.
 
 - `ci.yml` — `lint` → `tests` + `validate` in parallel (both need `lint`),
   then `update-pr-branch` once all three pass (pull requests only).
@@ -106,8 +112,9 @@ action at `@latest`.
 - `auto-assign.yml` — new issues and PRs, plus a daily cron sweep. Uses
   `pull_request_target`, so it needs no checkout of fork code.
 
-Required checks are named `<job id> / <workflow job name>` — renaming a job id
-silently un-requires its check in branch protection.
+Required checks of reusable-workflow jobs are named
+`<job id> / <workflow job name>` — renaming a job id silently un-requires its
+check in branch protection.
 
 ## Conventions worth knowing
 
@@ -127,5 +134,6 @@ silently un-requires its check in branch protection.
   protection is never lowered to land a quick fix. Only *Rebase and merge* is
   enabled.
 - `CONTRIBUTING.md` references a VS Code devcontainer (`.devcontainer.json`)
-  originally derived from the `integration_blueprint` template — still valid
-  for spinning up a sandboxed HA dev instance.
+  originally derived from the `integration_blueprint` template. Its
+  `postCreateCommand` still runs `scripts/setup`, which no longer exists — run
+  `uv sync --all-groups` by hand inside the container.
