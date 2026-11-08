@@ -185,6 +185,15 @@ class XiaomiCloud:
         )
         return device
 
+    def restore_device(self, device: XiaomiDeviceInfo) -> None:
+        """Adopt a previously resolved device without querying the cloud."""
+        self._device = device
+        LOGGER.debug(
+            "Restored cloud device: model=%s did=%s",
+            device.model,
+            device.device_id,
+        )
+
     async def async_list_devices(
         self, model_prefix: str = ""
     ) -> list[XiaomiDeviceInfo]:

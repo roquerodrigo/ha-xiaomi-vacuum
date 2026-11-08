@@ -244,7 +244,7 @@ async def _setup_model_entry(hass, model: str):
     )
     entry.add_to_hass(hass)
     await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     return entry
 
 
@@ -394,7 +394,15 @@ def mock_cloud() -> Generator:
     with patch("custom_components.xiaomi_vacuum.XiaomiCloud") as cls:
         instance = cls.return_value
         cls.from_session = MagicMock(return_value=instance)
-        device = MagicMock(country="cn", model="xiaomi.vacuum.d109gl", device_id="d")
+        from custom_components.xiaomi_vacuum.cloud import XiaomiDeviceInfo
+
+        device = XiaomiDeviceInfo(
+            device_id="d",
+            name="Vacuum",
+            model="xiaomi.vacuum.d109gl",
+            token="0" * 32,
+            country="cn",
+        )
         instance._device = device
         instance.async_resolve_device = AsyncMock(return_value=device)
         instance.async_get_map_bytes = AsyncMock(return_value=b"PNG_BYTES")
@@ -440,7 +448,7 @@ async def setup_integration_c102_with_cloud(
     )
     entry.add_to_hass(hass)
     await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
+    await hass.async_block_till_done(wait_background_tasks=True)
     return entry
 
 
@@ -482,5 +490,5 @@ async def setup_integration_with_cloud(
         )
         entry.add_to_hass(hass)
         await hass.config_entries.async_setup(entry.entry_id)
-        await hass.async_block_till_done()
+        await hass.async_block_till_done(wait_background_tasks=True)
         yield entry

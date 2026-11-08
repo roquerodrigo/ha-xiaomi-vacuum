@@ -24,6 +24,7 @@ CONF_CLOUD_SSECURITY = "cloud_ssecurity"
 CONF_CLOUD_SERVICE_TOKEN = "cloud_service_token"  # noqa: S105
 CONF_CLOUD_USER_ID = "cloud_user_id"
 CONF_DEVICE_INFO = "device_info"
+CONF_CLOUD_DEVICE = "cloud_device"
 
 # Xiaomi cloud server regions the account can live in. The device is only found
 # on the server matching its region, so the user picks this at setup. Codes map
