@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from unittest.mock import AsyncMock, patch
 
 from homeassistant.config_entries import ConfigEntryState
@@ -9,6 +10,7 @@ from custom_components.xiaomi_vacuum.api import (
 )
 from custom_components.xiaomi_vacuum.const import (
     CONF_CLOUD_COUNTRY,
+    CONF_CLOUD_DEVICE,
     CONF_CLOUD_SERVICE_TOKEN,
     CONF_CLOUD_SSECURITY,
     CONF_CLOUD_USER_ID,
@@ -378,3 +380,161 @@ async def test_setup_unknown_model_raises_unsupported_repair(
     )
     assert issue is not None
     assert issue.translation_placeholders["model"] == "xiaomi.vacuum.unknown"
+
+
+CACHED_CLOUD_DEVICE = {
+    "device_id": "d",
+    "name": "Vacuum",
+    "model": "xiaomi.vacuum.d109gl",
+    "country": "cn",
+    "local_ip": None,
+    "mac": None,
+}
+
+
+def _cloud_entry(cloud_device=None):
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    data = {
+        CONF_HOST: "192.168.1.50",
+        CONF_TOKEN: "0" * 32,
+        CONF_NAME: "Vacuum",
+        CONF_CLOUD_COUNTRY: "cn",
+        CONF_CLOUD_SSECURITY: "ssec",
+        CONF_CLOUD_SERVICE_TOKEN: "tok",
+        CONF_CLOUD_USER_ID: "uid",
+    }
+    if cloud_device is not None:
+        data[CONF_CLOUD_DEVICE] = cloud_device
+    return MockConfigEntry(domain=DOMAIN, data=data, unique_id="AA:BB:CC:DD:EE:FF")
+
+
+async def test_setup_persists_the_resolved_cloud_device(
+    hass, setup_integration_with_cloud, mock_cloud
+):
+    mock_cloud.async_resolve_device.assert_awaited_once_with("0" * 32)
+    assert setup_integration_with_cloud.data[CONF_CLOUD_DEVICE] == CACHED_CLOUD_DEVICE
+
+
+async def test_setup_reuses_the_cached_cloud_device_without_waiting(
+    hass, mock_miot_device, mock_cloud, enable_custom_integrations
+):
+    from custom_components.xiaomi_vacuum.cloud import XiaomiDeviceInfo
+
+    lookup_done = asyncio.Event()
+
+    async def slow_lookup(token):
+        await lookup_done.wait()
+        return mock_cloud.async_resolve_device.return_value
+
+    mock_cloud.async_resolve_device.side_effect = slow_lookup
+    entry = _cloud_entry(CACHED_CLOUD_DEVICE)
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    # Loaded while the cloud lookup is still pending.
+    assert entry.state == ConfigEntryState.LOADED
+    assert entry.runtime_data.map_coordinator is not None
+    mock_cloud.restore_device.assert_called_once_with(
+        XiaomiDeviceInfo("d", "Vacuum", "xiaomi.vacuum.d109gl", "0" * 32, "cn")
+    )
+
+    lookup_done.set()
+    await hass.async_block_till_done(wait_background_tasks=True)
+    mock_cloud.async_resolve_device.assert_awaited_once_with("0" * 32)
+    assert entry.data[CONF_CLOUD_DEVICE] == CACHED_CLOUD_DEVICE
+
+
+async def test_cached_cloud_device_from_another_region_is_resolved_again(
+    hass, mock_miot_device, mock_cloud, enable_custom_integrations
+):
+    entry = _cloud_entry({**CACHED_CLOUD_DEVICE, "country": "de"})
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    mock_cloud.restore_device.assert_not_called()
+    mock_cloud.async_resolve_device.assert_awaited_once()
+    assert entry.data[CONF_CLOUD_DEVICE] == CACHED_CLOUD_DEVICE
+
+
+async def test_background_check_updates_a_changed_cloud_device(
+    hass, mock_miot_device, mock_cloud, enable_custom_integrations
+):
+    entry = _cloud_entry({**CACHED_CLOUD_DEVICE, "name": "Old name"})
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done(wait_background_tasks=True)
+
+    assert entry.data[CONF_CLOUD_DEVICE] == CACHED_CLOUD_DEVICE
+
+
+async def test_background_check_tolerates_an_unreachable_cloud(
+    hass, mock_miot_device, mock_cloud, enable_custom_integrations
+):
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudConnectionError
+
+    mock_cloud.async_resolve_device.side_effect = XiaomiCloudConnectionError("dns")
+    entry = _cloud_entry(CACHED_CLOUD_DEVICE)
+    entry.add_to_hass(hass)
+    with patch.object(MockConfigEntry, "async_start_reauth") as start_reauth:
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done(wait_background_tasks=True)
+
+    # The cached device keeps the entry loaded instead of retrying setup.
+    assert entry.state == ConfigEntryState.LOADED
+    assert entry.runtime_data.map_coordinator is not None
+    start_reauth.assert_not_called()
+
+
+async def test_background_check_starts_reauth_when_session_rejected(
+    hass, mock_miot_device, mock_cloud, enable_custom_integrations
+):
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
+
+    mock_cloud.async_resolve_device.side_effect = XiaomiCloudAuthError("expired")
+    entry = _cloud_entry(CACHED_CLOUD_DEVICE)
+    entry.add_to_hass(hass)
+    with patch.object(MockConfigEntry, "async_start_reauth") as start_reauth:
+        await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done(wait_background_tasks=True)
+
+    assert entry.state == ConfigEntryState.LOADED
+    start_reauth.assert_called_once()
+
+
+async def test_map_download_does_not_block_setup(
+    hass, mock_miot_device_c102, mock_cloud, enable_custom_integrations
+):
+    from tests.conftest import b64_name, build_dreame_map
+
+    download_done = asyncio.Event()
+    map_blob = build_dreame_map({"1": {"name": b64_name("Living room")}})
+
+    async def slow_download(obj_name):
+        await download_done.wait()
+        return map_blob
+
+    mock_cloud.async_fault_text = AsyncMock(return_value=None)
+    mock_cloud.async_get_map_bytes = AsyncMock(side_effect=slow_download)
+    entry = _cloud_entry(CACHED_CLOUD_DEVICE)
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+
+    # Entities exist before the map lands; the image waits for its first PNG.
+    assert entry.state == ConfigEntryState.LOADED
+    map_coordinator = entry.runtime_data.map_coordinator
+    assert map_coordinator.data is None
+    image = next(iter(hass.states.async_entity_ids("image")))
+    assert hass.states.get(image).state == "unavailable"
+
+    download_done.set()
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert map_coordinator.data["png"].startswith(b"\x89PNG")
+    assert hass.states.get(image).state != "unavailable"

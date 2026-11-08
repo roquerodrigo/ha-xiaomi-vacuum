@@ -9,16 +9,19 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.loader import async_get_loaded_integration
 
 from .api import XiaomiVacuumApiClient, XiaomiVacuumApiClientCommunicationError
+from .cached_cloud_device import CachedCloudDevice
 from .cached_device_info import CachedDeviceInfo
 from .cloud import XiaomiCloud, XiaomiCloudConnectionError, XiaomiCloudError
 from .const import (
     CONF_CLOUD_COUNTRY,
+    CONF_CLOUD_DEVICE,
     CONF_CLOUD_SERVICE_TOKEN,
     CONF_CLOUD_SSECURITY,
     CONF_CLOUD_USER_ID,
     CONF_DEVICE_INFO,
     CONF_HOST,
     CONF_TOKEN,
+    DOMAIN,
     LOGGER,
 )
 from .coordinator import XiaomiVacuumDataUpdateCoordinator
@@ -35,6 +38,7 @@ from .spec import DEFAULT_MODEL, SUPPORTED_MODELS, get_spec
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
+    from .cloud import XiaomiDeviceInfo
     from .data import DeviceInfoLike, JsonObject, XiaomiVacuumConfigEntry
 
 PLATFORMS: list[Platform] = [
@@ -63,6 +67,10 @@ async def _setup_cloud(
     cloud is unreachable so Home Assistant retries the whole entry. The cloud
     also backs cloud-routed actions (e.g. the S20+ room-clean) via
     ``client.set_cloud``.
+
+    A device resolved on an earlier setup is reused straight away and checked
+    against the cloud in the background, so setup does not wait on the
+    account-wide device lookup.
     """
     cloud_country = entry.data.get(CONF_CLOUD_COUNTRY)
     ssecurity = entry.data.get(CONF_CLOUD_SSECURITY)
@@ -77,25 +85,73 @@ async def _setup_cloud(
         service_token=service_token,
         user_id=cloud_user_id,
     )
-    try:
-        await cloud.async_resolve_device(entry.data[CONF_TOKEN])
-    except XiaomiCloudConnectionError as exception:
-        # Transient network failure (e.g. DNS not up yet while the host boots):
-        # retry the whole entry instead of treating it as an expired session.
-        raise ConfigEntryNotReady(exception) from exception
-    except XiaomiCloudError as exception:
-        LOGGER.warning(
-            "Cloud session invalid; starting reauth to refresh: %s", exception
+    token: str = entry.data[CONF_TOKEN]
+    cached_device = CachedCloudDevice.from_stored(
+        entry.data.get(CONF_CLOUD_DEVICE), token, cloud_country
+    )
+    if cached_device is not None:
+        cloud.restore_device(cached_device)
+        entry.async_create_background_task(
+            hass,
+            _async_revalidate_cloud_device(hass, entry, cloud, token),
+            f"{DOMAIN}_revalidate_cloud_device",
         )
-        # Surface a repair/reauth prompt instead of silently dropping the map;
-        # local entities stay available since the entry itself keeps loading.
-        entry.async_start_reauth(hass)
-        return None
+    else:
+        try:
+            device = await cloud.async_resolve_device(token)
+        except XiaomiCloudConnectionError as exception:
+            # Transient network failure (e.g. DNS not up yet while the host
+            # boots): retry the whole entry instead of treating it as an
+            # expired session.
+            raise ConfigEntryNotReady(exception) from exception
+        except XiaomiCloudError as exception:
+            LOGGER.warning(
+                "Cloud session invalid; starting reauth to refresh: %s", exception
+            )
+            # Surface a repair/reauth prompt instead of silently dropping the
+            # map; local entities stay available since the entry keeps loading.
+            entry.async_start_reauth(hass)
+            return None
+        _async_store_cloud_device(hass, entry, device)
     coordinator.cloud = cloud
     # Route multi-step actions (e.g. the S20+ room-clean) through the cloud for
     # reliability — local UDP routinely times out (-9999).
     client.set_cloud(cloud)
     return XiaomiVacuumMapCoordinator(hass, cloud=cloud, state_coordinator=coordinator)
+
+
+async def _async_revalidate_cloud_device(
+    hass: HomeAssistant,
+    entry: XiaomiVacuumConfigEntry,
+    cloud: XiaomiCloud,
+    token: str,
+) -> None:
+    """Confirm the reused cloud device and session, prompting reauth if rejected."""
+    try:
+        device = await cloud.async_resolve_device(token)
+    except XiaomiCloudConnectionError as exception:
+        LOGGER.debug("Cloud device check skipped, cloud unreachable: %s", exception)
+        return
+    except XiaomiCloudError as exception:
+        LOGGER.warning(
+            "Cloud session invalid; starting reauth to refresh: %s", exception
+        )
+        entry.async_start_reauth(hass)
+        return
+    _async_store_cloud_device(hass, entry, device)
+
+
+def _async_store_cloud_device(
+    hass: HomeAssistant,
+    entry: XiaomiVacuumConfigEntry,
+    device: XiaomiDeviceInfo,
+) -> None:
+    """Persist the resolved cloud device so the next setup can skip the lookup."""
+    stored = CachedCloudDevice.to_stored(device)
+    if entry.data.get(CONF_CLOUD_DEVICE) != stored:
+        hass.config_entries.async_update_entry(
+            entry, data={**entry.data, CONF_CLOUD_DEVICE: stored}
+        )
 
 
 async def async_setup_entry(
@@ -174,9 +230,13 @@ async def async_setup_entry(
     else:
         await coordinator.async_config_entry_first_refresh()
     if map_coordinator is not None:
-        # The map is best-effort and must never block entity creation.
+        # The map is best-effort and must never block entity creation: the
+        # disk-cached PNG is served at once and the cloud download + render
+        # runs in the background, notifying the image entity when it lands.
         await map_coordinator.async_load_cached()
-        await map_coordinator.async_refresh()
+        entry.async_create_background_task(
+            hass, map_coordinator.async_refresh(), f"{DOMAIN}_map_first_refresh"
+        )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 

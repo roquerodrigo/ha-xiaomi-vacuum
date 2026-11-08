@@ -998,3 +998,12 @@ def test_response_key_names_lists_keys_without_values():
 def test_response_key_names_describes_empty_and_non_mapping_bodies():
     assert response_key_names({}) == "<empty>"
     assert response_key_names(["ssecurity"]) == "<list>"
+
+
+async def test_restore_device_adopts_it_without_a_cloud_call(hass):
+    cloud = XiaomiCloud(hass, "us")
+    device = XiaomiDeviceInfo("d", "x", "m", "abc", "us")
+    with patch.object(cloud._connector, "find_device") as find_device:
+        cloud.restore_device(device)
+    find_device.assert_not_called()
+    assert cloud.device is device
