@@ -45,7 +45,7 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
 | Custom cleanings (`xiaomi_vacuum.start_custom_cleaning`) | — | — | — | ✅ |
 | Empty the dust bin into the dock | — | — | ✅ | ✅ |
 | Wash and dry the mop in the dock | — | — | ✅ ⁴ | ✅ |
-| Consumable hours left and reset buttons | — | — | ✅ | — |
+| Consumable hours left and reset buttons | — | ✅ | ✅ | ✅ |
 | Mop drying time left and lifetime cleaning statistics | — | — | ✅ | — |
 | Child lock, carpet boost, resume after charging, do not disturb | — | — | ✅ | — |
 | Voice volume | — | — | ✅ | — |
@@ -149,7 +149,7 @@ the English names are shown below.
 | `sensor.<name>_error` | All | Localized fault text (`OK` when healthy) |
 | `sensor.<name>_error_code` | All | Raw fault code (`0` when healthy) |
 | `sensor.<name>_mop_life`, `_main_brush_life`, `_side_brush_life`, `_filter_life` | All | Consumable life left (%) |
-| `sensor.<name>_mop_time_left`, `_main_brush_time_left`, `_side_brush_time_left`, `_filter_time_left` | X20+ | Consumable hours left |
+| `sensor.<name>_mop_time_left`, `_main_brush_time_left`, `_side_brush_time_left`, `_filter_time_left` | S40 Pro, X20+, X20 Max | Consumable hours left |
 | `sensor.<name>_drying_time_left` | X20+ | Minutes of mop drying left |
 | `sensor.<name>_total_cleaning_time`, `_total_cleanings`, `_total_cleaned_area` | X20+ | Lifetime cleaning statistics |
 | `binary_sensor.<name>_charging` | All | Whether the battery is charging |
@@ -163,7 +163,7 @@ the English names are shown below.
 | `button.<name>_collect_dust` | X20+, X20 Max | Empties the dust bin into the dock |
 | `button.<name>_wash_mop`, `_dry_mop`, `_stop_drying_mop` | X20+, X20 Max | Washes or dries the mop in the dock |
 | `button.<name>_stop_washing_mop` | X20 Max | Stops washing the mop |
-| `button.<name>_reset_main_brush`, `_reset_side_brush`, `_reset_filter`, `_reset_mop` | X20+ | Resets a consumable after replacing it |
+| `button.<name>_reset_main_brush`, `_reset_side_brush`, `_reset_filter`, `_reset_mop` | S40 Pro, X20+, X20 Max | Resets a consumable after replacing it |
 | `switch.<name>_child_lock`, `_carpet_boost`, `_resume_after_charging`, `_do_not_disturb` | X20+ | Device settings |
 | `number.<name>_volume` | X20+ | Voice volume, 0–100 % |
 

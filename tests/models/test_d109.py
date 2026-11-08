@@ -1,15 +1,17 @@
 """End-to-end behaviour for the X20 Max (xiaomi.vacuum.d109gl) model.
 
 Mirror of ``test_b108.py``: the X20 Max must get the sweep-route /
-obstacle-avoidance selects and the dust-arrest button (it has that hardware),
-its return-home must hit the vacuum service (SIID 2 / aiid 3, not the battery
-service like the S20+), and the live ``Fault Ids`` JSON list must be parsed.
+obstacle-avoidance selects, the dust-arrest button (it has that hardware) and
+the consumable hours-left sensors and life reset buttons; its return-home must
+hit the vacuum service (SIID 2 / aiid 3, not the battery service like the S20+),
+and the live ``Fault Ids`` JSON list must be parsed.
 """
 
 from __future__ import annotations
 
 import json
 
+import pytest
 from homeassistant.config_entries import ConfigEntryState
 from xiaomi_vacuum_sdk import ActionAddress
 
@@ -17,7 +19,12 @@ from xiaomi_vacuum_sdk import ActionAddress
 # without it `from custom_components.xiaomi_vacuum...` inside tests fails with
 # AttributeError until another test file imports the package first.
 from custom_components.xiaomi_vacuum.const import DOMAIN  # noqa: F401
-from custom_components.xiaomi_vacuum.spec import EntityKey, FaultIdsReading
+from custom_components.xiaomi_vacuum.spec import (
+    D109GL,
+    EntityKey,
+    FaultIdsReading,
+    Property,
+)
 
 
 async def test_d109_setup_loads(hass, setup_integration):
@@ -45,8 +52,8 @@ async def test_d109_creates_all_five_selects(hass, setup_integration):
     assert "select.vacuum_obstacle_avoidance" in entity_ids
 
 
-async def test_d109_creates_the_dock_buttons(hass, setup_integration):
-    """The auto-empty and auto-wash dock get one button per dock action."""
+async def test_d109_creates_the_dock_and_reset_buttons(hass, setup_integration):
+    """One button per dock action, plus one life reset per consumable."""
     entity_ids = {s.entity_id for s in hass.states.async_all("button")}
     assert entity_ids == {
         "button.vacuum_collect_dust",
@@ -54,7 +61,63 @@ async def test_d109_creates_the_dock_buttons(hass, setup_integration):
         "button.vacuum_stop_washing_mop",
         "button.vacuum_dry_mop",
         "button.vacuum_stop_drying_mop",
+        "button.vacuum_reset_main_brush",
+        "button.vacuum_reset_side_brush",
+        "button.vacuum_reset_filter",
+        "button.vacuum_reset_mop",
     }
+
+
+@pytest.mark.parametrize(
+    ("button", "address"),
+    [
+        ("reset_mop", ActionAddress(siid=9, aiid=1)),
+        ("reset_main_brush", ActionAddress(siid=12, aiid=1)),
+        ("reset_side_brush", ActionAddress(siid=13, aiid=1)),
+        ("reset_filter", ActionAddress(siid=14, aiid=1)),
+    ],
+)
+async def test_d109_reset_buttons_fire_the_consumable_actions(
+    hass, setup_integration, mock_miot_device, button, address
+):
+    mock_miot_device.call_action.reset_mock()
+    await hass.services.async_call(
+        "button", "press", {"entity_id": f"button.vacuum_{button}"}, blocking=True
+    )
+    mock_miot_device.call_action.assert_called_once_with(address)
+
+
+@pytest.mark.parametrize(
+    ("entity_id", "expected"),
+    [
+        ("sensor.vacuum_mop_time_left", "68"),
+        ("sensor.vacuum_main_brush_time_left", "213"),
+        ("sensor.vacuum_side_brush_time_left", "180"),
+        ("sensor.vacuum_filter_time_left", "105"),
+    ],
+)
+async def test_d109_consumable_hours_left(hass, setup_integration, entity_id, expected):
+    state = hass.states.get(entity_id)
+    assert state is not None
+    assert state.state == expected
+    assert state.attributes["unit_of_measurement"] == "h"
+
+
+async def test_d109_consumable_hours_left_unknown_when_unreported(
+    hass, setup_integration
+):
+    coordinator = setup_integration.runtime_data.coordinator
+    coordinator.async_set_updated_data({**coordinator.data, "filter_time_left": None})
+    await hass.async_block_till_done()
+    assert hass.states.get("sensor.vacuum_filter_time_left").state == "unknown"
+
+
+def test_d109_reads_the_consumable_hours_left_next_to_the_life_level():
+    mapping = D109GL.property_mapping
+    assert mapping[Property.MOP_TIME_LEFT] == {"siid": 9, "piid": 2}
+    assert mapping[Property.MAIN_BRUSH_TIME_LEFT] == {"siid": 12, "piid": 2}
+    assert mapping[Property.SIDE_BRUSH_TIME_LEFT] == {"siid": 13, "piid": 2}
+    assert mapping[Property.FILTER_TIME_LEFT] == {"siid": 14, "piid": 2}
 
 
 async def test_d109_mop_water_level_includes_off_option(hass, setup_integration):

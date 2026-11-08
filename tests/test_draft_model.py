@@ -76,20 +76,8 @@ def test_x20_max_draft_holds_every_hand_written_address(draft_model):
         assert values == dict(getattr(D109GL, table)), table
     # The latching Device Fault is dropped next to the live Fault Ids list.
     assert "fault" not in result.properties
-    # The published spec has more than the hand-written one wires: the hours left
-    # on each consumable and their reset actions.
-    assert set(result.properties) - set(D109GL.property_mapping) == {
-        "mop_time_left",
-        "main_brush_time_left",
-        "side_brush_time_left",
-        "filter_time_left",
-    }
-    assert set(result.actions) - set(_hand_written_actions(D109GL)) == {
-        "reset_mop",
-        "reset_main_brush",
-        "reset_side_brush",
-        "reset_filter",
-    }
+    assert set(result.properties) == set(D109GL.property_mapping)
+    assert set(result.actions) == set(_hand_written_actions(D109GL))
 
 
 def test_x20_plus_draft_adopts_the_dreame_layout(draft_model):
