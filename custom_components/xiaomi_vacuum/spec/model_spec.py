@@ -40,30 +40,27 @@ _CAPABILITY_ENTITIES: dict[Capability, EntityKey] = {
     Capability.OBSTACLE_AVOIDANCE: EntityKey.OBSTACLE_AVOIDANCE_SELECT,
 }
 
-#: Entities every supported vacuum exposes regardless of capabilities.
-#: Includes the platforms whose creation is otherwise unconditional
-#: (vacuum entity, sensors, binary sensors) so the entity-key
-#: registry stays the single source of truth for what a model exposes.
+#: Entities every vacuum exposes: they derive from the status and the fault,
+#: which every model publishes.
 _BASE_ENTITIES: frozenset[EntityKey] = frozenset(
     {
         EntityKey.VACUUM,
-        EntityKey.BATTERY_SENSOR,
         EntityKey.STATUS_SENSOR,
         EntityKey.ERROR_SENSOR,
         EntityKey.ERROR_CODE_SENSOR,
-        EntityKey.MOP_LIFE_SENSOR,
-        EntityKey.MAIN_BRUSH_LIFE_SENSOR,
-        EntityKey.SIDE_BRUSH_LIFE_SENSOR,
-        EntityKey.FILTER_LIFE_SENSOR,
-        EntityKey.BATTERY_CHARGING_SENSOR,
         EntityKey.CLEANING_SENSOR,
     }
 )
 
-#: Entities backed by one property, created only when the model maps it. The
-#: Xiaomi in-house models map all of them; the X20+ packs its sweep/mop mode
-#: into a Dreame clean-setting bitfield and publishes no clean-times property.
+#: Entities backed by one property, created only when the model maps it, so a
+#: model without e.g. a side brush gets no side-brush sensor stuck at unknown.
 _PROPERTY_ENTITIES: dict[Property, EntityKey] = {
+    Property.BATTERY_LEVEL: EntityKey.BATTERY_SENSOR,
+    Property.CHARGING_STATE: EntityKey.BATTERY_CHARGING_SENSOR,
+    Property.MOP_LIFE: EntityKey.MOP_LIFE_SENSOR,
+    Property.MAIN_BRUSH_LIFE: EntityKey.MAIN_BRUSH_LIFE_SENSOR,
+    Property.SIDE_BRUSH_LIFE: EntityKey.SIDE_BRUSH_LIFE_SENSOR,
+    Property.FILTER_LIFE: EntityKey.FILTER_LIFE_SENSOR,
     Property.MAP_OBJ_NAME: EntityKey.MAP_IMAGE,
     Property.MOP_STATUS: EntityKey.MOP_PAD_SENSOR,
     Property.SWEEP_MOP_TYPE: EntityKey.SWEEP_MOP_TYPE_SELECT,
@@ -122,16 +119,15 @@ class ModelSpec:
     property_mapping: dict[Property, MiotPropertyBinding]
     actions: ModelActions
     status: dict[int, StatusSlug]
-    fan_speeds: dict[str, int]
-    sweep_mop_types: dict[str, int]
-    clean_times: dict[str, int]
-    mop_water_levels: dict[str, int]
-    charging_state_slugs: dict[int, str]
     send_commands: dict[str, MiotActionAddress]
-    # Optional per-model enumerations, present only when the model exposes the
-    # matching property (gated by Capability.SWEEP_ROUTE / OBSTACLE_AVOIDANCE).
-    # Kept on the spec — not module-level — so a future vacuum publishing a
-    # different value table gets its own instead of the X20 Max's.
+    # Value tables of the matching properties, empty when the model does not
+    # map the property. Kept on the spec — not module-level — so a vacuum
+    # publishing a different table gets its own instead of the X20 Max's.
+    fan_speeds: dict[str, int] = field(default_factory=dict)
+    sweep_mop_types: dict[str, int] = field(default_factory=dict)
+    clean_times: dict[str, int] = field(default_factory=dict)
+    mop_water_levels: dict[str, int] = field(default_factory=dict)
+    charging_state_slugs: dict[int, str] = field(default_factory=dict)
     sweep_routes: dict[str, int] = field(default_factory=dict)
     obstacle_avoidances: dict[str, int] = field(default_factory=dict)
     # Fault codes this model publishes permanently for hardware it does not

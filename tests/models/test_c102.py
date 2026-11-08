@@ -517,3 +517,17 @@ def test_c102_status_follows_the_selected_mode():
 
 def test_c102_charging_state_knows_go_charging():
     assert C102GL.charging_state_slugs[5] == "go_charging"
+
+
+async def test_c102_without_a_fan_speed_table_does_not_offer_fan_speeds(
+    hass, setup_integration_c102
+):
+    from dataclasses import replace
+
+    from homeassistant.components.vacuum.const import VacuumEntityFeature
+
+    spec = setup_integration_c102.runtime_data.spec
+    setup_integration_c102.runtime_data.spec = replace(spec, fan_speeds={})
+    features = _vacuum(hass).supported_features
+    assert not features & VacuumEntityFeature.FAN_SPEED
+    assert features & VacuumEntityFeature.START

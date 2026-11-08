@@ -151,7 +151,6 @@ C102GL = ModelSpec(
         "sweep": 2,
         "sweep_before_mopping": 3,
     },
-    clean_times={},
     # Low / Medium / High; there is no "off" (sweep-only mode lifts the mops).
     mop_water_levels={
         "level_1": 1,
