@@ -12,6 +12,7 @@ from custom_components.xiaomi_vacuum.spec import (
     DEFAULT_MODEL,
     MODELS,
     OV71GL,
+    STATUS_MEANINGS,
     SUPPORTED_MODELS,
     get_spec,
 )
@@ -155,32 +156,18 @@ def test_b108_entities_exclude_capability_gated_selects_and_button():
     assert EntityKey.DUST_ARREST_BUTTON not in entities
 
 
-def test_status_back_compat_properties_match_status_table():
-    # The legacy status_to_activity / status_slugs / idle_statuses views must
-    # stay in sync with the new single `status` table.
-    for code, status in D109GL.status.items():
-        assert D109GL.status_to_activity[code] == status["activity"]
-        assert D109GL.status_slugs[code] == status["slug"]
-        is_idle = code in D109GL.idle_statuses
-        assert is_idle == status["is_idle"]
-        assert D109GL.cleaning_job_signals[code] == status["cleaning_job"]
+def test_status_views_follow_the_catalog():
+    for code, slug in D109GL.status.items():
+        meaning = STATUS_MEANINGS[slug]
+        assert D109GL.status_to_activity[code] is meaning.activity
+        assert D109GL.status_slugs[code] == slug
+        assert (code in D109GL.idle_statuses) == meaning.is_idle
+        assert D109GL.cleaning_job_signals[code] is meaning.cleaning_job
 
 
-def test_status_codes_sharing_a_slug_agree_on_the_cleaning_job_signal():
-    """A slug means the same device state on every model, so its signal must match."""
-    signal_by_slug: dict[str, object] = {}
-    for spec in MODELS.values():
-        for status in spec.status.values():
-            expected = signal_by_slug.setdefault(status["slug"], status["cleaning_job"])
-            assert status["cleaning_job"] == expected, status["slug"]
-
-
-def test_status_codes_sharing_a_slug_agree_on_the_activity():
-    activity_by_slug: dict[str, VacuumActivity] = {}
-    for spec in MODELS.values():
-        for status in spec.status.values():
-            expected = activity_by_slug.setdefault(status["slug"], status["activity"])
-            assert status["activity"] is expected, status["slug"]
+def test_every_catalog_slug_is_used_by_a_model():
+    used = {slug for spec in MODELS.values() for slug in spec.status.values()}
+    assert used == set(STATUS_MEANINGS)
 
 
 @pytest.mark.parametrize(
@@ -199,12 +186,11 @@ def test_d109_activities_follow_the_mi_home_status_strings(code, activity):
 def test_cleaning_job_signals_are_decisive_for_unambiguous_statuses():
     from custom_components.xiaomi_vacuum.spec import CleaningJobSignal
 
-    for spec in MODELS.values():
-        for status in spec.status.values():
-            if status["is_idle"]:
-                assert status["cleaning_job"] is CleaningJobSignal.FINISHED
-            if status["activity"] in (VacuumActivity.CLEANING, VacuumActivity.PAUSED):
-                assert status["cleaning_job"] is CleaningJobSignal.IN_PROGRESS
+    for meaning in STATUS_MEANINGS.values():
+        if meaning.is_idle:
+            assert meaning.cleaning_job is CleaningJobSignal.FINISHED
+        if meaning.activity in (VacuumActivity.CLEANING, VacuumActivity.PAUSED):
+            assert meaning.cleaning_job is CleaningJobSignal.IN_PROGRESS
 
 
 def test_d109_route_and_obstacle_enumerations_are_per_model():

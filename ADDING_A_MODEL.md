@@ -133,47 +133,44 @@ _ACTIONS = ModelActions(
 
 ### 3.3 Status table
 
-Each published status code must have an entry in `status`. Pick the
-closest-matching `VacuumActivity` for HA's UI; the `slug` is a stable
-translation key (see [§4 Translations](#4-translations)). Decide the activity
-from what the Mi Home app shows for the code (the `multiLanguage` endpoint in
-`XIAOMI_VACUUM_API.md` §1, `zh_cn` first), not from the spec's shorthand name.
-
-`is_idle` decides whether a fresh `start` is safe (the vacuum is parked at
-the dock) versus whether `start` should resume an in-progress clean.
-
-`cleaning_job` drives the *Cleaning in progress* binary sensor. Use
-`CleaningJobSignal.IN_PROGRESS` for statuses that only happen during a job
-(cleaning, paused, washing the mop or recharging mid-job),
-`CleaningJobSignal.FINISHED` for statuses that only happen outside one (idle,
-charging, returning to the dock at the end), and
-`CleaningJobSignal.INCONCLUSIVE` for statuses the device reports both mid-job
-and after the job ends (e.g. `station_working`) — those keep the previous
-verdict.
+Map each published status code to a `StatusSlug`:
 
 ```python
-_STATUS: dict[int, StatusDef] = {
-    1: {
-        "activity": VacuumActivity.IDLE,
-        "slug": "idle",
-        "is_idle": True,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    4: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "sweeping",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
+_STATUS: dict[int, StatusSlug] = {
+    1: StatusSlug.IDLE,
+    2: StatusSlug.CHARGING,
+    4: StatusSlug.SWEEPING,
     ...
 }
 ```
 
-The activity must **never** be `VacuumActivity.ERROR` for any status code —
-an active fault drives that state separately (see
-`vacuum/cleaner.py:XiaomiVacuum.activity`). Status codes that semantically
-mean "error" but fire during normal cycles map to their nearest non-error
-activity.
+A slug means the same on every model, so what it implies lives once, in
+`spec/status_catalog.py` (`STATUS_MEANINGS`): the `VacuumActivity` shown in
+HA's UI, whether a fresh `start` is safe from it (`is_idle`, the robot is
+parked) or should resume the current job, and what it reveals about the
+cleaning job (`cleaning_job`). Pick the slug from what the Mi Home app shows
+for the code (the `multiLanguage` endpoint in `XIAOMI_VACUUM_API.md` §1,
+`zh_cn` first), not from the spec's shorthand name.
+
+Only when a code means something no slug covers, add one: a `StatusSlug`
+member, its `StatusMeaning` in `STATUS_MEANINGS`, and its translation under
+`entity.sensor.status.state.<slug>`. For the meaning:
+
+- `cleaning_job` is `CleaningJobSignal.IN_PROGRESS` for statuses that only
+  happen during a job (cleaning, paused, washing the mop or recharging
+  mid-job), `CleaningJobSignal.FINISHED` for statuses that only happen outside
+  one (idle, charging, returning to the dock at the end), and
+  `CleaningJobSignal.INCONCLUSIVE` for statuses the device reports both mid-job
+  and after the job ends (e.g. `station_working`) — those keep the previous
+  verdict.
+- The activity must **never** be `VacuumActivity.ERROR` — an active fault
+  drives that state separately (see `vacuum/cleaner.py:XiaomiVacuum.activity`).
+  Status codes that semantically mean "error" but fire during normal cycles map
+  to their nearest non-error activity.
+
+Optimistic UI patches report the code of the activity's canonical slug
+(`CANONICAL_STATUSES`: `sweeping`, `paused`, `idle`, `go_charging`,
+`charging`), so the order of `_STATUS` does not matter.
 
 ### 3.4 Fault representation
 

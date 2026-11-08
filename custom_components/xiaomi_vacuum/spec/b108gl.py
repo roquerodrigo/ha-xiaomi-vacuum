@@ -20,9 +20,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from homeassistant.components.vacuum.const import VacuumActivity
-
-from .cleaning_job_signal import CleaningJobSignal
 from .enumerations import (
     CHARGING_STATE_SLUGS,
     CLEAN_TIMES,
@@ -30,8 +27,9 @@ from .enumerations import (
     SWEEP_MOP_TYPES,
 )
 from .model_actions import ModelActions, _require_action
-from .model_spec import ModelSpec, StatusDef
+from .model_spec import ModelSpec
 from .property import Property
+from .status_slug import StatusSlug
 
 if TYPE_CHECKING:
     from .addresses import MiotPropertyAddress
@@ -81,69 +79,17 @@ _ACTIONS = ModelActions(
     start_custom_sweep={"siid": 6, "aiid": 7},  # vacuum-extend.start-custom-sweep
 )
 
-# is_idle = parked at the dock and safe to start a fresh clean from (1 Idle,
-# 2 Charging, 8 Charged).
-_STATUS: dict[int, StatusDef] = {
-    1: {
-        "activity": VacuumActivity.IDLE,
-        "slug": "idle",
-        "is_idle": True,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    2: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "charging",
-        "is_idle": True,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    3: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "break_charging",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    4: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "sweeping",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    5: {
-        "activity": VacuumActivity.PAUSED,
-        "slug": "paused",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    6: {
-        "activity": VacuumActivity.RETURNING,
-        "slug": "go_charging",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    7: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "remote",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    8: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "charged",
-        "is_idle": True,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    9: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "building_map",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    10: {
-        "activity": VacuumActivity.IDLE,
-        "slug": "updating",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
+_STATUS: dict[int, StatusSlug] = {
+    1: StatusSlug.IDLE,
+    2: StatusSlug.CHARGING,
+    3: StatusSlug.BREAK_CHARGING,
+    4: StatusSlug.SWEEPING,
+    5: StatusSlug.PAUSED,
+    6: StatusSlug.GO_CHARGING,
+    7: StatusSlug.REMOTE,
+    8: StatusSlug.CHARGED,
+    9: StatusSlug.BUILDING_MAP,
+    10: StatusSlug.UPDATING,
 }
 
 B108GL = ModelSpec(

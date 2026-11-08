@@ -35,20 +35,24 @@ from .model_spec import (
     MapFormat,
     ModelSpec,
     RoomCleanStrategy,
-    StatusDef,
 )
 from .ov71gl import OV71GL
 from .property import Property
 from .registry import DEFAULT_MODEL, MODELS, SUPPORTED_MODELS, get_spec
+from .status_catalog import CANONICAL_STATUSES, STATUS_MEANINGS
+from .status_meaning import StatusMeaning
+from .status_slug import StatusSlug
 
 __all__ = [
     "B108GL",
     "C102GL",
+    "CANONICAL_STATUSES",
     "D109GL",
     "DEFAULT_MODEL",
     "MAPPING_FIELDS",
     "MODELS",
     "OV71GL",
+    "STATUS_MEANINGS",
     "SUPPORTED_MODELS",
     "Capability",
     "CleaningJobSignal",
@@ -63,7 +67,8 @@ __all__ = [
     "ModelSpec",
     "Property",
     "RoomCleanStrategy",
-    "StatusDef",
+    "StatusMeaning",
+    "StatusSlug",
     "_require_action",
     "get_spec",
 ]

@@ -8,9 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from homeassistant.components.vacuum.const import VacuumActivity
-
-from .cleaning_job_signal import CleaningJobSignal
 from .enumerations import (
     CHARGING_STATE_SLUGS,
     FAN_SPEEDS,
@@ -19,8 +16,9 @@ from .enumerations import (
     SWEEP_ROUTES,
 )
 from .model_actions import ModelActions, _require_action
-from .model_spec import ModelSpec, StatusDef
+from .model_spec import ModelSpec
 from .property import Property
+from .status_slug import StatusSlug
 
 if TYPE_CHECKING:
     from .addresses import MiotPropertyAddress
@@ -72,141 +70,31 @@ _ACTIONS = ModelActions(
     stop_dry={"siid": 2, "aiid": 32},
 )
 
-# The ERROR activity is NOT produced from status: an active fault drives it (see
-# XiaomiVacuum.activity). The bare "Error" status (15) occurs with no active fault
-# during normal cycles, so it maps to IDLE instead. Activities follow what the
-# robot physically does, as the Mi Home strings describe it: 19 GoChargeBreak and
-# 20 WashBreak drive back to the dock mid-job, 7 GoWash washes the mop while
-# docked. Whether the job carries on afterwards is what `cleaning_job` records.
-# is_idle = parked at the dock and safe to start a fresh clean from (1 Idle,
-# 2 Charging, 9 Charged).
-_STATUS: dict[int, StatusDef] = {
-    1: {
-        "activity": VacuumActivity.IDLE,
-        "slug": "idle",
-        "is_idle": True,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    2: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "charging",
-        "is_idle": True,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    3: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "break_charging",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    4: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "sweeping",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    5: {
-        "activity": VacuumActivity.PAUSED,
-        "slug": "paused",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    6: {
-        "activity": VacuumActivity.RETURNING,
-        "slug": "go_charging",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    7: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "go_wash",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.INCONCLUSIVE,
-    },
-    8: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "remote",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    9: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "charged",
-        "is_idle": True,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    10: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "building_map",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    11: {
-        "activity": VacuumActivity.IDLE,
-        "slug": "updating",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
-    12: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "multi_task_station_working",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    13: {
-        "activity": VacuumActivity.RETURNING,
-        "slug": "multi_task_recharge",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    14: {
-        "activity": VacuumActivity.DOCKED,
-        "slug": "station_working",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.INCONCLUSIVE,
-    },
-    15: {
-        "activity": VacuumActivity.IDLE,
-        "slug": "error",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.INCONCLUSIVE,
-    },
-    16: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "sweeping_and_mopping",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    17: {
-        "activity": VacuumActivity.CLEANING,
-        "slug": "mopping",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    18: {
-        "activity": VacuumActivity.PAUSED,
-        "slug": "mapping_pause",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    19: {
-        "activity": VacuumActivity.RETURNING,
-        "slug": "go_charge_break",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    20: {
-        "activity": VacuumActivity.RETURNING,
-        "slug": "wash_break",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.IN_PROGRESS,
-    },
-    21: {
-        "activity": VacuumActivity.RETURNING,
-        "slug": "go_charge_building_map",
-        "is_idle": False,
-        "cleaning_job": CleaningJobSignal.FINISHED,
-    },
+# Slugs follow what the robot physically does, as the Mi Home strings describe
+# it: 19 GoChargeBreak and 20 WashBreak drive back to the dock mid-job, 7 GoWash
+# washes the mop while docked.
+_STATUS: dict[int, StatusSlug] = {
+    1: StatusSlug.IDLE,
+    2: StatusSlug.CHARGING,
+    3: StatusSlug.BREAK_CHARGING,
+    4: StatusSlug.SWEEPING,
+    5: StatusSlug.PAUSED,
+    6: StatusSlug.GO_CHARGING,
+    7: StatusSlug.GO_WASH,
+    8: StatusSlug.REMOTE,
+    9: StatusSlug.CHARGED,
+    10: StatusSlug.BUILDING_MAP,
+    11: StatusSlug.UPDATING,
+    12: StatusSlug.MULTI_TASK_STATION_WORKING,
+    13: StatusSlug.MULTI_TASK_RECHARGE,
+    14: StatusSlug.STATION_WORKING,
+    15: StatusSlug.ERROR,
+    16: StatusSlug.SWEEPING_AND_MOPPING,
+    17: StatusSlug.MOPPING,
+    18: StatusSlug.MAPPING_PAUSE,
+    19: StatusSlug.GO_CHARGE_BREAK,
+    20: StatusSlug.WASH_BREAK,
+    21: StatusSlug.GO_CHARGE_BUILDING_MAP,
 }
 
 D109GL = ModelSpec(
