@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from xiaomi_vacuum_sdk import DreameMapDecoder, MapError
 
@@ -16,7 +16,10 @@ if TYPE_CHECKING:
 class DreameMapFormat(MapFormat):
     """A pixel grid plus a JSON trailer whose segment metadata lists the rooms."""
 
-    carries_rooms: ClassVar[bool] = True
+    @property
+    def carries_rooms(self) -> bool:
+        """The rooms come from the map's segment metadata."""
+        return True
 
     def render(
         self,

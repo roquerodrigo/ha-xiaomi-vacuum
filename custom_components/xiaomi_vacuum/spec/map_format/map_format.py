@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from xiaomi_vacuum_sdk import MapRenderer, RenderedMap
@@ -12,9 +12,10 @@ if TYPE_CHECKING:
 class MapFormat(ABC):
     """Draws a model's map blob and says where its room list comes from."""
 
-    #: Whether the map carries the room list; otherwise the device publishes
-    #: it in the room-information property.
-    carries_rooms: ClassVar[bool]
+    @property
+    @abstractmethod
+    def carries_rooms(self) -> bool:
+        """Whether the map lists the rooms, instead of the room-information property."""
 
     @abstractmethod
     def render(
