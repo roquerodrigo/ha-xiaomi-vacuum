@@ -67,10 +67,13 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
 
     @property
     def supported_features(self) -> VacuumEntityFeature:
-        """Advertise area cleaning only when the model has its room-clean actions."""
-        if self.spec.supports_room_clean:
-            return SUPPORTED_FEATURES
-        return SUPPORTED_FEATURES & ~VacuumEntityFeature.CLEAN_AREA
+        """Advertise area cleaning and fan speeds only when the model has them."""
+        features = SUPPORTED_FEATURES
+        if not self.spec.supports_room_clean:
+            features &= ~VacuumEntityFeature.CLEAN_AREA
+        if not self.spec.fan_speeds:
+            features &= ~VacuumEntityFeature.FAN_SPEED
+        return features
 
     @property
     def fan_speed_list(self) -> list[str]:

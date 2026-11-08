@@ -384,3 +384,21 @@ def test_status_code_for_falls_back_to_the_first_matching_code():
 def test_plain_fault_reading_reports_nothing_without_the_property():
     assert B108GL.live_fault_code({}) is None
     assert B108GL.live_fault_code({"fault": 7}) == 7
+
+
+def test_consumable_and_battery_entities_need_their_property():
+    from dataclasses import replace
+
+    from custom_components.xiaomi_vacuum.spec import EntityKey
+
+    spec = replace(
+        D109GL,
+        property_mapping={
+            name: binding
+            for name, binding in D109GL.property_mapping.items()
+            if name not in (Property.SIDE_BRUSH_LIFE, Property.BATTERY_LEVEL)
+        },
+    )
+    assert EntityKey.SIDE_BRUSH_LIFE_SENSOR not in spec.entities
+    assert EntityKey.BATTERY_SENSOR not in spec.entities
+    assert EntityKey.MAIN_BRUSH_LIFE_SENSOR in spec.entities
