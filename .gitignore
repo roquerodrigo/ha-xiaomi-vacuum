@@ -25,5 +25,6 @@ config/*
 # Local working data (specs, extracted files) — not committed
 resources/
 
-# Claude Code session state
-.claude/
+# Claude Code session state; the project skills are versioned
+.claude/*
+!.claude/skills/
