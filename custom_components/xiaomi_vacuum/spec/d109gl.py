@@ -22,9 +22,9 @@ from .room_cleaning import DirectRoomSweep
 from .status_slug import StatusSlug
 
 if TYPE_CHECKING:
-    from .addresses import MiotPropertyAddress
+    from .addresses import MiotPropertyBinding
 
-_PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
+_PROPERTY_MAPPING: dict[Property, MiotPropertyBinding] = {
     Property.STATUS: {"siid": 2, "piid": 2},
     # Live fault state. The Device Fault property (piid 3) is deliberately NOT
     # read: it latches the last code and never resets. Fault Ids (piid 66) is
@@ -48,6 +48,9 @@ _PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
     Property.MAIN_BRUSH_LIFE: {"siid": 12, "piid": 1},
     Property.SIDE_BRUSH_LIFE: {"siid": 13, "piid": 1},
     Property.FILTER_LIFE: {"siid": 14, "piid": 1},
+    # The custom cleanings list grows with every cleaning saved in Mi Home and
+    # would push the batched poll reply past the single-datagram limit.
+    Property.USER_DEFINE_SWEEP_CONFIG: {"siid": 2, "piid": 42, "polled": False},
 }
 
 _ACTIONS = ModelActions(
@@ -130,7 +133,6 @@ D109GL = ModelSpec(
         "stop_dry": _require_action(_ACTIONS.stop_dry, "stop_dry"),
     },
     room_cleaning=DirectRoomSweep({"siid": 2, "aiid": 16, "in_piid": 15}),
-    user_define_sweep_config={"siid": 2, "piid": 42},
     sweep_routes=dict(SWEEP_ROUTES),
     obstacle_avoidances=dict(OBSTACLE_AVOIDANCES),
 )

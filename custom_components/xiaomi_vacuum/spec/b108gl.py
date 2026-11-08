@@ -33,9 +33,9 @@ from .room_cleaning import ConfigThenCustomSweep
 from .status_slug import StatusSlug
 
 if TYPE_CHECKING:
-    from .addresses import MiotPropertyAddress
+    from .addresses import MiotPropertyBinding
 
-_PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
+_PROPERTY_MAPPING: dict[Property, MiotPropertyBinding] = {
     Property.STATUS: {"siid": 2, "piid": 1},
     # Plain uint32 fault; 0 == healthy.
     Property.FAULT: {"siid": 2, "piid": 2},

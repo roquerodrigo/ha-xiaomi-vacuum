@@ -11,6 +11,7 @@ from homeassistant.helpers.service import async_set_service_schema
 
 from ..api import XiaomiVacuumApiClientError  # noqa: TID252
 from ..const import DOMAIN, LOGGER  # noqa: TID252
+from ..spec import Property  # noqa: TID252
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -30,7 +31,7 @@ async def async_refresh_custom_cleaning_options(
 ) -> None:
     """Read the vacuum's custom cleanings when it is reachable and offer them."""
     data = entry.runtime_data
-    if data.spec.user_define_sweep_config is None:
+    if Property.USER_DEFINE_SWEEP_CONFIG not in data.spec.property_mapping:
         return
     if not data.coordinator.last_update_success:
         return

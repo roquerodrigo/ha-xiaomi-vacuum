@@ -43,3 +43,4 @@ class Property(StrEnum):
     RESUME_AFTER_CHARGE = "resume_after_charge"
     DO_NOT_DISTURB = "do_not_disturb"
     VOLUME = "volume"
+    USER_DEFINE_SWEEP_CONFIG = "user_define_sweep_config"

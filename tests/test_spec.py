@@ -16,6 +16,7 @@ from custom_components.xiaomi_vacuum.spec import (
     SUPPORTED_MODELS,
     ConfigThenCustomSweep,
     DirectRoomSweep,
+    Property,
     get_spec,
 )
 
@@ -219,15 +220,7 @@ def test_spec_fields_are_immutable():
     # mapping instead of short-circuiting on a missing key.
     mutations: dict[str, tuple[object, object]] = {
         "property_mapping": (Property.STATUS, {"siid": 0, "piid": 0}),
-        "status": (
-            1,
-            {
-                "activity": VacuumActivity.IDLE,
-                "slug": "x",
-                "is_idle": False,
-                "cleaning_job": "finished",
-            },
-        ),
+        "status": (1, "idle"),
         "fan_speeds": ("silent", 99),
         "sweep_mop_types": ("sweep", 99),
         "clean_times": ("one_time", 99),
@@ -236,7 +229,6 @@ def test_spec_fields_are_immutable():
         "send_commands": ("boom", {"siid": 0, "aiid": 0}),
         "sweep_routes": ("quick", 99),
         "obstacle_avoidances": ("less_collisions", 99),
-        "property_masks": (Property.SWEEP_MOP_TYPE, 0x03),
     }
     assert set(mutations) == set(MAPPING_FIELDS)
     for field_name, (key, value) in mutations.items():
@@ -299,10 +291,15 @@ def test_custom_cleanings_wired_only_where_verified():
         "aiid": 42,
         "in_piid": 43,
     }
-    assert D109GL.user_define_sweep_config == {"siid": 2, "piid": 42}
+    assert D109GL.property_mapping[Property.USER_DEFINE_SWEEP_CONFIG] == {
+        "siid": 2,
+        "piid": 42,
+        "polled": False,
+    }
+    assert Property.USER_DEFINE_SWEEP_CONFIG not in D109GL.polled_properties
     for spec in (B108GL, OV71GL, C102GL):
         assert spec.actions.start_user_define_sweep is None
-        assert spec.user_define_sweep_config is None
+        assert Property.USER_DEFINE_SWEEP_CONFIG not in spec.property_mapping
 
 
 @pytest.mark.parametrize("spec", [D109GL, B108GL, OV71GL], ids=lambda s: s.model)

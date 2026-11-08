@@ -15,7 +15,7 @@ its layout shares almost nothing with the in-house models:
 - no mode-specific start actions: a clean runs in the selected mode, which the
   firmware packs into the low two bits of the clean-setting bitfield (4.23)
   together with the wash frequency and water level; the mode select reads and
-  writes only those bits (``property_masks``). There is no clean-times
+  writes only those bits (the ``mask`` of its binding). There is no clean-times
   property
 - task status (4.7) stays non-zero for the whole job, mid-job washes and
   recharges included, so it decides the cleaning job and blocks fresh starts
@@ -39,9 +39,9 @@ from .room_cleaning import DreameSegmentClean
 from .status_slug import StatusSlug
 
 if TYPE_CHECKING:
-    from .addresses import MiotPropertyAddress
+    from .addresses import MiotPropertyBinding
 
-_PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
+_PROPERTY_MAPPING: dict[Property, MiotPropertyBinding] = {
     Property.STATUS: {"siid": 2, "piid": 1},
     # Plain uint8 Dreame fault code; 0 == healthy.
     Property.FAULT: {"siid": 2, "piid": 2},
@@ -64,9 +64,10 @@ _PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
     Property.MOP_LIFE: {"siid": 18, "piid": 1},
     # {"object_name": ..., "md5": ...} of the current map in the Xiaomi cloud.
     Property.MAP_OBJ_NAME: {"siid": 6, "piid": 8},
-    # Cleaning mode: low two bits of the Dreame clean-setting (see _MODE_MASK).
-    # The spec lists 4.23 without access, but the firmware accepts writes.
-    Property.SWEEP_MOP_TYPE: {"siid": 4, "piid": 23},
+    # Cleaning mode: low two bits of the Dreame clean-setting, packed with the
+    # wash frequency and water level. The spec lists 4.23 without access, but
+    # the firmware accepts writes.
+    Property.SWEEP_MOP_TYPE: {"siid": 4, "piid": 23, "mask": 0x03},
     # Hours left on each consumable (the life level is on the sibling piid).
     Property.MAIN_BRUSH_TIME_LEFT: {"siid": 9, "piid": 1},
     Property.SIDE_BRUSH_TIME_LEFT: {"siid": 10, "piid": 1},
@@ -82,12 +83,10 @@ _PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
     Property.RESUME_AFTER_CHARGE: {"siid": 4, "piid": 11},
     Property.CARPET_BOOST: {"siid": 4, "piid": 12},
     Property.CHILD_LOCK: {"siid": 4, "piid": 27},
-    # bool; the quiet hours themselves are 5.2 / 5.3 ("HH:MM").
-    Property.DO_NOT_DISTURB: {"siid": 5, "piid": 1},
+    # The quiet hours themselves are 5.2 / 5.3 ("HH:MM").
+    Property.DO_NOT_DISTURB: {"siid": 5, "piid": 1, "boolean": True},
     Property.VOLUME: {"siid": 7, "piid": 1},  # 0-100
 }
-
-_MODE_MASK = 0x03
 
 _ACTIONS = ModelActions(
     start_sweep={"siid": 2, "aiid": 1},
@@ -178,5 +177,4 @@ C102GL = ModelSpec(
     #   while drying.
     notice_fault_codes=frozenset({68, 114}),
     map_format=DreameMapFormat(),
-    property_masks={Property.SWEEP_MOP_TYPE: _MODE_MASK},
 )

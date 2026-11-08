@@ -75,7 +75,7 @@ async def test_async_get_state_requests_spec_mapping(mock_miot_device):
         siid=D109GL.property_mapping["status"]["siid"],
         piid=D109GL.property_mapping["status"]["piid"],
     )
-    assert set(requested) == set(D109GL.property_mapping)
+    assert set(requested) == set(D109GL.polled_properties)
 
 
 @pytest.mark.parametrize("spec", [D109GL, B108GL])
@@ -85,10 +85,10 @@ async def test_async_get_state_reads_room_information_alone(mock_miot_device, sp
         set(call.args[0]) for call in mock_miot_device.get_properties.await_args_list
     ]
     assert requests == [
-        set(spec.property_mapping) - {"room_information"},
+        set(spec.polled_properties) - {"room_information"},
         {"room_information"},
     ]
-    assert set(state) == set(spec.property_mapping)
+    assert set(state) == set(spec.polled_properties)
 
 
 async def test_async_get_state_passes_through_missing_values(mock_miot_device):
@@ -525,7 +525,13 @@ async def test_masked_property_read_on_bool_or_missing_is_left_alone(
 
     from custom_components.xiaomi_vacuum.spec import C102GL, Property
 
-    spec = replace(C102GL, property_masks={Property.SWEEP_MOP_TYPE: 0x0C})
+    spec = replace(
+        C102GL,
+        property_mapping={
+            **C102GL.property_mapping,
+            Property.SWEEP_MOP_TYPE: {"siid": 4, "piid": 23, "mask": 0x0C},
+        },
+    )
     client = _client(mock_miot_device_c102, spec=spec)
     mock_miot_device_c102.get_properties.side_effect = None
     mock_miot_device_c102.get_properties.return_value = {"sweep_mop_type": 0b1110}
@@ -541,7 +547,13 @@ async def test_masked_property_write_shifts_into_the_mask(mock_miot_device_c102)
 
     from custom_components.xiaomi_vacuum.spec import C102GL, Property
 
-    spec = replace(C102GL, property_masks={Property.SWEEP_MOP_TYPE: 0x0C})
+    spec = replace(
+        C102GL,
+        property_mapping={
+            **C102GL.property_mapping,
+            Property.SWEEP_MOP_TYPE: {"siid": 4, "piid": 23, "mask": 0x0C},
+        },
+    )
     client = _client(mock_miot_device_c102, spec=spec)
     mock_miot_device_c102.get_properties.side_effect = None
     mock_miot_device_c102.get_properties.return_value = {"sweep_mop_type": 0b110011}
