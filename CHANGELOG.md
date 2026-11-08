@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.11.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.11.0...v2.11.1) (2026-11-08)
+
+### Improvements
+
+- Setup of cloud-connected vacuums is faster, since the cloud device lookup and map download no longer delay it. The map is refreshed in the background. ([#165](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/165))
+
 ## [2.11.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.10.0...v2.11.0) (2026-11-08)
 
 ### New features
