@@ -46,7 +46,8 @@ It picks the highest released spec version (`--version N` picks another one,
   `vacuum-extend:start-clean`, the Dreame layout of the X20+.
 
 What it cannot decide is left as `# TODO:` comments, and `ruff` refuses to
-commit a TODO, so each one gets resolved: a brush service with no main/side
+commit a TODO, so each one gets resolved: the retail product name (the spec
+only says "Robot Cleaner"), a brush service with no main/side
 description, a status description no slug covers, a value with no
 translation, charging states without a `charging` one, a required action the
 spec does not publish, the dock actions to keep, the room-cleaning flow to
@@ -84,9 +85,24 @@ OV71GL = replace(
 )
 ```
 
-A derived spec inherits everything its sibling gains later, so list in its
-docstring what it removes and why, and remove anything the new model has not
-been verified to support.
+To tell whether two models share a layout, draft both and diff the drafts:
+identical drafts (apart from the model and the URN) mean the same layout.
+
+A derived spec inherits everything its sibling has and everything it gains
+later, so list in its docstring what it removes and why. Which inherited parts
+to keep is **the verification rule** this guide uses everywhere:
+
+- Keep what the sibling has verified, as long as the new model's own spec
+  publishes it at the same address and the retail hardware has the part.
+- Remove what the retail hardware lacks (the S40 Pro's dock actions).
+- Without a device, remove the flows that proved model-specific — room
+  cleaning (`room_cleaning=None`), zone cleaning (`start_zone_sweep=None`) and
+  custom cleanings (`start_user_define_sweep=None` together with the
+  `Property.USER_DEFINE_SWEEP_CONFIG` binding; a contract test requires both or
+  neither) — and say in the pull request that they wait for a device.
+- What the draft maps beyond the verified sibling (e.g. the X20 Max draft's
+  consumable hours left and reset actions) is not a difference of the new
+  model: leave it out, and add it as a feature once a device confirms it.
 
 The closest siblings: `d109gl.py` for a model with an auto-wash dock,
 `ov71gl.py` for an X20-Max-shaped spec without dock hardware, `b108gl.py` for
@@ -271,9 +287,10 @@ it invokes (`spec/room_cleaning/`):
   X20+ acknowledges its spec-published `start-room-sweep` but ignores it.
 - `None` — no room cleaning; the vacuum does not offer area cleaning.
 
-If you can't capture the app flow, start with `DirectRoomSweep` and verify with
-a real device; the S20+ ignored its spec-published direct action. A flow none
-of these covers becomes a new `RoomCleaning` subclass, run against the
+Without a device or a capture, set `room_cleaning=None` (the verification rule
+in §3.1): `DirectRoomSweep` is only the first flow to try *on* a device, and
+the S20+ and the X20+ both ignore their spec-published direct action. A flow
+none of these covers becomes a new `RoomCleaning` subclass, run against the
 `RoomCleaningDevice` port the API client implements.
 
 ### 3.8 Map format
@@ -341,10 +358,11 @@ Then add `tests/models/test_c108.py` for what is specific to the model,
 mirroring [`test_d109.py`](tests/models/test_d109.py) /
 [`test_c102.py`](tests/models/test_c102.py): the entities it must and must not
 have (e.g. no dust-arrest button without an auto-dust dock), the action
-addresses its commands hit, and its fault payload. Generic fixtures
-`setup_integration_of_model` / `mock_miot_device_of_model` exist; a model test
-usually wants its own named pair, built with `_setup_model_entry` and
-`_patch_miot_client` like `setup_integration_c102`.
+addresses its commands hit, its fault payload, and its room-cleaning payload
+(or, with `room_cleaning=None`, that the vacuum does not offer area cleaning).
+Set the model up with the `setup_model` fixture — `entry, device = await
+setup_model("xiaomi.vacuum.c108gl")` — so it needs no named fixtures of its
+own.
 
 ---
 

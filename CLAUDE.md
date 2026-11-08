@@ -55,10 +55,9 @@ here.
   `ADDING_A_MODEL.md`). A sibling model is derived with `dataclasses.replace`
   (the S40 Pro from the X20 Max). The spec is selected from the device model
   at setup and threaded through `runtime_data` / the coordinator. **Read the
-  model's module before touching any SIID/PIID/AIID — the S20+ diverges from
-  the other two on almost all of them, the S40 Pro shares the X20 Max layout
-  but has no dock hardware, and the X20+ is a Dreame layout unlike any of
-  them.**
+  model's module before touching any SIID/PIID/AIID** — layouts diverge from
+  model to model, and each module's docstring says how it differs from its
+  closest sibling.
 - **`config_flow.py`** — QR-login config flow plus reauth (fresh QR scan when
   the stored cloud session expires) and a reconfigure flow for changing the
   Xiaomi cloud region.
