@@ -59,6 +59,8 @@ SAMPLE_STATE: dict[str, Any] = {
     "main_brush_life": 71,
     "side_brush_life": 90,
     "filter_life": 70,
+    # No map yet: the cloud fixtures publish one when a test needs it.
+    "map_obj_name": None,
 }
 
 #: Parsed-state fixture for the X20 Max (alias of SAMPLE_STATE for clarity).
@@ -88,6 +90,7 @@ _SAMPLE_STATE_B108: dict[str, Any] = {
     "main_brush_life": 71,
     "side_brush_life": 90,
     "filter_life": 70,
+    "map_obj_name": None,
 }
 
 #: Parsed-state fixture for the X20+, taken from a live unit docked and fully
@@ -126,18 +129,34 @@ _SAMPLE_STATE_C102: dict[str, Any] = {
     "volume": 75,
 }
 
-_MODEL_MACS: dict[str, str] = {
-    "xiaomi.vacuum.d109gl": "AA:BB:CC:DD:EE:FF",
-    "xiaomi.vacuum.b108gl": "AA:BB:CC:DD:EE:01",
-    "xiaomi.vacuum.ov71gl": "AA:BB:CC:DD:EE:02",
-    "xiaomi.vacuum.c102gl": "AA:BB:CC:DD:EE:03",
-}
-
-_MODEL_STATES: dict[str, dict[str, Any]] = {
-    "xiaomi.vacuum.d109gl": _SAMPLE_STATE_D109,
-    "xiaomi.vacuum.b108gl": _SAMPLE_STATE_B108,
-    "xiaomi.vacuum.ov71gl": _SAMPLE_STATE_OV71,
-    "xiaomi.vacuum.c102gl": _SAMPLE_STATE_C102,
+#: One entry per supported model: the parsed state its mocked device publishes
+#: and the identity of its config entry. Adding a model adds one entry here; the
+#: contract tests run against every entry and fail when a model has none.
+MODEL_FIXTURES: dict[str, dict[str, Any]] = {
+    "xiaomi.vacuum.d109gl": {
+        "mac": "AA:BB:CC:DD:EE:FF",
+        "host": "192.168.1.50",
+        "name": "Vacuum",
+        "state": _SAMPLE_STATE_D109,
+    },
+    "xiaomi.vacuum.b108gl": {
+        "mac": "AA:BB:CC:DD:EE:01",
+        "host": "192.168.1.51",
+        "name": "S20 Living Room",
+        "state": _SAMPLE_STATE_B108,
+    },
+    "xiaomi.vacuum.ov71gl": {
+        "mac": "AA:BB:CC:DD:EE:02",
+        "host": "192.168.1.52",
+        "name": "S40 Pro",
+        "state": _SAMPLE_STATE_OV71,
+    },
+    "xiaomi.vacuum.c102gl": {
+        "mac": "AA:BB:CC:DD:EE:03",
+        "host": "192.168.1.53",
+        "name": "X20 Plus",
+        "state": _SAMPLE_STATE_C102,
+    },
 }
 
 
@@ -164,7 +183,7 @@ def _make_miot_instance(model: str):
 
     spec = get_spec(model)
     # Distinct MAC per model so entries don't collide on unique_id.
-    mac = _MODEL_MACS[model]
+    mac = MODEL_FIXTURES[model]["mac"]
     instance = MagicMock()
     info = MagicMock()
     info.model = model
@@ -176,7 +195,7 @@ def _make_miot_instance(model: str):
     instance.set_property = AsyncMock(return_value=None)
     instance.call_action = AsyncMock(return_value=None)
     instance.close = AsyncMock(return_value=None)
-    state = _MODEL_STATES[model]
+    state = MODEL_FIXTURES[model]["state"]
     instance.get_properties = AsyncMock(
         side_effect=lambda mapping, **_: {name: state.get(name) for name in mapping}
     )
@@ -190,41 +209,15 @@ def make_miot_instance():
     return _make_miot_instance
 
 
-@pytest.fixture
-def mock_miot_device() -> Generator:
-    """Patch the SDK MiotClient everywhere it's imported (default: X20 Max d109gl)."""
+def _patch_miot_client(model: str) -> Generator:
+    """Patch the SDK MiotClient everywhere it's imported with a model's mock."""
     with patch("custom_components.xiaomi_vacuum.api.client.MiotClient") as cls:
-        cls.return_value = _make_miot_instance("xiaomi.vacuum.d109gl")
+        cls.return_value = _make_miot_instance(model)
         yield cls.return_value
 
 
-@pytest.fixture
-def mock_miot_device_b108() -> Generator:
-    """Patch the SDK MiotClient for the S20+ (b108gl) model."""
-    with patch("custom_components.xiaomi_vacuum.api.client.MiotClient") as cls:
-        cls.return_value = _make_miot_instance("xiaomi.vacuum.b108gl")
-        yield cls.return_value
-
-
-@pytest.fixture
-def mock_miot_device_ov71() -> Generator:
-    """Patch the SDK MiotClient for the S40 Pro (ov71gl) model."""
-    with patch("custom_components.xiaomi_vacuum.api.client.MiotClient") as cls:
-        cls.return_value = _make_miot_instance("xiaomi.vacuum.ov71gl")
-        yield cls.return_value
-
-
-@pytest.fixture
-def mock_miot_device_c102() -> Generator:
-    """Patch the SDK MiotClient for the X20+ (c102gl) model."""
-    with patch("custom_components.xiaomi_vacuum.api.client.MiotClient") as cls:
-        cls.return_value = _make_miot_instance("xiaomi.vacuum.c102gl")
-        yield cls.return_value
-
-
-@pytest.fixture
-async def setup_integration(hass, mock_miot_device, enable_custom_integrations):
-    """Set up the integration with mocked MIoT and return the entry."""
+async def _setup_model_entry(hass, model: str):
+    """Add and set up a config entry for ``model``'s mocked device."""
     from pytest_homeassistant_custom_component.common import MockConfigEntry
 
     from custom_components.xiaomi_vacuum.const import (
@@ -234,19 +227,70 @@ async def setup_integration(hass, mock_miot_device, enable_custom_integrations):
         DOMAIN,
     )
 
+    fixture = MODEL_FIXTURES[model]
     entry = MockConfigEntry(
         domain=DOMAIN,
         data={
-            CONF_HOST: "192.168.1.50",
+            CONF_HOST: fixture["host"],
             CONF_TOKEN: "0" * 32,
-            CONF_NAME: "Vacuum",
+            CONF_NAME: fixture["name"],
         },
-        unique_id="AA:BB:CC:DD:EE:FF",
+        unique_id=fixture["mac"],
     )
     entry.add_to_hass(hass)
     await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     return entry
+
+
+@pytest.fixture(params=sorted(MODEL_FIXTURES))
+def model(request) -> str:
+    """Every supported model string, one test run each."""
+    return request.param
+
+
+@pytest.fixture
+def mock_miot_device_of_model(model) -> Generator:
+    """Patch the SDK MiotClient with the parametrized model's mock."""
+    yield from _patch_miot_client(model)
+
+
+@pytest.fixture
+async def setup_integration_of_model(
+    hass, model, mock_miot_device_of_model, enable_custom_integrations
+):
+    """Set up the integration against the parametrized model's mock."""
+    return await _setup_model_entry(hass, model)
+
+
+@pytest.fixture
+def mock_miot_device() -> Generator:
+    """Patch the SDK MiotClient for the X20 Max (d109gl), the default model."""
+    yield from _patch_miot_client("xiaomi.vacuum.d109gl")
+
+
+@pytest.fixture
+def mock_miot_device_b108() -> Generator:
+    """Patch the SDK MiotClient for the S20+ (b108gl) model."""
+    yield from _patch_miot_client("xiaomi.vacuum.b108gl")
+
+
+@pytest.fixture
+def mock_miot_device_ov71() -> Generator:
+    """Patch the SDK MiotClient for the S40 Pro (ov71gl) model."""
+    yield from _patch_miot_client("xiaomi.vacuum.ov71gl")
+
+
+@pytest.fixture
+def mock_miot_device_c102() -> Generator:
+    """Patch the SDK MiotClient for the X20+ (c102gl) model."""
+    yield from _patch_miot_client("xiaomi.vacuum.c102gl")
+
+
+@pytest.fixture
+async def setup_integration(hass, mock_miot_device, enable_custom_integrations):
+    """Set up the integration against the X20 Max mock and return the entry."""
+    return await _setup_model_entry(hass, "xiaomi.vacuum.d109gl")
 
 
 @pytest.fixture
@@ -254,28 +298,7 @@ async def setup_integration_b108(
     hass, mock_miot_device_b108, enable_custom_integrations
 ):
     """Set up the integration against the S20+ (b108gl) mock and return the entry."""
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
-
-    from custom_components.xiaomi_vacuum.const import (
-        CONF_HOST,
-        CONF_NAME,
-        CONF_TOKEN,
-        DOMAIN,
-    )
-
-    entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_HOST: "192.168.1.51",
-            CONF_TOKEN: "0" * 32,
-            CONF_NAME: "S20 Living Room",
-        },
-        unique_id="AA:BB:CC:DD:EE:01",
-    )
-    entry.add_to_hass(hass)
-    await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
-    return entry
+    return await _setup_model_entry(hass, "xiaomi.vacuum.b108gl")
 
 
 @pytest.fixture
@@ -283,28 +306,7 @@ async def setup_integration_ov71(
     hass, mock_miot_device_ov71, enable_custom_integrations
 ):
     """Set up the integration against the S40 Pro (ov71gl) mock and return the entry."""
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
-
-    from custom_components.xiaomi_vacuum.const import (
-        CONF_HOST,
-        CONF_NAME,
-        CONF_TOKEN,
-        DOMAIN,
-    )
-
-    entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_HOST: "192.168.1.52",
-            CONF_TOKEN: "0" * 32,
-            CONF_NAME: "S40 Pro",
-        },
-        unique_id="AA:BB:CC:DD:EE:02",
-    )
-    entry.add_to_hass(hass)
-    await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
-    return entry
+    return await _setup_model_entry(hass, "xiaomi.vacuum.ov71gl")
 
 
 @pytest.fixture
@@ -312,28 +314,7 @@ async def setup_integration_c102(
     hass, mock_miot_device_c102, enable_custom_integrations
 ):
     """Set up the integration against the X20+ (c102gl) mock and return the entry."""
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
-
-    from custom_components.xiaomi_vacuum.const import (
-        CONF_HOST,
-        CONF_NAME,
-        CONF_TOKEN,
-        DOMAIN,
-    )
-
-    entry = MockConfigEntry(
-        domain=DOMAIN,
-        data={
-            CONF_HOST: "192.168.1.53",
-            CONF_TOKEN: "0" * 32,
-            CONF_NAME: "X20 Plus",
-        },
-        unique_id="AA:BB:CC:DD:EE:03",
-    )
-    entry.add_to_hass(hass)
-    await hass.config_entries.async_setup(entry.entry_id)
-    await hass.async_block_till_done()
-    return entry
+    return await _setup_model_entry(hass, "xiaomi.vacuum.c102gl")
 
 
 def build_dreame_map(

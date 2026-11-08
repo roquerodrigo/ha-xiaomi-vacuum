@@ -32,17 +32,9 @@ def test_registry_lists_all_supported_models():
     assert DEFAULT_MODEL == "xiaomi.vacuum.d109gl"
 
 
-@pytest.mark.parametrize(
-    ("model", "spec"),
-    [
-        ("xiaomi.vacuum.d109gl", D109GL),
-        ("xiaomi.vacuum.b108gl", B108GL),
-        ("xiaomi.vacuum.ov71gl", OV71GL),
-        ("xiaomi.vacuum.c102gl", C102GL),
-    ],
-)
-def test_get_spec_returns_known_model(model, spec):
-    assert get_spec(model) is spec
+def test_get_spec_returns_known_model(model):
+    assert get_spec(model) is MODELS[model]
+    assert get_spec(model).model == model
 
 
 def test_get_spec_unknown_model_falls_back_with_warning(caplog):
