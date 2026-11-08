@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.11.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.10.0...v2.11.0) (2026-11-08)
+
+### New features
+
+- The X20 Max and S40 Pro now show the hours left on the mop, main brush, side brush and filter, and can reset each consumable's life after replacement. ([#163](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/163))
+
 ## [2.10.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.9.0...v2.10.0) (2026-11-08)
 
 Adds support for the Xiaomi Robot Vacuum X20+ with room cleaning, a map and new entities, and fixes a warning logged after QR login.
