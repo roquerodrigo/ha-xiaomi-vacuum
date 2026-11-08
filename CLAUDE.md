@@ -45,8 +45,9 @@ here.
   property is mapped or whose action is defined — and the `send_command`
   names from the defined actions (`send_commands.py`). Platforms filter their
   `_*_CLASSES` registries by `EntityKey in spec.entities`, so adding a new
-  model is a data-only change: one module plus a `registry.py` line, drafted
-  by `scripts/draft_model.py` from the published miot-spec (see
+  model is a data-only change: one module (drafted by `scripts/draft_model.py`
+  from the published miot-spec), its `registry.py` and `spec/__init__.py`
+  lines, and one `MODEL_FIXTURES` entry in the tests (see
   `ADDING_A_MODEL.md`). A sibling model is derived with `dataclasses.replace`
   (the S40 Pro from the X20 Max). The spec is selected from the device model
   at setup and threaded through `runtime_data` / the coordinator. **Read the

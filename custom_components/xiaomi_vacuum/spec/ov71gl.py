@@ -8,7 +8,8 @@ served by the Mainland China cloud, so the config flow must use another region
 
 The vacuum-service layout is the X20 Max's (``d109gl.py``): every SIID/PIID/AIID
 this integration reads or invokes is identical, so the spec is derived from it
-and only states where the two diverge:
+and only states where the two diverge. Anything added to the X20 Max reaches
+the S40 Pro too, unless it is removed here:
 
 - status publishes three extra codes (22 StationAssistingCleaning, 23
   StationAssistingCleaned, 24 GoChargeInStationAssistingCleaning)
@@ -16,6 +17,9 @@ and only states where the two diverge:
   lists dust-arrest / mop-wash actions, but no dock hardware honours them, so no
   dock action is wired: no dust-arrest button, no mop-wash / dry send_commands
 - no detergent (SIID 18) or dust-bag (SIID 19) services, no start-dry action
+- no zone cleaning: replaying the app's zone through ``start-zone-sweep`` does
+  nothing on a real unit (see ``XIAOMI_VACUUM_API.md`` §5)
+- no custom cleanings: the action and its list are only verified on the X20 Max
 - the dockless hardware still runs the station's sewage-tank check and reports
   its permanent failure as fault 100027, which ``_PHANTOM_FAULTS`` drops
 - taking the water tank or dust bin out raises 210020 / 210005, which

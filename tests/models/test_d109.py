@@ -32,9 +32,8 @@ async def test_d109_picks_the_right_spec(hass, setup_integration):
     assert EntityKey.DUST_ARREST_BUTTON in spec.entities
     assert EntityKey.SWEEP_ROUTE_SELECT in spec.entities
     assert EntityKey.OBSTACLE_AVOIDANCE_SELECT in spec.entities
-    # Mop-wash / dry dock actions exist on the X20 Max but are not a gating
-    # capability (no entity is created from them); they're exposed only via
-    # send_commands and asserted in test_d109_send_command_exposes_mop_wash_and_dry.
+    assert EntityKey.START_MOP_WASH_BUTTON in spec.entities
+    assert EntityKey.STOP_DRY_BUTTON in spec.entities
 
 
 async def test_d109_creates_all_five_selects(hass, setup_integration):
@@ -127,7 +126,7 @@ async def test_d109_dust_arrest_button_hits_action(
     mock_miot_device.call_action.assert_any_call(ActionAddress(siid=2, aiid=18))
 
 
-async def test_d109_clean_segments_uses_direct_strategy(
+async def test_d109_clean_segments_uses_the_direct_room_sweep(
     hass, setup_integration, mock_miot_device
 ):
     """X20 Max room-clean fires start-vacuum-room-sweep directly (no cloud detour)."""

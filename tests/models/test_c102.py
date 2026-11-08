@@ -372,7 +372,7 @@ async def test_c102_advertises_area_cleaning(hass, setup_integration_c102):
 async def test_area_cleaning_hidden_without_room_clean_actions(
     hass, setup_integration_c102
 ):
-    """A model missing its strategy's actions never offers clean_area."""
+    """A model without a room-cleaning flow never offers clean_area."""
     from dataclasses import replace
 
     from homeassistant.components.vacuum.const import VacuumEntityFeature
