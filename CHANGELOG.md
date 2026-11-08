@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.10.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.9.0...v2.10.0) (2026-11-08)
+
+Adds support for the Xiaomi Robot Vacuum X20+ with room cleaning, a map and new entities, and fixes a warning logged after QR login.
+
+### New features
+
+- Adds support for the Xiaomi Robot Vacuum X20+ (xiaomi.vacuum.c102gl), with start, pause, stop, dock, locate, fan speed and mop water level control. ([#156](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/156))
+- The X20+ can clean selected rooms and shows its saved floor plan and dock on the map. Room names come from the Xiaomi cloud, so the cloud login is needed. ([#156](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/156))
+- The X20+ adds a cleaning mode select, consumable and cleaning time sensors, mop washing and drying buttons, switches and a volume control. ([#156](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/156))
+- The Xiaomi Robot Vacuum X20 Max gets buttons to wash and dry the mop pads in the dock, and to stop washing or drying them. ([#156](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/156))
+
+### Improvements
+
+- Updates the xiaomi-vacuum-sdk library to version 0.1.2, which the X20+ map and room support depends on. ([#156](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/156))
+
+### Bug fixes
+
+- Fixes a Home Assistant warning that the integration closes the shared web session after a Xiaomi QR login during setup or reauthentication. ([#157](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/157))
+
 ## [2.9.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.8.0...v2.9.0) (2026-11-05)
 
 Vacuums with an unsupported model now get a repair that links to a prefilled support request form.
