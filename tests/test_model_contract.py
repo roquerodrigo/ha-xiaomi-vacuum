@@ -100,6 +100,20 @@ def test_room_cleaning_and_map_rooms_agree(spec):
         assert Property.ROOM_INFORMATION in spec.property_mapping
 
 
+@_SPECS
+def test_custom_cleanings_have_both_their_action_and_their_list(spec):
+    """The service starts the action; its options are read from the property."""
+    has_action = spec.actions.start_user_define_sweep is not None
+    assert has_action == (Property.USER_DEFINE_SWEEP_CONFIG in spec.property_mapping)
+
+
+@_SPECS
+def test_a_mapped_charging_state_names_the_charging_slug(spec):
+    """The battery and charging entities look for the ``charging`` slug."""
+    if Property.CHARGING_STATE in spec.property_mapping:
+        assert "charging" in spec.charging_state_slugs.values()
+
+
 def test_the_sample_state_covers_every_polled_property(model):
     state = MODEL_FIXTURES[model]["state"]
     assert set(MODELS[model].polled_properties) <= set(state)

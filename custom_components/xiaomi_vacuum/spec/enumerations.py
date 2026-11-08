@@ -2,38 +2,56 @@
 
 from __future__ import annotations
 
-FAN_SPEEDS: dict[str, int] = {
-    "silent": 1,
-    "basic": 2,
-    "strong": 3,
-    "full_speed": 4,
-}
+from types import MappingProxyType
+from typing import TYPE_CHECKING
 
-SWEEP_MOP_TYPES: dict[str, int] = {
-    "sweep": 1,
-    "mop": 2,
-    "sweep_mop": 3,
-    "sweep_before_mopping": 4,
-}
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
-CLEAN_TIMES: dict[str, int] = {
-    "one_time": 1,
-    "two_times": 2,
-}
+FAN_SPEEDS: Mapping[str, int] = MappingProxyType(
+    {
+        "silent": 1,
+        "basic": 2,
+        "strong": 3,
+        "full_speed": 4,
+    }
+)
 
-CHARGING_STATE_SLUGS: dict[int, str] = {
-    1: "charging",
-    2: "not_charging",
-    3: "not_chargeable",
-}
+SWEEP_MOP_TYPES: Mapping[str, int] = MappingProxyType(
+    {
+        "sweep": 1,
+        "mop": 2,
+        "sweep_mop": 3,
+        "sweep_before_mopping": 4,
+    }
+)
 
-SWEEP_ROUTES: dict[str, int] = {
-    "quick": 1,
-    "daily": 2,
-    "careful": 3,
-}
+CLEAN_TIMES: Mapping[str, int] = MappingProxyType(
+    {
+        "one_time": 1,
+        "two_times": 2,
+    }
+)
 
-OBSTACLE_AVOIDANCES: dict[str, int] = {
-    "less_collisions": 0,
-    "high_coverage": 1,
-}
+CHARGING_STATE_SLUGS: Mapping[int, str] = MappingProxyType(
+    {
+        1: "charging",
+        2: "not_charging",
+        3: "not_chargeable",
+    }
+)
+
+SWEEP_ROUTES: Mapping[str, int] = MappingProxyType(
+    {
+        "quick": 1,
+        "daily": 2,
+        "careful": 3,
+    }
+)
+
+OBSTACLE_AVOIDANCES: Mapping[str, int] = MappingProxyType(
+    {
+        "less_collisions": 0,
+        "high_coverage": 1,
+    }
+)

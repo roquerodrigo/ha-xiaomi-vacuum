@@ -382,3 +382,25 @@ def test_consumable_and_battery_entities_need_their_property():
     assert EntityKey.SIDE_BRUSH_LIFE_SENSOR not in spec.entities
     assert EntityKey.BATTERY_SENSOR not in spec.entities
     assert EntityKey.MAIN_BRUSH_LIFE_SENSOR in spec.entities
+
+
+def test_shared_catalogs_are_read_only():
+    from custom_components.xiaomi_vacuum.spec import (
+        CANONICAL_STATUSES,
+        StatusSlug,
+    )
+    from custom_components.xiaomi_vacuum.spec.entity_requirements import (
+        ACTION_ENTITIES,
+        PROPERTY_ENTITIES,
+    )
+    from custom_components.xiaomi_vacuum.spec.enumerations import FAN_SPEEDS
+
+    for catalog in (
+        STATUS_MEANINGS,
+        CANONICAL_STATUSES,
+        PROPERTY_ENTITIES,
+        ACTION_ENTITIES,
+        FAN_SPEEDS,
+    ):
+        with pytest.raises(TypeError):
+            catalog[StatusSlug.IDLE] = None  # type: ignore[index]

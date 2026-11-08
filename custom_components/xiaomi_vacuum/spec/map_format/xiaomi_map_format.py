@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING
 
 from xiaomi_vacuum_sdk import MapParseError
 
@@ -16,7 +16,10 @@ if TYPE_CHECKING:
 class XiaomiMapFormat(MapFormat):
     """An encrypted JSON map, keyed by the model and device id."""
 
-    carries_rooms: ClassVar[bool] = False
+    @property
+    def carries_rooms(self) -> bool:
+        """The rooms come from the room-information property."""
+        return False
 
     def render(
         self, renderer: MapRenderer, raw: bytes, *, model: str, device_id: str
