@@ -78,6 +78,24 @@ property to the bitfield and give its bits in `property_masks` (the X20+ maps
 its cleaning mode to the low two bits of `4.23`). Optional actions such as the
 dock and consumable-reset actions create their buttons automatically.
 
+**Derive a sibling instead of copying it.** When the new model shares a
+supported model's layout, build its spec with `dataclasses.replace` on that
+model and state only the differences — the S40 Pro (`ov71gl.py`) is the X20
+Max with its dock actions set to `None` and three extra status codes:
+
+```python
+OV71GL = replace(
+    D109GL,
+    model="xiaomi.vacuum.ov71gl",
+    name="Xiaomi Robot Vacuum S40 Pro",
+    actions=replace(D109GL.actions, start_dust_arrest=None, ...),
+    status={**D109GL.status, 22: StatusSlug.STATION_ASSISTING_CLEANING, ...},
+)
+```
+
+The rest of this section describes the fields for a model written from
+scratch.
+
 **Check the retail hardware, not just the spec.** Xiaomi reuses one spec
 template across a product line: the S40 Pro (`ov71gl`) publishes dust-arrest
 and mop-wash actions although it ships with a plain charging dock. Since
