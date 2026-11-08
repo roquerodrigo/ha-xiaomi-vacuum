@@ -21,6 +21,7 @@ from ..cloud.errors import (  # noqa: TID252
 )
 from ..const import LOGGER  # noqa: TID252
 from ..spec import Property  # noqa: TID252
+from ..spec.room_cleaning import RoomCleaningError  # noqa: TID252
 from .custom_cleaning import CustomCleaning
 from .errors import (
     XiaomiVacuumApiClientCommunicationError,
@@ -33,7 +34,6 @@ if TYPE_CHECKING:
     from ..cloud import XiaomiCloud  # noqa: TID252
     from ..data import (  # noqa: TID252
         DeviceInfoLike,
-        JsonObject,
         JsonValue,
         VacuumState,
     )
@@ -53,10 +53,6 @@ _DEVICE_TIMEOUT_SECONDS = 10.0
 # names are escaped), so batching it with other properties can push the reply
 # past that limit and leave every poll unanswered.
 _STANDALONE_PROPERTIES = frozenset({Property.ROOM_INFORMATION})
-
-# Dreame work mode that cleans the selected segments, and the passes per room.
-_DREAME_SEGMENT_WORK_MODE = 18
-_DREAME_SEGMENT_REPEATS = 1
 
 
 class XiaomiVacuumApiClient:
@@ -126,12 +122,17 @@ class XiaomiVacuumApiClient:
         values: dict[str, PropertyValue] = {}
         for properties in self._property_requests:
             values |= await self._run(self._client.get_properties(properties))
+        values = self._unmask(values)
+        LOGGER.debug("Parsed state: %s", values)
+        return cast("VacuumState", values)
+
+    def _unmask(self, values: dict[str, PropertyValue]) -> dict[str, PropertyValue]:
+        """Keep only the bits a masked property owns, shifted down."""
         for name, mask in self._spec.property_masks.items():
             raw = values.get(name)
             if isinstance(raw, int) and not isinstance(raw, bool):
                 values[name] = (raw & mask) >> _mask_shift(mask)
-        LOGGER.debug("Parsed state: %s", values)
-        return cast("VacuumState", values)
+        return values
 
     async def async_start(self) -> None:
         """Start sweeping."""
@@ -229,120 +230,36 @@ class XiaomiVacuumApiClient:
     async def async_clean_segments(
         self, segment_ids: list[str], room_information: str | None = None
     ) -> None:
-        """
-        Start cleaning specific rooms by their MIoT room IDs.
-
-        Two strategies, picked by the active model's spec:
-
-        * ``direct`` (X20 Max) — fire ``start-vacuum-room-sweep`` with the room
-          ids as a comma-separated string.
-        * ``config_then_custom`` (S20+) — captured from the Mi Home app: rebuild
-          the room config from ``room_information`` with the target rooms'
-          ``on`` flag set to True (others False), push it via
-          ``set-room-clean-configs``, then fire ``start-custom-sweep``. The
-          spec's ``start-vacuum-room-sweep`` (aiid 13) exists but the robot
-          ignores it and returns to the dock.
-        * ``dreame_segment`` (X20+) — fire the Dreame ``start-clean`` with the
-          segment work mode and a room selection carrying the current fan speed
-          and water level. The spec's ``start-room-sweep`` is acknowledged but
-          ignored.
-        """
-        strategy = self._spec.room_clean_strategy
-        actions = self._spec.actions
-        if strategy == "direct":
-            if actions.start_room_sweep is None:
-                msg = "direct room-clean strategy but no start_room_sweep action"
-                raise XiaomiVacuumApiClientError(msg)
-            action = actions.start_room_sweep
-            payload: list[JsonValue] = [
-                {
-                    "piid": action["in_piid"],
-                    "value": ",".join(str(r) for r in segment_ids),
-                }
-            ]
-            LOGGER.debug("Calling start-vacuum-room-sweep with payload: %s", payload)
-            await self._run_action(self._client.call_action(_address(action), payload))
-            return
-        if strategy == "dreame_segment":
-            await self._async_clean_dreame_segments(segment_ids)
-            return
-
-        # config_then_custom (S20+)
-        if actions.set_room_clean_configs is None or actions.start_custom_sweep is None:
-            msg = (
-                "config_then_custom room-clean strategy requires both "
-                "set_room_clean_configs and start_custom_sweep actions"
-            )
-            raise XiaomiVacuumApiClientError(msg)
-        config = _build_room_clean_config(room_information, segment_ids)
-        if not config:
-            msg = (
-                "Cannot start room clean: the device published no room "
-                "information. Configure rooms in the Mi Home app first."
-            )
-            raise XiaomiVacuumApiClientError(msg)
-        set_action = actions.set_room_clean_configs
-        config_payload = [json.dumps({"room_attrs": config})]
-        LOGGER.debug(
-            "Calling set-room-clean-configs (%s/%s) with %d room(s), cleaning %d",
-            set_action["siid"],
-            set_action["aiid"],
-            len(config),
-            sum(1 for r in config if r.get("on")),
-        )
-        await self._call_action_cloud_or_local(
-            set_action["siid"], set_action["aiid"], config_payload
-        )
-        start_action = actions.start_custom_sweep
-        LOGGER.debug(
-            "Calling start-custom-sweep (%s/%s)",
-            start_action["siid"],
-            start_action["aiid"],
-        )
-        await self._call_action_cloud_or_local(
-            start_action["siid"], start_action["aiid"], []
-        )
-
-    async def _async_clean_dreame_segments(self, segment_ids: list[str]) -> None:
-        """Start a Dreame segment clean of the given rooms, in the given order."""
-        action = self._spec.actions.start_segment_clean
-        if action is None:
-            msg = "dreame_segment room-clean strategy but no start_segment_clean action"
+        """Start cleaning specific rooms with the model's room-cleaning flow."""
+        room_cleaning = self._spec.room_cleaning
+        if room_cleaning is None:
+            msg = "Failed to clean rooms: this model has no room cleaning"
             raise XiaomiVacuumApiClientError(msg)
         try:
-            rooms = [int(segment_id) for segment_id in segment_ids]
-        except ValueError as exception:
-            msg = f"Failed to clean rooms: invalid room id in {segment_ids}"
-            raise XiaomiVacuumApiClientError(msg) from exception
-        # The selection repeats the fan speed and water level per room; the
-        # current settings keep the clean consistent with the app's choice.
-        settings = await self._run(
+            await room_cleaning.async_start(self, segment_ids, room_information)
+        except RoomCleaningError as exception:
+            raise XiaomiVacuumApiClientError(str(exception)) from exception
+
+    async def async_call_action_with_params(
+        self, action: MiotActionAddress, params: list[JsonValue]
+    ) -> None:
+        """Invoke an action with input params, tolerating the device's late acks."""
+        await self._run_action(self._client.call_action(_address(action), params))
+
+    async def async_read_properties(
+        self, names: Sequence[Property]
+    ) -> dict[str, PropertyValue]:
+        """Read the current value of the mapped properties among ``names``."""
+        values = await self._run(
             self._client.get_properties(
                 {
                     name: self._properties[name]
-                    for name in (Property.FAN_SPEED, Property.MOP_WATER_LEVEL)
+                    for name in names
                     if name in self._properties
                 }
             )
         )
-        fan = settings.get(Property.FAN_SPEED)
-        water = settings.get(Property.MOP_WATER_LEVEL)
-        if fan is None or water is None:
-            msg = "Failed to clean rooms: could not read the fan speed and water level"
-            raise XiaomiVacuumApiClientError(msg)
-        selects: list[JsonValue] = [
-            [room, _DREAME_SEGMENT_REPEATS, fan, water, order]
-            for order, room in enumerate(rooms, start=1)
-        ]
-        payload: list[JsonValue] = [
-            {"piid": action["mode_piid"], "value": _DREAME_SEGMENT_WORK_MODE},
-            {
-                "piid": action["data_piid"],
-                "value": json.dumps({"selects": selects}, separators=(",", ":")),
-            },
-        ]
-        LOGGER.debug("Calling Dreame start-clean with payload: %s", payload)
-        await self._run_action(self._client.call_action(_address(action), payload))
+        return self._unmask(values)
 
     async def async_clean_zones(
         self, zones: Sequence[CleaningZone], repeats: int | None = None
@@ -390,8 +307,8 @@ class XiaomiVacuumApiClient:
         LOGGER.debug("Calling start-user-define-sweep with payload: %s", payload)
         await self._run_action(self._client.call_action(_address(action), payload))
 
-    async def _call_action_cloud_or_local(
-        self, siid: int, aiid: int, params: list[str]
+    async def async_call_action_reliably(
+        self, action: MiotActionAddress, params: list[str]
     ) -> None:
         """
         Invoke a MIoT action, preferring the cloud when a session is available.
@@ -402,6 +319,7 @@ class XiaomiVacuumApiClient:
         second step running uselessly. When no cloud session is configured we
         fall back to the local path (with its ack-timeout tolerance).
         """
+        siid, aiid = action["siid"], action["aiid"]
         if self._cloud is not None:
             try:
                 result = await self._cloud.async_call_action(siid, aiid, params)
@@ -474,85 +392,3 @@ def _group_property_requests(
         else:
             shared[name] = address
     return [shared, *standalone]
-
-
-# Columns published by the S20+ `room-info` property (SIID 6 / piid 10) and
-# accepted by `set-room-clean-configs` (SIID 2 / aiid 10). Order matters: the
-# device publishes a table `room_attrs` whose first row is exactly this header.
-_ROOM_ATTR_HEADERS = (
-    "id",
-    "room_name",
-    "fan_level",
-    "water_level",
-    "clean_mode",
-    "clean_times",
-    "mop_mode",
-    "on",
-)
-
-
-def _build_room_clean_config(
-    room_information: str | None, segment_ids: list[str]
-) -> list[JsonObject]:
-    """
-    Build the S20+ ``set-room-clean-configs`` payload.
-
-    Reads the current room config from ``room_information`` (the device's
-    table-shaped ``room_attrs`` JSON), converts it to the object-array write
-    format the action expects, and flips the ``on`` flag to True for every
-    requested room id (False for the rest). Returns an empty list when the
-    device published no rooms (caller should refuse to start in that case).
-
-    The order of selected rooms is preserved from ``segment_ids``: the Mi Home
-    app stores the cleaning sequence as the position of each room in
-    ``room_attrs``, so we emit the requested rooms first (in the order the
-    caller asked for), followed by the unselected ones in their original
-    relative order. A ``clean_area`` call with ``[kitchen, living_room]`` thus
-    cleans kitchen before living_room.
-    """
-    if not room_information:
-        return []
-    try:
-        data = json.loads(room_information)
-    except ValueError, TypeError:
-        return []
-    matrix = data.get("room_attrs") if isinstance(data, dict) else None
-    if not isinstance(matrix, list) or not matrix:
-        return []
-    header = matrix[0] if isinstance(matrix[0], list) else list(_ROOM_ATTR_HEADERS)
-    # Normalise header cells to lower-case, matching ``_rows_to_attrs`` in
-    # ``vacuum/cleaner.py``: both parsers read the same ``room_attrs`` payload,
-    # so a device publishing ``Id`` / ``Room_Name`` instead of the lower-case
-    # spelling resolves identically in both places. Without this the per-room
-    # ``id`` lookup below fails on every row and the config comes back empty.
-    header = [str(c).casefold() if c is not None else "" for c in header]
-    # Requested sequence as an ordered lookup: position decides emit order.
-    wanted_order = [str(s) for s in segment_ids]
-    wanted = set(wanted_order)
-    selected: list[JsonObject] = []
-    others: list[JsonObject] = []
-    for row in matrix[1:]:
-        if not isinstance(row, list):
-            continue
-        room = dict(zip(header, row, strict=False))
-        room_id = room.get("id")
-        if room_id is None:
-            continue
-        room_id_str = str(room_id)
-        room["on"] = room_id_str in wanted
-        if room["on"]:
-            selected.append(room)
-        else:
-            others.append(room)
-    # Reorder selected rooms to match the requested sequence (stable for any
-    # ids the device knows but the caller didn't list, which shouldn't happen).
-    selected.sort(key=lambda r: _ordered_index(str(r.get("id")), wanted_order))
-    return selected + others
-
-
-def _ordered_index(room_id: str, wanted_order: list[str]) -> int:
-    """Position of ``room_id`` in ``wanted_order``, or a large sentinel if absent."""
-    try:
-        return wanted_order.index(room_id)
-    except ValueError:
-        return len(wanted_order)

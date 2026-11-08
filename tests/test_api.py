@@ -16,8 +16,12 @@ from custom_components.xiaomi_vacuum.api import (
     XiaomiVacuumApiClientCommunicationError,
     XiaomiVacuumApiClientError,
 )
-from custom_components.xiaomi_vacuum.api.client import _build_room_clean_config
 from custom_components.xiaomi_vacuum.spec import B108GL, D109GL
+from custom_components.xiaomi_vacuum.spec.room_cleaning import (
+    config_then_custom_sweep,
+)
+
+_build_room_clean_config = config_then_custom_sweep._build_room_clean_config
 
 
 def _client(mock_miot_device, spec=D109GL):
@@ -190,7 +194,7 @@ async def test_async_set_property_writes_value(mock_miot_device):
 async def test_async_clean_segments_payload(mock_miot_device):
     await _client(mock_miot_device).async_clean_segments(["10", "28"])
     args = mock_miot_device.call_action.call_args.args
-    a = D109GL.actions.start_room_sweep
+    a = D109GL.room_cleaning.action
     assert args[0] == ActionAddress(siid=a["siid"], aiid=a["aiid"])
     assert args[1] == [{"piid": a["in_piid"], "value": "10,28"}]
 
@@ -507,7 +511,7 @@ async def test_c102_clean_segments_without_the_segment_action_raises(
 
     from custom_components.xiaomi_vacuum.spec import C102GL
 
-    spec = replace(C102GL, actions=replace(C102GL.actions, start_segment_clean=None))
+    spec = replace(C102GL, room_cleaning=None)
     client = _client(mock_miot_device_c102, spec=spec)
     with pytest.raises(XiaomiVacuumApiClientError):
         await client.async_clean_segments(["1"])

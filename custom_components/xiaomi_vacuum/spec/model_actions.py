@@ -6,11 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .addresses import (
-        MiotActionAddress,
-        MiotActionInputAddress,
-        MiotSegmentCleanAddress,
-    )
+    from .addresses import MiotActionAddress, MiotActionInputAddress
 
 
 @dataclass(frozen=True)
@@ -29,14 +25,6 @@ class ModelActions:
     start_only_sweep: MiotActionAddress | None = None
     start_mop: MiotActionAddress | None = None
     start_sweep_mop: MiotActionAddress | None = None
-    # Room cleaning. X20 Max uses a single direct action that takes room ids;
-    # S20+ has no such action and instead configures rooms (below) then fires
-    # start-custom-sweep; the Dreame-built X20+ starts a segment clean through
-    # its generic start-clean action.
-    start_room_sweep: MiotActionInputAddress | None = None
-    start_segment_clean: MiotSegmentCleanAddress | None = None
-    set_room_clean_configs: MiotActionAddress | None = None
-    start_custom_sweep: MiotActionAddress | None = None
     start_zone_sweep: MiotActionInputAddress | None = None
     start_user_define_sweep: MiotActionInputAddress | None = None
     # Dock-only actions; None when the model has no such hardware (S20+).

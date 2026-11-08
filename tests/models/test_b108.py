@@ -11,7 +11,7 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntryState
 from xiaomi_vacuum_sdk import ActionAddress
 
-from custom_components.xiaomi_vacuum.spec import Capability
+from custom_components.xiaomi_vacuum.spec import Capability, PlainFaultReading
 
 
 async def test_b108_setup_loads(hass, setup_integration_b108):
@@ -21,7 +21,7 @@ async def test_b108_setup_loads(hass, setup_integration_b108):
 async def test_b108_picks_the_right_spec(hass, setup_integration_b108):
     spec = setup_integration_b108.runtime_data.spec
     assert spec.model == "xiaomi.vacuum.b108gl"
-    assert spec.fault_kind == "simple"
+    assert isinstance(spec.fault_reading, PlainFaultReading)
     assert Capability.DUST_ARREST not in spec.capabilities
     assert Capability.SWEEP_ROUTE not in spec.capabilities
     assert Capability.OBSTACLE_AVOIDANCE not in spec.capabilities

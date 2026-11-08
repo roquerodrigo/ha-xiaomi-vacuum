@@ -29,6 +29,7 @@ from .enumerations import (
 from .model_actions import ModelActions, _require_action
 from .model_spec import ModelSpec
 from .property import Property
+from .room_cleaning import ConfigThenCustomSweep
 from .status_slug import StatusSlug
 
 if TYPE_CHECKING:
@@ -36,7 +37,7 @@ if TYPE_CHECKING:
 
 _PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
     Property.STATUS: {"siid": 2, "piid": 1},
-    # Plain uint32 fault; 0 == healthy. fault_kind="simple" reads it directly.
+    # Plain uint32 fault; 0 == healthy.
     Property.FAULT: {"siid": 2, "piid": 2},
     Property.SWEEP_MOP_TYPE: {"siid": 2, "piid": 3},
     Property.CLEANING_AREA: {"siid": 2, "piid": 5},
@@ -70,13 +71,6 @@ _ACTIONS = ModelActions(
     pause_sweeping={"siid": 2, "aiid": 6},
     continue_sweep={"siid": 6, "aiid": 1},  # vacuum-extend.continue-sweep
     identify={"siid": 6, "aiid": 6},  # vacuum-extend.find-vacuum
-    # Room cleaning on the S20+ is a two-step flow (captured from the Mi Home
-    # app): mark the target rooms via set-room-clean-configs, then fire
-    # start-custom-sweep. There is no direct start-vacuum-room-sweep action the
-    # device honours — that action exists in the spec (aiid 13) but the robot
-    # ignores it and returns to the dock.
-    set_room_clean_configs={"siid": 2, "aiid": 10},
-    start_custom_sweep={"siid": 6, "aiid": 7},  # vacuum-extend.start-custom-sweep
 )
 
 _STATUS: dict[int, StatusSlug] = {
@@ -116,6 +110,10 @@ B108GL = ModelSpec(
         "start_sweep_mop": _require_action(_ACTIONS.start_sweep_mop, "start_sweep_mop"),
         "continue_sweep": _ACTIONS.continue_sweep,
     },
-    fault_kind="simple",
-    room_clean_strategy="config_then_custom",
+    # The spec's start-vacuum-room-sweep (aiid 13) is ignored by the robot,
+    # which returns to the dock; the Mi Home app marks the rooms instead.
+    room_cleaning=ConfigThenCustomSweep(
+        set_room_clean_configs={"siid": 2, "aiid": 10},
+        start_custom_sweep={"siid": 6, "aiid": 7},  # vacuum-extend
+    ),
 )

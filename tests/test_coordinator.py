@@ -15,10 +15,18 @@ from custom_components.xiaomi_vacuum.const import CONF_HOST, DOMAIN
 from custom_components.xiaomi_vacuum.coordinator import (
     UPDATE_INTERVAL,
     XiaomiVacuumDataUpdateCoordinator,
-    _live_fault_code_ids,
 )
 from custom_components.xiaomi_vacuum.repairs import async_raise_cannot_connect
-from custom_components.xiaomi_vacuum.spec import B108GL, D109GL, OV71GL
+from custom_components.xiaomi_vacuum.spec import (
+    B108GL,
+    D109GL,
+    OV71GL,
+    FaultIdsReading,
+)
+
+
+def _live_fault_code_ids(raw, ignored, notices=frozenset()):
+    return FaultIdsReading().live_code({"fault_ids": raw}, ignored, notices)
 
 
 def _fake_entry(client_mock=None, spec=D109GL):
@@ -247,7 +255,7 @@ async def test_enrich_fault_text_noop_when_text_missing(hass):
 
 
 async def test_b108_derives_fault_from_simple_uint32(hass):
-    """S20+ (fault_kind=simple) reads the plain fault property as an int."""
+    """S20+ reads the plain fault property as an int."""
     state = {"fault": 0}
     client = type("C", (), {"async_get_state": AsyncMock(return_value=state)})()
     coord = _coord_with_client(hass, client, spec=B108GL)

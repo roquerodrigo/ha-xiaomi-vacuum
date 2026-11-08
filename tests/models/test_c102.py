@@ -18,7 +18,12 @@ from xiaomi_vacuum_sdk import ActionAddress
 
 # Top-level import triggers custom-component loading in the HA pytest harness.
 from custom_components.xiaomi_vacuum.const import DOMAIN  # noqa: F401
-from custom_components.xiaomi_vacuum.spec import C102GL, Capability, EntityKey
+from custom_components.xiaomi_vacuum.spec import (
+    C102GL,
+    Capability,
+    EntityKey,
+    PlainFaultReading,
+)
 
 VACUUM_ID = "vacuum.x20_plus"
 CLEANING_ID = "binary_sensor.x20_plus_cleaning_in_progress"
@@ -37,7 +42,7 @@ async def test_c102_setup_loads(hass, setup_integration_c102):
 async def test_c102_picks_the_right_spec(hass, setup_integration_c102):
     spec = setup_integration_c102.runtime_data.spec
     assert spec is C102GL
-    assert spec.fault_kind == "simple"
+    assert isinstance(spec.fault_reading, PlainFaultReading)
     assert spec.capabilities == frozenset({Capability.DUST_ARREST})
 
 
@@ -372,9 +377,7 @@ async def test_area_cleaning_hidden_without_room_clean_actions(
     from homeassistant.components.vacuum.const import VacuumEntityFeature
 
     spec = setup_integration_c102.runtime_data.spec
-    setup_integration_c102.runtime_data.spec = replace(
-        spec, actions=replace(spec.actions, start_segment_clean=None)
-    )
+    setup_integration_c102.runtime_data.spec = replace(spec, room_cleaning=None)
     features = _vacuum(hass).supported_features
     assert not features & VacuumEntityFeature.CLEAN_AREA
     assert features & VacuumEntityFeature.START
