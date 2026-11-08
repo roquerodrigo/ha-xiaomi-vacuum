@@ -17,7 +17,7 @@ from xiaomi_vacuum_sdk import ActionAddress
 # without it `from custom_components.xiaomi_vacuum...` inside tests fails with
 # AttributeError until another test file imports the package first.
 from custom_components.xiaomi_vacuum.const import DOMAIN  # noqa: F401
-from custom_components.xiaomi_vacuum.spec import Capability
+from custom_components.xiaomi_vacuum.spec import Capability, FaultIdsReading
 
 
 async def test_d109_setup_loads(hass, setup_integration):
@@ -28,7 +28,7 @@ async def test_d109_picks_the_right_spec(hass, setup_integration):
 
     spec = setup_integration.runtime_data.spec
     assert spec.model == "xiaomi.vacuum.d109gl"
-    assert spec.fault_kind == "ids"
+    assert isinstance(spec.fault_reading, FaultIdsReading)
     assert Capability.DUST_ARREST in spec.capabilities
     assert Capability.SWEEP_ROUTE in spec.capabilities
     assert Capability.OBSTACLE_AVOIDANCE in spec.capabilities
@@ -141,13 +141,15 @@ async def test_d109_clean_segments_uses_direct_strategy(
 
 async def test_d109_parses_fault_ids_json_list(hass, setup_integration):
     """The X20 Max publishes a Fault Ids JSON list; coordinator extracts the code."""
-    from custom_components.xiaomi_vacuum.coordinator import _live_fault_code_ids
+    spec = setup_integration.runtime_data.spec
+
+    def live(raw):
+        return spec.live_fault_code({"fault_ids": raw})
 
     # Active fault (code 210009) at the head of the list.
-    raw = json.dumps({"ts": 1700000000, "fault": [210009]})
-    assert _live_fault_code_ids(raw, frozenset()) == 210009
+    assert live(json.dumps({"ts": 1700000000, "fault": [210009]})) == 210009
     # [0] means no active fault.
-    assert _live_fault_code_ids(json.dumps({"fault": [0]}), frozenset()) == 0
+    assert live(json.dumps({"fault": [0]})) == 0
     # Missing / unparseable -> None.
-    assert _live_fault_code_ids(None, frozenset()) is None
-    assert _live_fault_code_ids("not json", frozenset()) is None
+    assert live(None) is None
+    assert live("not json") is None

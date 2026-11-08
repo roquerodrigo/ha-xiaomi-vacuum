@@ -16,7 +16,13 @@ from homeassistant.components.vacuum.const import VacuumActivity
 from homeassistant.config_entries import ConfigEntryState
 from xiaomi_vacuum_sdk import ActionAddress
 
-from custom_components.xiaomi_vacuum.spec import OV71GL, Capability, Property
+from custom_components.xiaomi_vacuum.spec import (
+    OV71GL,
+    Capability,
+    DirectRoomSweep,
+    FaultIdsReading,
+    Property,
+)
 
 #: `room-information` (2/16) exactly as a physical S40 Pro published it
 #: (firmware 4.5.8_0053), accents and all.
@@ -34,8 +40,8 @@ async def test_ov71_picks_the_right_spec(hass, setup_integration_ov71):
     spec = setup_integration_ov71.runtime_data.spec
     assert spec is OV71GL
     assert spec.model == "xiaomi.vacuum.ov71gl"
-    assert spec.fault_kind == "ids"
-    assert spec.room_clean_strategy == "direct"
+    assert isinstance(spec.fault_reading, FaultIdsReading)
+    assert isinstance(spec.room_cleaning, DirectRoomSweep)
     assert Capability.SWEEP_ROUTE in spec.capabilities
     assert Capability.OBSTACLE_AVOIDANCE in spec.capabilities
     assert Capability.DUST_ARREST not in spec.capabilities

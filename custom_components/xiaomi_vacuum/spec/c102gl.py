@@ -9,8 +9,7 @@ its layout shares almost nothing with the in-house models:
 
 - the vacuum service (SIID 2) holds status, fault and fan speed only; the job
   data, mop settings and task status live in the Dreame service (SIID 4)
-- fault is a small Dreame code on a plain uint8 (``fault_kind="simple"``), not
-  a Xiaomi six-digit id
+- fault is a small Dreame code on a plain uint8, not a Xiaomi six-digit id
 - pause is ``stop-sweeping`` (2/2); stop is the Dreame ``stop-clean`` (4/2); a
   paused job resumes through ``start-sweep`` again
 - no mode-specific start actions: a clean runs in the selected mode, which the
@@ -32,9 +31,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .map_format import DreameMapFormat
 from .model_actions import ModelActions, _require_action
 from .model_spec import ModelSpec
 from .property import Property
+from .room_cleaning import DreameSegmentClean
 from .status_slug import StatusSlug
 
 if TYPE_CHECKING:
@@ -99,8 +100,6 @@ _ACTIONS = ModelActions(
     start_mop_wash={"siid": 2, "aiid": 6},
     start_dry={"siid": 2, "aiid": 8},
     stop_dry={"siid": 2, "aiid": 9},
-    # Dreame start-clean: piid 1 work mode, piid 10 clean-extend data.
-    start_segment_clean={"siid": 4, "aiid": 1, "mode_piid": 1, "data_piid": 10},
     reset_main_brush={"siid": 9, "aiid": 1},
     reset_side_brush={"siid": 10, "aiid": 1},
     reset_filter={"siid": 11, "aiid": 1},
@@ -167,8 +166,10 @@ C102GL = ModelSpec(
         "start_dry": _require_action(_ACTIONS.start_dry, "start_dry"),
         "stop_dry": _require_action(_ACTIONS.stop_dry, "stop_dry"),
     },
-    fault_kind="simple",
-    room_clean_strategy="dreame_segment",
+    # Dreame start-clean: piid 1 work mode, piid 10 clean-extend data.
+    room_cleaning=DreameSegmentClean(
+        {"siid": 4, "aiid": 1, "mode_piid": 1, "data_piid": 10}
+    ),
     # Routine prompts, not faults:
     # - 68 is published while the robot sits in the dock with its mop pads on
     #   (fully charged, drying) and clears as soon as it leaves or the pads
@@ -176,6 +177,6 @@ C102GL = ModelSpec(
     # - 114 asks to rinse the dock's mop-washing tray after a mop job, seen
     #   while drying.
     notice_fault_codes=frozenset({68, 114}),
-    map_format="dreame",
+    map_format=DreameMapFormat(),
     property_masks={Property.SWEEP_MOP_TYPE: _MODE_MASK},
 )

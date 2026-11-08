@@ -18,6 +18,7 @@ from .enumerations import (
 from .model_actions import ModelActions, _require_action
 from .model_spec import ModelSpec
 from .property import Property
+from .room_cleaning import DirectRoomSweep
 from .status_slug import StatusSlug
 
 if TYPE_CHECKING:
@@ -59,7 +60,6 @@ _ACTIONS = ModelActions(
     pause_sweeping={"siid": 2, "aiid": 7},
     # Resume a paused job (vs. start_sweep, which begins a fresh clean).
     continue_sweep={"siid": 2, "aiid": 8},
-    start_room_sweep={"siid": 2, "aiid": 16, "in_piid": 15},
     start_zone_sweep={"siid": 2, "aiid": 37, "in_piid": 12},
     start_user_define_sweep={"siid": 2, "aiid": 42, "in_piid": 43},
     identify={"siid": 6, "aiid": 1},
@@ -129,8 +129,7 @@ D109GL = ModelSpec(
         "start_dry": _require_action(_ACTIONS.start_dry, "start_dry"),
         "stop_dry": _require_action(_ACTIONS.stop_dry, "stop_dry"),
     },
-    fault_kind="ids",
-    room_clean_strategy="direct",
+    room_cleaning=DirectRoomSweep({"siid": 2, "aiid": 16, "in_piid": 15}),
     user_define_sweep_config={"siid": 2, "piid": 42},
     sweep_routes=dict(SWEEP_ROUTES),
     obstacle_avoidances=dict(OBSTACLE_AVOIDANCES),

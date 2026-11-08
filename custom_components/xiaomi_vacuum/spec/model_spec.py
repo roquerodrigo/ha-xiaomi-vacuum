@@ -4,44 +4,27 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from types import MappingProxyType
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING
 
 from .capability import Capability
 from .cleaning_job_signal import CleaningJobSignal
 from .entity_key import EntityKey
+from .fault_reading import FaultIdsReading, PlainFaultReading
+from .map_format import MapFormat, XiaomiMapFormat
 from .property import Property
 from .status_catalog import CANONICAL_STATUSES, STATUS_MEANINGS
 
 if TYPE_CHECKING:
     from homeassistant.components.vacuum.const import VacuumActivity
 
+    from ..data import VacuumState  # noqa: TID252
     from .addresses import MiotActionAddress, MiotPropertyAddress
+    from .fault_reading import FaultReading
     from .model_actions import ModelActions
+    from .room_cleaning import RoomCleaning
     from .status_slug import StatusSlug
 
-# How the live fault is read. d109gl publishes a `Fault Ids` JSON list
-# ({"fault":[codes]}); b108gl publishes a plain `fault` uint32 (0 == healthy).
-FaultKind = Literal["ids", "simple"]
-
-# How room cleaning is initiated.
-# - "direct": a single `start-vacuum-room-sweep` action takes the room ids
-#   as input (X20 Max).
-# - "config_then_custom": the app first marks the target rooms via
-#   `set-room-clean-configs` (setting their `on` flag), then fires
-#   `start-custom-sweep` with no params (S20+). Captured from the Mi Home app.
-# - "dreame_segment": the Dreame `start-clean` action with the segment work
-#   mode and a `{"selects": [[room, repeat, fan, water, order], ...]}` room
-#   selection (X20+). The spec's own `start-room-sweep` is acknowledged but
-#   ignored by the firmware.
-RoomCleanStrategy = Literal["direct", "config_then_custom", "dreame_segment"]
-
-# Format of the cloud map blob, which picks the xiaomi-vacuum-sdk decoder and
-# where the room list comes from.
-# - "xiaomi": encrypted Xiaomi JSON payload; rooms come from the
-#   room-information property.
-# - "dreame": Dreame frame (pixel grid plus JSON trailer); rooms are decoded
-#   from the map's segment metadata (X20+).
-MapFormat = Literal["xiaomi", "dreame"]
+_XIAOMI_MAP_FORMAT = XiaomiMapFormat()
 
 #: Task-status value meaning "no job open". Dreame-built models publish a
 #: task-status property (0 completed, 1 auto clean, 2 zone, 3 room, 6+ the
@@ -146,8 +129,6 @@ class ModelSpec:
     mop_water_levels: dict[str, int]
     charging_state_slugs: dict[int, str]
     send_commands: dict[str, MiotActionAddress]
-    fault_kind: FaultKind
-    room_clean_strategy: RoomCleanStrategy
     # Optional per-model enumerations, present only when the model exposes the
     # matching property (gated by Capability.SWEEP_ROUTE / OBSTACLE_AVOIDANCE).
     # Kept on the spec — not module-level — so a future vacuum publishing a
@@ -171,7 +152,8 @@ class ModelSpec:
     # every cleaning saved in Mi Home and would push the batched poll reply past
     # the single-datagram limit.
     user_define_sweep_config: MiotPropertyAddress | None = None
-    map_format: MapFormat = "xiaomi"
+    room_cleaning: RoomCleaning | None = None
+    map_format: MapFormat = _XIAOMI_MAP_FORMAT
     # Properties that live in some bits of a packed device value: the mask
     # picks the bits (e.g. the X20+ cleaning mode in the low two bits of its
     # clean-setting). Reads expose only those bits, shifted down; writes keep
@@ -268,17 +250,22 @@ class ModelSpec:
         return frozenset(keys)
 
     @property
+    def fault_reading(self) -> FaultReading:
+        """How the live fault is read: the fault-ids list when mapped, else plain."""
+        if Property.FAULT_IDS in self.property_mapping:
+            return FaultIdsReading()
+        return PlainFaultReading()
+
+    def live_fault_code(self, data: VacuumState) -> int | None:
+        """Return the live fault code of a polled state, phantom faults dropped."""
+        return self.fault_reading.live_code(
+            data, self.ignored_fault_codes, self.notice_fault_codes
+        )
+
+    @property
     def supports_room_clean(self) -> bool:
-        """Whether the model has the actions its room-clean strategy needs."""
-        actions = self.actions
-        if self.room_clean_strategy == "direct":
-            return actions.start_room_sweep is not None
-        if self.room_clean_strategy == "config_then_custom":
-            return (
-                actions.set_room_clean_configs is not None
-                and actions.start_custom_sweep is not None
-            )
-        return actions.start_segment_clean is not None
+        """Whether the model has a room-cleaning flow."""
+        return self.room_cleaning is not None
 
     def cleaning_job_signal(
         self, status: int | None, task_status: int | None = None

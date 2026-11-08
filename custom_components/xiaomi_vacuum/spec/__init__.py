@@ -28,17 +28,23 @@ from .capability import Capability
 from .cleaning_job_signal import CleaningJobSignal
 from .d109gl import D109GL
 from .entity_key import EntityKey
+from .fault_reading import FaultIdsReading, FaultReading, PlainFaultReading
+from .map_format import DreameMapFormat, MapFormat, XiaomiMapFormat
 from .model_actions import ModelActions, _require_action
 from .model_spec import (
     MAPPING_FIELDS,
-    FaultKind,
-    MapFormat,
     ModelSpec,
-    RoomCleanStrategy,
 )
 from .ov71gl import OV71GL
 from .property import Property
 from .registry import DEFAULT_MODEL, MODELS, SUPPORTED_MODELS, get_spec
+from .room_cleaning import (
+    ConfigThenCustomSweep,
+    DirectRoomSweep,
+    DreameSegmentClean,
+    RoomCleaning,
+    RoomCleaningError,
+)
 from .status_catalog import CANONICAL_STATUSES, STATUS_MEANINGS
 from .status_meaning import StatusMeaning
 from .status_slug import StatusSlug
@@ -56,8 +62,13 @@ __all__ = [
     "SUPPORTED_MODELS",
     "Capability",
     "CleaningJobSignal",
+    "ConfigThenCustomSweep",
+    "DirectRoomSweep",
+    "DreameMapFormat",
+    "DreameSegmentClean",
     "EntityKey",
-    "FaultKind",
+    "FaultIdsReading",
+    "FaultReading",
     "MapFormat",
     "MiotActionAddress",
     "MiotActionInputAddress",
@@ -65,10 +76,13 @@ __all__ = [
     "MiotSegmentCleanAddress",
     "ModelActions",
     "ModelSpec",
+    "PlainFaultReading",
     "Property",
-    "RoomCleanStrategy",
+    "RoomCleaning",
+    "RoomCleaningError",
     "StatusMeaning",
     "StatusSlug",
+    "XiaomiMapFormat",
     "_require_action",
     "get_spec",
 ]

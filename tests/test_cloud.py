@@ -963,15 +963,14 @@ def test_every_model_action_round_trips_through_call_action(model):
         ("pause_sweeping", actions.pause_sweeping),
         ("continue_sweep", actions.continue_sweep),
         ("identify", actions.identify),
-        ("start_room_sweep", actions.start_room_sweep),
-        ("set_room_clean_configs", actions.set_room_clean_configs),
-        ("start_custom_sweep", actions.start_custom_sweep),
         ("start_dust_arrest", actions.start_dust_arrest),
         ("start_mop_wash", actions.start_mop_wash),
         ("start_dry", actions.start_dry),
         ("stop_mop_wash", actions.stop_mop_wash),
         ("stop_dry", actions.stop_dry),
     ]
+    if spec.room_cleaning is not None:
+        pairs += [("room_cleaning", a) for a in spec.room_cleaning.actions]
     c = _signed_connector()
     seen: list[tuple[int, int]] = []
 

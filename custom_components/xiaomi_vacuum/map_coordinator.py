@@ -10,20 +10,13 @@ from typing import TYPE_CHECKING, NotRequired, TypedDict
 
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from xiaomi_vacuum_sdk import (
-    DreameMapDecoder,
-    MapError,
-    MapParseError,
-    MapRenderer,
-    RenderOptions,
-)
+from xiaomi_vacuum_sdk import MapRenderer, RenderOptions
 
 from .cloud import XiaomiCloudAuthError
 from .const import DOMAIN, LOGGER
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
-    from xiaomi_vacuum_sdk import RenderedMap as SdkRenderedMap
 
     from .cloud import XiaomiCloud
     from .coordinator import XiaomiVacuumDataUpdateCoordinator
@@ -150,20 +143,11 @@ class XiaomiVacuumMapCoordinator(DataUpdateCoordinator["RenderedMap | None"]):
         ``render_map`` parses the blob once and returns the projection it drew
         with, so the stored calibration describes the served PNG exactly.
         """
-        if self._state_coordinator.spec.map_format == "dreame":
-            rendered = self._render_dreame(raw)
-            if rendered is None:
-                return None
-        else:
-            try:
-                rendered = self._renderer.render_map(
-                    raw, model=model, device_id=device_id
-                )
-            except MapParseError as exception:
-                # The device published a payload without a drawable map (e.g. a
-                # fresh map still being built) — keep serving the previous image.
-                LOGGER.debug("Map payload not drawable: %s", exception)
-                return None
+        rendered = self._state_coordinator.spec.map_format.render(
+            self._renderer, raw, model=model, device_id=device_id
+        )
+        if rendered is None:
+            return None
         coordinates = rendered.coordinates
         calibration: MapCalibration = {
             "origin_x": coordinates.origin_x,
@@ -180,17 +164,6 @@ class XiaomiVacuumMapCoordinator(DataUpdateCoordinator["RenderedMap | None"]):
             for segment in rendered.map_data.segments
         ]
         return {"png": rendered.png, "calibration": calibration, "rooms": rooms}
-
-    def _render_dreame(self, raw: bytes) -> SdkRenderedMap | None:
-        """Decode a Dreame map blob and draw it with the stock renderer."""
-        try:
-            map_data = DreameMapDecoder().decode(raw)
-        except MapError as exception:
-            # Not drawable yet (e.g. an encrypted frame): keep the last image,
-            # logged like the Xiaomi path's non-drawable payloads.
-            LOGGER.debug("Dreame map payload not drawable: %s", exception)
-            return None
-        return self._renderer.render_map_data(map_data)
 
     @staticmethod
     def _extract_obj_name(raw_field: str | None) -> str | None:

@@ -14,6 +14,8 @@ from custom_components.xiaomi_vacuum.spec import (
     OV71GL,
     STATUS_MEANINGS,
     SUPPORTED_MODELS,
+    ConfigThenCustomSweep,
+    DirectRoomSweep,
     get_spec,
 )
 
@@ -93,20 +95,20 @@ def test_b108_return_home_and_continue_use_different_services():
     assert D109GL.actions.continue_sweep["siid"] == 2
 
 
-def test_room_clean_strategy_matches_action_set():
+def test_room_cleaning_flows_carry_their_actions():
     """d109gl uses the direct start-vacuum-room-sweep; b108gl configures+starts."""
-    # X20 Max: a single direct action carrying room ids as input.
-    assert D109GL.room_clean_strategy == "direct"
-    assert D109GL.actions.start_room_sweep == {"siid": 2, "aiid": 16, "in_piid": 15}
-    assert D109GL.actions.set_room_clean_configs is None
-    assert D109GL.actions.start_custom_sweep is None
-
-    # S20+: no direct room-sweep action; two-step config + start-custom-sweep.
+    assert D109GL.room_cleaning == DirectRoomSweep(
+        {"siid": 2, "aiid": 16, "in_piid": 15}
+    )
     # Captured from the Mi Home app — the spec's aiid 13 is ignored by the robot.
-    assert B108GL.room_clean_strategy == "config_then_custom"
-    assert B108GL.actions.start_room_sweep is None
-    assert B108GL.actions.set_room_clean_configs == {"siid": 2, "aiid": 10}
-    assert B108GL.actions.start_custom_sweep == {"siid": 6, "aiid": 7}
+    assert B108GL.room_cleaning == ConfigThenCustomSweep(
+        set_room_clean_configs={"siid": 2, "aiid": 10},
+        start_custom_sweep={"siid": 6, "aiid": 7},
+    )
+    assert B108GL.room_cleaning.actions == (
+        {"siid": 2, "aiid": 10},
+        {"siid": 6, "aiid": 7},
+    )
 
 
 def test_b108_send_commands_exclude_mop_wash_and_dry():
@@ -327,13 +329,10 @@ def test_supports_room_clean(spec, supported):
     assert spec.supports_room_clean is supported
 
 
-def test_strategies_without_their_actions_do_not_support_room_clean():
+def test_a_model_without_a_room_cleaning_flow_does_not_support_room_clean():
     from dataclasses import replace
 
-    no_segment_action = replace(
-        C102GL, actions=replace(C102GL.actions, start_segment_clean=None)
-    )
-    assert no_segment_action.supports_room_clean is False
+    assert replace(C102GL, room_cleaning=None).supports_room_clean is False
 
 
 def test_task_status_decides_the_cleaning_job_when_mapped():
@@ -361,3 +360,30 @@ def test_open_task_vetoes_a_fresh_start_from_an_idle_status():
     assert C102GL.is_idle(6, 0) is True
     assert C102GL.is_idle(13, None) is True
     assert C102GL.is_idle(1, 0) is False  # sweeping is never idle
+
+
+def test_status_code_for_prefers_the_canonical_slug_whatever_the_order():
+    from dataclasses import replace
+
+    from custom_components.xiaomi_vacuum.spec import StatusSlug
+
+    spec = replace(
+        D109GL, status={16: StatusSlug.SWEEPING_AND_MOPPING, 4: StatusSlug.SWEEPING}
+    )
+    assert spec.status_code_for(VacuumActivity.CLEANING) == 4
+
+
+def test_status_code_for_falls_back_to_the_first_matching_code():
+    from dataclasses import replace
+
+    from custom_components.xiaomi_vacuum.spec import StatusSlug
+
+    spec = replace(D109GL, status={17: StatusSlug.MOPPING, 16: StatusSlug.REMOTE})
+    assert spec.status_code_for(VacuumActivity.CLEANING) == 17
+    with pytest.raises(ValueError, match="No status code"):
+        spec.status_code_for(VacuumActivity.PAUSED)
+
+
+def test_plain_fault_reading_reports_nothing_without_the_property():
+    assert B108GL.live_fault_code({}) is None
+    assert B108GL.live_fault_code({"fault": 7}) == 7

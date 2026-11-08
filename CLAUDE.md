@@ -21,7 +21,7 @@ here.
   `iot_class: local_polling` over MIoT via `xiaomi-vacuum-sdk`. The Xiaomi cloud
   (`custom_components/xiaomi_vacuum/cloud/`) is used only for the QR-login
   setup flow, the map image, localized error text, and the X20+ room list
-  (decoded from its Dreame cloud map, `spec.map_format == "dreame"`, by the
+  (decoded from its Dreame cloud map, `DreameMapFormat`, by the
   SDK's `DreameMapDecoder`).
 - **Entity platforms**, each its own subpackage under
   `custom_components/xiaomi_vacuum/`: `vacuum/`, `image/`, `sensor/`,

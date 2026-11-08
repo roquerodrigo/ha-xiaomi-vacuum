@@ -11,12 +11,14 @@ from custom_components.xiaomi_vacuum.map_coordinator import (
     MAP_UPDATE_INTERVAL,
     XiaomiVacuumMapCoordinator,
 )
+from custom_components.xiaomi_vacuum.spec import D109GL
 
 
 def _state_coord(map_obj_name="0/abc"):
     sc = MagicMock()
     sc.data = {"map_obj_name": map_obj_name} if map_obj_name else {}
     sc.config_entry.entry_id = "test-entry"
+    sc.spec = D109GL
     return sc
 
 

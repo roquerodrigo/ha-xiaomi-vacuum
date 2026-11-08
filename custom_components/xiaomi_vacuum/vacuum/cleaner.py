@@ -218,7 +218,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         # not check availability — data is None while the robot has been
         # offline since startup (offline-tolerant setup).
         data: VacuumState | None = self.coordinator.data
-        if self.spec.map_format == "dreame":
+        if self.spec.map_format.carries_rooms:
             return await self._async_map_segments()
         raw = data.get("room_information") if data else None
         return _parse_segments(raw)
