@@ -71,8 +71,7 @@ class VacuumState(TypedDict):
     resume_after_charge: NotRequired[int | None]
     do_not_disturb: NotRequired[bool | None]
     volume: NotRequired[int | None]
-    # Live fault payload — the raw shape depends on the model's fault_kind:
-    # "ids" (X20 Max) → a JSON string; "simple" (S20+) → an int.
+    # Live fault payload: a JSON fault-ids list (X20 Max) or a plain code (S20+).
     fault_ids: NotRequired[str | None]
     fault: NotRequired[int | None]
     fault_text: NotRequired[str]

@@ -40,7 +40,7 @@ async def async_setup_entry(
     entry: XiaomiVacuumConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the select entities this model advertises (capability-gated)."""
+    """Set up the select entities this model advertises."""
     coordinator = entry.runtime_data.coordinator
     entities = [
         cls(coordinator)

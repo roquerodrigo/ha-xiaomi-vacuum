@@ -31,21 +31,29 @@ here.
 - **`api/`** wraps the local MIoT client; **`cloud/`** wraps the Xiaomi cloud
   (QR login, device discovery, map fetch, error-message resolution).
 - **`spec/`** — per-model MIoT spec registry: one `ModelSpec` module per model
-  plus `registry.py` for the model-string lookup. A `ModelSpec` bundles its property
-  mapping, action mapping, status table, enumerations, `send_command`
-  whitelist, fault representation, and room-clean strategy. Capabilities
-  (`DUST_ARREST` / `SWEEP_ROUTE` / `OBSTACLE_AVOIDANCE`) are **derived** from
-  the spec, not declared; the set of entities to create (`spec.entities`) is in
-  turn derived from the capability set, the mapped properties, the defined
-  optional actions and a base roster. `spec.property_masks` lets a property
-  own only some bits of a packed device value (the X20+ cleaning mode). Platforms filter
-  their `_*_CLASSES` registries by `EntityKey in spec.entities`, so adding a
-  new model is a data-only change: one module plus a `registry.py` line (see
-  `ADDING_A_MODEL.md`). The spec is selected from the device model at setup and
-  threaded through `runtime_data` / the coordinator. **Read the model's module
-  before touching any SIID/PIID/AIID — the S20+ diverges from the other two on
-  almost all of them, the S40 Pro shares the X20 Max layout but has no
-  dock hardware, and the X20+ is a Dreame layout unlike any of them.**
+  plus `registry.py` for the model-string lookup. A `ModelSpec` bundles its
+  property mapping (each `MiotPropertyBinding` carries the address plus the
+  encoding: `mask`, `boolean`, `polled`), action mapping, a status table that
+  maps codes to `StatusSlug` members (what a slug means — activity, idle,
+  cleaning-job signal — lives once in `status_catalog.py`), the value tables,
+  phantom/notice fault codes, and three behaviour objects: the room-cleaning
+  flow (`spec/room_cleaning/`, run against the `RoomCleaningDevice` port the
+  API client implements), the map format (`spec/map_format/`) and the fault
+  reading (`spec/fault_reading/`, derived from which fault property is
+  mapped). Nothing else is declared: the entities to create (`spec.entities`)
+  follow from `entity_requirements.py` — a base roster plus every entity whose
+  property is mapped or whose action is defined — and the `send_command`
+  names from the defined actions (`send_commands.py`). Platforms filter their
+  `_*_CLASSES` registries by `EntityKey in spec.entities`, so adding a new
+  model is a data-only change: one module plus a `registry.py` line, drafted
+  by `scripts/draft_model.py` from the published miot-spec (see
+  `ADDING_A_MODEL.md`). A sibling model is derived with `dataclasses.replace`
+  (the S40 Pro from the X20 Max). The spec is selected from the device model
+  at setup and threaded through `runtime_data` / the coordinator. **Read the
+  model's module before touching any SIID/PIID/AIID — the S20+ diverges from
+  the other two on almost all of them, the S40 Pro shares the X20 Max layout
+  but has no dock hardware, and the X20+ is a Dreame layout unlike any of
+  them.**
 - **`config_flow.py`** — QR-login config flow plus reauth (fresh QR scan when
   the stored cloud session expires) and a reconfigure flow for changing the
   Xiaomi cloud region.
@@ -71,6 +79,8 @@ here.
   integration (`config/` dir, symlink-free via `PYTHONPATH`).
 - `scripts/qr_test.py` — standalone CLI to exercise the Xiaomi cloud QR-login
   flow outside of HA, for debugging the cloud connector.
+- `scripts/draft_model.py` — prints a draft spec module for a new model from
+  its published miot-spec, leaving what it cannot decide as `TODO` comments.
 
 ## Commands
 
@@ -83,6 +93,8 @@ uv run mypy custom_components/xiaomi_vacuum
 uv run pytest
 ```
 
+- `tests/test_model_contract.py` runs invariants against every registered
+  model; each model has one `MODEL_FIXTURES` entry in `tests/conftest.py`.
 - `pytest` config lives in `pyproject.toml`: `pytest-homeassistant-custom-component`
   harness, `asyncio_mode = "auto"`, coverage gate **`--cov-fail-under=90`**
   over `custom_components/xiaomi_vacuum`.
