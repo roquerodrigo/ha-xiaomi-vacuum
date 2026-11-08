@@ -3,9 +3,11 @@
 This integration supports one vacuum model per `ModelSpec` instance under
 [`custom_components/xiaomi_vacuum/spec/`](custom_components/xiaomi_vacuum/spec),
 one module per model.
-Adding a new model is, by design, **a data-only change** — no platform code,
-entity classes, or cloud-client changes are needed for a model whose
-capabilities are already represented by the `Capability` / `EntityKey` enums.
+Adding a new model is, by design, **a data-only change**: which entities,
+features and `send_command` names a model gets is derived from the properties
+it maps and the actions it defines, so no platform code, entity class or
+cloud-client change is needed for a model whose properties and actions the
+integration already knows.
 
 This document walks through the steps, using a hypothetical
 `xiaomi.vacuum.c108gl` (Xiaomi Robot Vacuum X30 Pro) as an example.
@@ -20,68 +22,52 @@ won't even show up in the picker.
 
 ---
 
-## 2. Pull the device's miot-spec
+## 2. Draft the spec from the published miot-spec
 
-Capabilities are not hardcoded — they are published on the public miot-spec
-service. Fetch them with the model's `urn`:
+Every model publishes its MIoT layout on the public miot-spec service. The
+draft generator reads it and prints a first version of the spec module:
 
-1. Look up the `urn` for the model:
-   ```
-   https://miot-spec.org/miot-spec-v2/instances?status=all
-   ```
-   Find the entry whose `model == "xiaomi.vacuum.c108gl"` and copy its `urn`.
-2. Fetch the full spec:
-   ```
-   https://miot-spec.org/miot-spec-v2/instance?type=urn:miot-spec-v2:device:vacuum:0000A006:xiaomi-c108gl:1
-   ```
-3. Note the **current spec version** (the `:1` at the end). If multiple
-   versions exist, use the highest one — older firmware may not be flashable.
+```bash
+uv run scripts/draft_model.py xiaomi.vacuum.c108gl > custom_components/xiaomi_vacuum/spec/c108gl.py
+```
 
-You'll get a JSON document with a list of services (`services[]`), each
-containing `properties[]` and `actions[]`. You need:
+It picks the highest released spec version (`--version N` picks another one,
+`--spec FILE` reads a downloaded instance instead) and maps:
 
-- the **SIID + PIID** of every property the integration reads/writes
-- the **SIID + AIID** of every action it invokes
-- the value-list enumerations for `fan_speed`, `mode`, etc.
-- the published status codes (look for a property named `status` of type
-  `uint8`/`uint16` with a `value-list`)
+- every property and action whose service and URN type the integration
+  already knows (`vacuum:status`, `battery:battery-level`,
+  `vacuum:start-sweep`, the brush services told apart by their
+  description, ...), with their SIID/PIID/AIID;
+- the status codes to `StatusSlug` members, and the fan speed, mode, clean
+  times, water level, route and obstacle-avoidance value lists to the slugs
+  the translations already have;
+- the room sweep to a `DirectRoomSweep`, or, when the spec has the Dreame
+  `vacuum-extend:start-clean`, the Dreame layout of the X20+.
 
-If you can pair the device in the Mi Home app, capture the app's traffic
-(Charles proxy on Android, or a `mitmproxy` capture) — Mi Home sometimes
-uses a different RPC path than the published spec, and the capture is the
-source of truth for what the firmware actually honours. The S20+
-`config_then_custom` room-clean flow was discovered this way; the spec's
-direct `start-vacuum-room-sweep` action exists but the robot ignores it.
+What it cannot decide is left as `# TODO:` comments, and `ruff` refuses to
+commit a TODO, so each one gets resolved: a brush service with no main/side
+description, a status description no slug covers, a value with no
+translation, the dock actions to keep, the room-cleaning flow to confirm.
+The draft is a starting point, not a verified spec — the rest of this guide
+is about verifying it.
+
+The spec is not the whole truth. If you can pair the device in the Mi Home app,
+capture the app's traffic (Charles proxy on Android, or a `mitmproxy`
+capture) — Mi Home sometimes uses a different RPC path than the published
+spec, and the capture is the source of truth for what the firmware actually
+honours. The S20+ room-clean flow was discovered this way; the spec's direct
+`start-vacuum-room-sweep` action exists but the robot ignores it.
 
 ---
 
-## 3. Add the `ModelSpec` entry
+## 3. Shape the `ModelSpec`
 
-Create `custom_components/xiaomi_vacuum/spec/c108gl.py`, named after the model
-string. Mirror the structure of the closest sibling (`d109gl.py` for a model
-with an auto-wash dock, `ov71gl.py` for an X20-Max-shaped spec without dock
-hardware, `b108gl.py` for the S20+ layout, `c102gl.py` for a Dreame-built
-model).
+### 3.1 Start from a sibling when one fits
 
-**Dreame-built models** (the handshake reports manufacturer `dreame`, the spec
-puts job data in a SIID-4 Dreame service) follow `c102gl.py`: a plain uint8
-fault, pause on `stop-sweeping`, stop on the Dreame `stop-clean`, no
-mode-specific start actions, and a task-status property (`Property.TASK_STATUS`)
-that decides the cleaning job instead of the status table. Entities backed by
-one property (mop pad, mode, clean times, water level, map) are only created
-when the spec maps that property, so leave unmapped what the model packs into a
-Dreame bitfield. Set `map_format="dreame"`: the map is decoded by the SDK's
-`DreameMapDecoder` instead of the Xiaomi decryptor, and the room list comes
-from its segment metadata instead of a room-information property. A setting
-packed into some bits of a Dreame bitfield can still back an entity: map the
-property to the bitfield and give its bits in `property_masks` (the X20+ maps
-its cleaning mode to the low two bits of `4.23`). Optional actions such as the
-dock and consumable-reset actions create their buttons automatically.
-
-**Derive a sibling instead of copying it.** When the new model shares a
-supported model's layout, build its spec with `dataclasses.replace` on that
-model and state only the differences — the S40 Pro (`ov71gl.py`) is the X20
-Max with its dock actions set to `None` and three extra status codes:
+When the new model shares a supported model's layout, derive its spec from
+that model with `dataclasses.replace` and state only the differences instead
+of keeping the full draft. The S40 Pro (`ov71gl.py`) is the X20 Max with its
+dock actions set to `None` and three extra status codes:
 
 ```python
 OV71GL = replace(
@@ -93,63 +79,62 @@ OV71GL = replace(
 )
 ```
 
-The rest of this section describes the fields for a model written from
-scratch.
+The closest siblings: `d109gl.py` for a model with an auto-wash dock,
+`ov71gl.py` for an X20-Max-shaped spec without dock hardware, `b108gl.py` for
+the S20+ layout, `c102gl.py` for a Dreame-built model.
+
+**Dreame-built models** (the spec puts the job data and a `start-clean` action
+in a `vacuum-extend` service at SIID 4) follow `c102gl.py`: a plain uint8
+fault, pause on `stop-sweeping`, stop on the Dreame `stop-clean`, no
+mode-specific start actions, and a task-status property (`Property.TASK_STATUS`)
+that decides the cleaning job instead of the status table. Leave unmapped what
+the model packs into a Dreame bitfield, unless a mask can isolate it (§3.2).
 
 **Check the retail hardware, not just the spec.** Xiaomi reuses one spec
-template across a product line: the S40 Pro (`ov71gl`) publishes dust-arrest
-and mop-wash actions although it ships with a plain charging dock. Since
-`Capability.DUST_ARREST` is derived from `actions.start_dust_arrest`, wiring an
-action the hardware cannot perform creates a button that does nothing — leave
-such actions `None`.
+template across a product line: the S40 Pro publishes dust-arrest and
+mop-wash actions although it ships with a plain charging dock. A defined
+action creates its button and `send_command`, so wiring an action the
+hardware cannot perform creates a button that does nothing — leave such
+actions `None`.
 
-### 3.1 Property mapping
+### 3.2 Property mapping
 
-Build a `dict[Property, MiotPropertyAddress]` keyed by the
-`Property` enum. If the new model exposes a property that no enum entry
-exists for, add one to `Property` first:
+`property_mapping` binds each `Property` to its place on the device:
 
 ```python
-class Property(StrEnum):
-    ...
-    NEW_THING = "new_thing"
-```
-
-Then declare the per-model mapping:
-
-```python
-_PROPERTY_MAPPING: dict[Property, MiotPropertyAddress] = {
+_PROPERTY_MAPPING: dict[Property, MiotPropertyBinding] = {
     Property.STATUS: {"siid": 2, "piid": 1},
-    Property.FAULT: {"siid": 2, "piid": 2},  # plain uint32 like the S20+
-    Property.SWEEP_MOP_TYPE: {"siid": 2, "piid": 3},
+    Property.FAULT: {"siid": 2, "piid": 2},
+    Property.SWEEP_MOP_TYPE: {"siid": 4, "piid": 23, "mask": 0x03},
+    Property.DO_NOT_DISTURB: {"siid": 5, "piid": 1, "boolean": True},
+    Property.USER_DEFINE_SWEEP_CONFIG: {"siid": 2, "piid": 42, "polled": False},
     ...
 }
 ```
 
-If the model has a property **only it exposes** (e.g. a new obstacle
-sensor), add the `Property` enum entry, add the mapping here, and see
-[§3.6 Capabilities](#36-capabilities--entity-gating) below if it should
-gate a new entity.
+Besides the address, a binding says how the value is encoded:
 
-### 3.2 Actions
+- `mask` — the property owns only those bits of a packed device value. Reads
+  expose the bits shifted down; writes keep every other bit as the device
+  reports it (the X20+ cleaning mode in the low two bits of `4.23`).
+- `boolean` — the device publishes a real bool and expects one back, instead
+  of a `0`/`1` integer.
+- `polled: False` — the property is read on demand, never in the periodic
+  poll (the custom cleanings list, which would push the batched reply past
+  the single-datagram limit).
 
-Declare a `ModelActions(...)`. Required actions must all be present;
-**optional** ones (dock-only, room-clean-strategy-specific) stay `None`
-when the model lacks them — the integration handles `None` gracefully.
+If the model exposes a property no `Property` member exists for, add one to
+`Property` first, then see [§3.6](#36-entities-features-and-commands) if it
+should back a new entity.
 
-```python
-_ACTIONS = ModelActions(
-    start_sweep={"siid": 2, "aiid": 1},
-    stop_sweeping={"siid": 2, "aiid": 2},
-    return_home={"siid": 3, "aiid": 1},  # like the S20+ battery.start-charge
-    ...
-    # No auto-wash dock on this hypothetical model:
-    start_mop_wash=None,  # implicit default
-    start_dry=None,
-)
-```
+### 3.3 Actions
 
-### 3.3 Status table
+`ModelActions` holds the action addresses. The job actions (`start_sweep`,
+`stop_sweeping`, `return_home`, `pause_sweeping`, `continue_sweep`,
+`identify`) are required; every other one stays `None` when the model lacks
+it.
+
+### 3.4 Status table
 
 Map each published status code to a `StatusSlug`:
 
@@ -190,17 +175,16 @@ Optimistic UI patches report the code of the activity's canonical slug
 (`CANONICAL_STATUSES`: `sweeping`, `paused`, `idle`, `go_charging`,
 `charging`), so the order of `_STATUS` does not matter.
 
-### 3.4 Fault representation
+### 3.5 Faults
 
-Set `fault_kind`:
+How the live fault is read follows from the mapping:
 
-- `"ids"` — the X20 Max style: a `Fault Ids` property publishing a JSON list
-  `{"ts": ..., "fault": [code, ...]}` where `[0]` means no active fault.
-  Wire `Property.FAULT_IDS` in the property mapping. The coordinator parses
-  the list and extracts the first non-zero code.
-- `"simple"` — the S20+ style: a plain `fault` uint32 property where
-  `0 == healthy`. Wire `Property.FAULT` in the property mapping. The
-  coordinator reads it directly.
+- `Property.FAULT_IDS` mapped — the X20 Max style: a `Fault Ids` property
+  publishing a JSON list `{"ts": ..., "fault": [code, ...]}` where `[0]` or
+  `[]` means no active fault (`FaultIdsReading`). Leave the plain `fault`
+  property next to it unmapped: it latches the last code and never resets.
+- otherwise `Property.FAULT` — a plain code where `0 == healthy`
+  (`PlainFaultReading`).
 
 Xiaomi publishes no code→text table anywhere; the localized message comes
 from the cloud message feed and is resolved by the coordinator into
@@ -211,12 +195,12 @@ so a unit sold with less hardware than the family's top model keeps running the
 checks for the parts it lacks and reports their failure permanently. The Mi
 Home app knows the hardware variant and hides those codes; the integration
 cannot infer it, so list them in `ignored_fault_codes` (a `frozenset[int]`,
-empty by default). The coordinator drops them for both `fault_kind` styles
-before the fault reaches any entity — without this the vacuum entity sits in
-`VacuumActivity.ERROR` for the device's whole life. The S40 Pro is the worked
-example: it ships with a plain charging dock and reports `100027` ("Sewage tank
-is full or not installed") forever. Only add a code once a real device is
-observed publishing it while the app reports nothing wrong.
+empty by default). They are dropped before the fault reaches any entity —
+without this the vacuum entity sits in `VacuumActivity.ERROR` for the device's
+whole life. The S40 Pro is the worked example: it ships with a plain charging
+dock and reports `100027` ("Sewage tank is full or not installed") forever.
+Only add a code once a real device is observed publishing it while the app
+reports nothing wrong.
 
 **Maintenance notices.** Some codes are not faults at all but routine
 maintenance: the robot publishes them while the user takes a part out (dust bin
@@ -227,99 +211,69 @@ activity instead of switching to `VacuumActivity.ERROR`; a real fault published
 alongside one takes precedence. The S40 Pro reports `210005` (dust bin out) and
 `210020` (water tank out).
 
-### 3.5 Room cleaning strategy
+### 3.6 Entities, features and commands
 
-Set `room_clean_strategy`:
+Nothing here is declared per model:
 
-- `"direct"` — the device honours a single `start-vacuum-room-sweep` action
-  taking room ids as input. Wire `actions.start_room_sweep` (with its
-  `in_piid`).
-- `"config_then_custom"` — captured from the Mi Home app: mark the target
-  rooms via `set-room-clean-configs` (pushing a `room_attrs` JSON), then
-  fire `start-custom-sweep` with no params. Wire `actions.set_room_clean_configs`
-  and `actions.start_custom_sweep`. This flow is routed through the cloud
-  when a session is available — local UDP routinely times out on the
-  multi-step sequence.
-- `"dreame_segment"` — Dreame-built models: the generic `start-clean` action
-  with the segment work mode (18) and a `{"selects": [[room, repeat, fan,
-  water, order], ...]}` room selection. Wire `actions.start_segment_clean`
-  with its `mode_piid` and `data_piid`. The X20+ acknowledges its
-  spec-published `start-room-sweep` but ignores it.
+- The vacuum, status, error, error-code and cleaning-in-progress entities
+  exist on every model.
+- Every other entity is created when its requirement is met
+  (`spec/entity_requirements.py`): a mapped property (`PROPERTY_ENTITIES` —
+  battery, consumables, selects, switches, volume, map image) or a defined
+  action (`ACTION_ENTITIES` — dock and consumable-reset buttons).
+- The vacuum advertises area cleaning when the spec has a room-cleaning flow
+  and fan speeds when it has a `fan_speeds` table.
+- The `send_command` names are the actions in `spec/send_commands.py` the
+  model defines.
 
-If you can't capture the app flow, start with `"direct"` and verify with a
-real device; the S20+ ignored its spec-published direct action.
+**Value tables** (`fan_speeds`, `sweep_mop_types`, `clean_times`,
+`mop_water_levels`, `charging_state_slugs`, `sweep_routes`,
+`obstacle_avoidances`) are per-model fields, filled exactly when the matching
+property is mapped. Shared tables live in `spec/enumerations.py`; copy one
+into the model's own module the moment the new vacuum publishes a different
+one.
 
-### 3.6 Capabilities & entity gating
+**Adding a new entity** (rare):
 
-`capabilities` is **derived** automatically from the spec — you do not
-need to declare it. The rules are:
-
-| Capability           | Derived from                                            |
-| -------------------- | ------------------------------------------------------- |
-| `DUST_ARREST`        | `actions.start_dust_arrest is not None`                 |
-| `SWEEP_ROUTE`        | `Property.SWEEP_ROUTE in property_mapping`              |
-| `OBSTACLE_AVOIDANCE` | `Property.OBSTACLE_AVOIDANCE_STRATEGY in property_mapping` |
-
-Each capability gates one entity (see `_CAPABILITY_ENTITIES`); base entities
-(vacuum, sensors, binary sensor, map image, default selects) are always
-present (see `_BASE_ENTITIES`). Every platform filters its `_*_CLASSES`
-registry by `EntityKey in spec.entities`, so the entity-key set is the single
-source of truth for what a model exposes.
-
-> **Note:** mop-wash / dry dock actions exist on the X20 Max but are **not** a
-gating capability — they don't create an entity. They're exposed only through
-`send_commands` (see the X20 Max spec for an example).
-
-**Per-model enumerations.** `sweep_routes` and `obstacle_avoidances` live on
-the `ModelSpec` (alongside `fan_speeds` / `sweep_mop_types` / `clean_times` /
-`mop_water_levels`), not as module-level globals. Populate them when the model
-exposes the matching property; leave them empty (the default) otherwise.
-
-**Adding a new capability** (rare):
-
-1. Add the `Capability` enum entry.
-2. Add a derivation rule in `ModelSpec.capabilities`.
-3. Add the `EntityKey` for the entity it gates, and add it to
-   `_CAPABILITY_ENTITIES` so it's auto-created when the capability is set.
-4. Implement the entity class on the relevant platform and add it to that
+1. Add the `Property` (or the `ModelActions` field) it reads.
+2. Add the `EntityKey` and its requirement to `PROPERTY_ENTITIES` or
+   `ACTION_ENTITIES`.
+3. Implement the entity class on the relevant platform and add it to that
    platform's `_*_CLASSES` registry (e.g. `_SELECT_CLASSES` in
    `select/__init__.py`).
-5. Add translations for the entity + its states.
+4. Add translations for the entity and its states.
 
-For most new models this is unnecessary — you only fill in
-`ModelSpec(...)`, and capability derivation takes care of itself.
+### 3.7 Room cleaning
 
-### 3.7 Final `ModelSpec(...)` block
+`room_cleaning` names the flow that starts a room clean, carrying the actions
+it invokes (`spec/room_cleaning/`):
 
-```python
-C108GL = ModelSpec(
-    model="xiaomi.vacuum.c108gl",
-    name="Xiaomi Robot Vacuum X30 Pro",
-    property_mapping=_PROPERTY_MAPPING,
-    actions=_ACTIONS,
-    status=_STATUS,
-    fan_speeds=dict(FAN_SPEEDS),  # reuse shared enums where identical
-    sweep_mop_types=dict(SWEEP_MOP_TYPES),
-    clean_times={"one_time": 1, "two_times": 2},  # if this model only has 2
-    mop_water_levels={"off": 0, "level_1": 1, "level_2": 2, "level_3": 3},
-    send_commands={
-        "start_only_sweep": _ACTIONS.start_only_sweep,
-        "start_mop": _ACTIONS.start_mop,
-        ...
-    },
-    charging_state_slugs=dict(CHARGING_STATE_SLUGS),
-    fault_kind="simple",
-    room_clean_strategy="config_then_custom",
-)
-```
+- `DirectRoomSweep(action)` — the device honours a single
+  `start-vacuum-room-sweep` taking the room ids as input (X20 Max).
+- `ConfigThenCustomSweep(set_room_clean_configs, start_custom_sweep)` —
+  captured from the Mi Home app on the S20+: mark the target rooms via
+  `set-room-clean-configs`, then fire `start-custom-sweep`. Both steps go
+  through the cloud when a session is available — local UDP routinely times
+  out on the multi-step sequence.
+- `DreameSegmentClean(action)` — Dreame-built models: the generic
+  `start-clean` with the segment work mode and a
+  `{"selects": [[room, repeat, fan, water, order], ...]}` room selection. The
+  X20+ acknowledges its spec-published `start-room-sweep` but ignores it.
+- `None` — no room cleaning; the vacuum does not offer area cleaning.
 
-Shared value tables (`FAN_SPEEDS`, `SWEEP_MOP_TYPES`, `CLEAN_TIMES`,
-`CHARGING_STATE_SLUGS`, `SWEEP_ROUTES`, `OBSTACLE_AVOIDANCES`) live in
-`spec/enumerations.py`. Copy one into the model's own module the moment the
-new vacuum publishes a different table — every enumeration is a per-model
-field, never a global the models happen to share.
+If you can't capture the app flow, start with `DirectRoomSweep` and verify with
+a real device; the S20+ ignored its spec-published direct action. A flow none
+of these covers becomes a new `RoomCleaning` subclass, run against the
+`RoomCleaningDevice` port the API client implements.
 
-### 3.8 Register the model
+### 3.8 Map format
+
+`map_format` decodes the cloud map blob and says where the room list comes
+from: `XiaomiMapFormat()` (the default) decrypts the Xiaomi payload and takes
+the rooms from the room-information property; `DreameMapFormat()` decodes the
+Dreame frame, whose segment metadata lists the rooms.
+
+### 3.9 Register the model
 
 Import it in `spec/registry.py` and add it to `MODELS`:
 
@@ -330,6 +284,7 @@ MODELS: dict[str, ModelSpec] = {
     D109GL.model: D109GL,
     B108GL.model: B108GL,
     OV71GL.model: OV71GL,
+    C102GL.model: C102GL,
     C108GL.model: C108GL,
 }
 ```
@@ -345,46 +300,41 @@ functions consult `spec.entities` to decide which entities to create.
 
 ## 4. Translations
 
-If the model introduces **new status slugs**, **new enum values**, or
-**new entities**, add the corresponding keys to both
-`custom_components/xiaomi_vacuum/translations/en.json` and
-`translations/pt-BR.json` (their key sets must stay in sync — see
-`CODE_STYLE.md`):
+New status slugs, value slugs or entities need their keys in every file under
+`custom_components/xiaomi_vacuum/translations/` (their key sets must stay in
+sync — see `CODE_STYLE.md`):
 
 - Status slugs → `entity.sensor.status.state.<slug>`
 - Select option slugs → `entity.select.<select_key>.state.<slug>`
 - New entity names → `entity.<platform>.<key>.name`
 
-Slugs that only this model produces but other models don't are fine —
-unused keys are harmless; missing keys show as the raw slug in the UI.
+A test fails when a `StatusSlug` has no translation.
 
 ---
 
 ## 5. Tests
 
-Add `tests/models/test_c108.py` mirroring the existing
-[`test_d109.py`](tests/models/test_d109.py) /
-[`test_b108.py`](tests/models/test_b108.py). At minimum:
+Add one entry to `MODEL_FIXTURES` in [`tests/conftest.py`](tests/conftest.py):
+the parsed state the mocked device publishes (take it from a real unit when
+you can — every polled property needs a key), a distinct MAC so entries don't
+collide on `unique_id`, a host and a name. Add the model to the pinned set in
+`test_registry_lists_all_supported_models` (`tests/test_spec.py`).
 
-- The right `ModelSpec` is selected (`spec.model == "..."`).
-- The expected capability set is derived.
-- The expected entity set is created (and absent ones are not — e.g. no
-  dust-arrest button if the model has no auto-dust dock).
-- Model-specific action addresses are hit when calling the relevant service
-  (e.g. `return_to_base` → the right SIID/AIID for this model's dock
-  service).
-- The fault-parsing branch (`fault_kind="ids"` vs `"simple"`) works for a
-  sample payload.
+That alone runs [`tests/test_model_contract.py`](tests/test_model_contract.py)
+and the other per-model tests against the new model: status and fault mapped,
+no two properties on one address, a status code for every activity the
+vacuum patches optimistically, value tables exactly for the mapped
+properties, a sample state covering every polled property, and a setup that
+creates every entity the spec lists.
 
-You'll also need a fixture for the new model. Copy the
-`mock_miot_device_ov71` / `setup_integration_ov71` fixtures from
-[`tests/conftest.py`](tests/conftest.py), add the model to the `_MODEL_MACS`
-and `_MODEL_STATES` tables there (distinct MAC so entries don't collide on
-`unique_id`), and adapt the sample state.
-
-Three tests enumerate the supported models and must list the new one:
-`tests/test_spec.py` (`SUPPORTED_MODELS` set and the `get_spec` parametrize)
-and the model parametrize in `tests/test_cloud.py`.
+Then add `tests/models/test_c108.py` for what is specific to the model,
+mirroring [`test_d109.py`](tests/models/test_d109.py) /
+[`test_c102.py`](tests/models/test_c102.py): the entities it must and must not
+have (e.g. no dust-arrest button without an auto-dust dock), the action
+addresses its commands hit, and its fault payload. Generic fixtures
+`setup_integration_of_model` / `mock_miot_device_of_model` exist; a model test
+usually wants its own named pair, built with `_setup_model_entry` and
+`_patch_miot_client` like `setup_integration_c102`.
 
 ---
 
@@ -399,9 +349,7 @@ uv run mypy custom_components/xiaomi_vacuum
 uv run pytest
 ```
 
-The coverage gate is 90 %; per-model tests typically push it well above
-that. If you added a `Property` / `EntityKey` / `Capability` enum entry,
-expect to also exercise it in `tests/test_spec.py`.
+The coverage gate is 90 %.
 
 ---
 
@@ -416,8 +364,8 @@ expect to also exercise it in `tests/test_spec.py`.
 - **Spec version bumps.** Xiaomi occasionally publishes a new spec version
   (`urn:...:c108gl:2`) that shifts PIIDs or adds services. If the new
   version is the only one installable on the device, update the existing
-  `ModelSpec` in place (cite the urn in the comment block); otherwise
-  consider a separate `C108GL_V2` entry and a model-string match rule.
+  `ModelSpec` in place (cite the urn in the docstring); otherwise consider a
+  separate `C108GL_V2` entry and a model-string match rule.
 - **The Mi Home app is the source of truth.** When the spec and the app's
   captured traffic disagree, trust the app — it's what users run. The
-  `room_clean_strategy` literal exists precisely to encode such deviations.
+  room-cleaning flows exist precisely to encode such deviations.
