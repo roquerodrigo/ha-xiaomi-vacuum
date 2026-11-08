@@ -33,11 +33,12 @@ for two cloud-only extras: the **map image** and **localized error messages**.
 > start / pause / stop / dock / locate, fan speed, mop water level, status,
 > battery, consumables, errors, the mop-pad sensor, the dust-bin button, room
 > cleaning and the map image. Its room list is read from the cloud map, so it
-> needs the Xiaomi cloud login; rooms left unnamed in Mi Home are skipped. The
-> map shows the saved floor plan and dock (no live robot position or path
-> yet). It has no clean-times select. It adds consumable hours-left, drying and
-> lifetime sensors, dock and consumable-reset buttons, child lock / carpet
-> boost / resume / do-not-disturb switches and a volume control.
+> needs the Xiaomi cloud login; rooms left unnamed in Mi Home are listed as
+> "Room N", as in the app. The map shows the saved floor plan and dock (no
+> live robot position or path yet). It has no clean-times select. It adds
+> consumable hours-left, drying and lifetime sensors, dock and consumable-reset
+> buttons, child lock / carpet boost / resume / do-not-disturb switches and a
+> volume control.
 
 ## Features
 
