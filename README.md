@@ -79,8 +79,6 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
   show on these sensors without switching the vacuum entity to `error`.
 - **Optimistic updates** — actions are reflected right away, and a background
   refresh confirms the vacuum's state about 5 seconds later.
-- **Translations** — English, Brazilian Portuguese and Serbian (Cyrillic and
-  Latin).
 
 ## Requirements
 

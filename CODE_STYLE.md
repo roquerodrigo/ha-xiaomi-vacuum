@@ -13,7 +13,7 @@ Style conventions for the `ha-xiaomi-vacuum` project. Before committing run
   variable names, dictionary keys, identifier strings.
 - The conversation language with the user can be Portuguese or anything else;
   what is committed to disk stays English.
-- User-facing strings live in `custom_components/xiaomi_vacuum/translations/{en,pt-BR}.json`
+- User-facing strings live in `custom_components/xiaomi_vacuum/translations/`
   only — never hardcoded in Python.
 
 ## File organization
@@ -178,8 +178,8 @@ explaining the deliberate narrowing.
 
 ## Translations
 
-- Two locales: `en.json` and `pt-BR.json`. Their nested key sets must stay
-  in sync.
+- `en.json` is the source locale; every other locale must keep the same
+  nested key set (enforced by `tests/test_translations.py`).
 - Issue strings live under `issues.<issue_id>`; flow strings under
   `config.step.<step_id>`; entity names under `entity.<platform>.<key>.name`.
 
