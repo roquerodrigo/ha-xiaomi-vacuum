@@ -115,9 +115,10 @@ uv run pytest
 
 Every job calls a reusable workflow from `roquerodrigo/workflows`, tracking
 `@main` (no version pinning — the workflows repo is same-owner and changes
-there take effect here immediately). The one exception is the release job,
-which runs the [Release Autopilot](https://github.com/marketplace/actions/release-autopilot)
-action at `@latest`.
+there take effect here immediately). The exceptions run same-owner actions at
+`@latest` instead: the `validate` job (`roquerodrigo/home-assistant-autopilot`)
+and the release job (`roquerodrigo/release-autopilot`, then
+`home-assistant-autopilot` with `command: publish` to attach the release zip).
 
 - `ci.yml` — `lint` → `tests` + `validate` in parallel (both need `lint`),
   then `update-pr-branch` once all three pass (pull requests only).
