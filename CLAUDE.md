@@ -66,8 +66,8 @@ here.
   (setup tolerates this and still serves the map) and `unsupported_model` when
   the handshake reports a model with no `ModelSpec`, which falls back to the
   default spec so local control keeps working.
-- **`translations/`** — `en.json`, `pt-BR.json`, `sr.json` and `sr-Latn.json`;
-  all user-facing strings live here, never hardcoded in Python.
+- **`translations/`** — one JSON file per locale, `en.json` the source; all
+  user-facing strings live here, never hardcoded in Python.
 
 ## Environment & tooling
 
