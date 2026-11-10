@@ -36,7 +36,6 @@ from .status_slug import StatusSlug
 
 _ACTIONS = replace(
     D109GL.actions,
-    start_zone_sweep=None,
     start_user_define_sweep=None,
     start_dust_arrest=None,
     start_mop_wash=None,
