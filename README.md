@@ -56,8 +56,9 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
    position or path.
 3. The X20+ mop water level has no *Off* option.
 4. The X20+ dock can start washing the mop but not stop it.
-5. The S40 Pro uses the X20 Max rectangle command path; device-level
-   verification of this particular payload is still pending.
+5. The S40 Pro uses the X20 Max rectangle command path. Real-device user
+   testing on 10 November 2026 confirmed that the S40 Pro cleaned 20 selected
+   rectangles in response to the zone-cleaning command.
 
 ## Features
 
