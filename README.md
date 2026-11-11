@@ -41,7 +41,7 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
 | Cleaning mode and mop water level selects | ✅ | ✅ | ✅ ³ | ✅ |
 | Clean repetitions select | 1–2 | 1–3 | — | 1–3 |
 | Sweep route and obstacle avoidance selects | — | ✅ | — | ✅ |
-| Zone cleaning (`xiaomi_vacuum.clean_zone`) | — | — | — | ✅ |
+| Zone cleaning (`xiaomi_vacuum.clean_zone`) | — | ✅ ⁵ | — | ✅ |
 | Custom cleanings (`xiaomi_vacuum.start_custom_cleaning`) | — | — | — | ✅ |
 | Empty the dust bin into the dock | — | — | ✅ | ✅ |
 | Wash and dry the mop in the dock | — | — | ✅ ⁴ | ✅ |
@@ -56,6 +56,8 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
    position or path.
 3. The X20+ mop water level has no *Off* option.
 4. The X20+ dock can start washing the mop but not stop it.
+5. The S40 Pro uses the X20 Max rectangle command path; device-level
+   verification of this particular payload is still pending.
 
 ## Features
 
@@ -216,7 +218,7 @@ fails with the list of cleanings the vacuum reports.
 
 ### Cleaning zones
 
-On the X20 Max, the `xiaomi_vacuum.clean_zone` action cleans one or more
+On the X20 Max and S40 Pro, the `xiaomi_vacuum.clean_zone` action sends one or more
 rectangles, each given as two opposite corners `[x1, y1, x2, y2]` in the
 vacuum's millimetre coordinates, with an optional number of repeats:
 
@@ -239,7 +241,7 @@ reads. The card resolves its map source through the entity's `entity_picture`,
 so the `image` entity can be used directly.
 
 The card's built-in interactive modes call other integrations' services and do
-not work here. On the X20 Max, a custom map mode drives zone cleaning instead:
+not work here. On the X20 Max and S40 Pro, a custom map mode drives zone cleaning instead:
 
 ```yaml
 type: custom:xiaomi-vacuum-map-card
@@ -265,7 +267,7 @@ map_modes:
         entity_id: "[[entity_id]]"
 ```
 
-On the other models, set `map_modes: []`, since zone cleaning is not
+On the S20+ and X20+, set `map_modes: []`, since zone cleaning is not
 available, and use the `vacuum.clean_area` action for rooms.
 
 The raw geometry (`origin_x`, `origin_y`, `resolution`, `width`, `height`,
