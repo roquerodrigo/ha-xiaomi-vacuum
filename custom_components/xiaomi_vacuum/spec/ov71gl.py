@@ -17,8 +17,9 @@ the S40 Pro too, unless it is removed here:
   lists dust-arrest / mop-wash actions, but no dock hardware honours them, so no
   dock action is wired: no dust-arrest button, no mop-wash / dry send_commands
 - no detergent (SIID 18) or dust-bag (SIID 19) services, no start-dry action
-- no zone cleaning: replaying the app's zone through ``start-zone-sweep`` does
-  nothing on a real unit (see ``XIAOMI_VACUUM_API.md`` §5)
+- zone cleaning is enabled via the shared X20 Max ``start-zone-sweep`` action
+  (2/37); earlier unsuccessful payload attempts are documented in
+  ``XIAOMI_VACUUM_API.md`` §5
 - no custom cleanings: the action and its list are only verified on the X20 Max
 - the dockless hardware still runs the station's sewage-tank check and reports
   its permanent failure as fault 100027, which ``_PHANTOM_FAULTS`` drops
