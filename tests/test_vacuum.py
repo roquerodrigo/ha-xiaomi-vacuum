@@ -404,6 +404,27 @@ async def test_clean_zone_service_rejects_invalid_input(
     mock_miot_device.call_action.assert_not_called()
 
 
+async def test_clean_zone_service_s40_pro_payload(
+    hass, setup_integration_ov71, mock_miot_device_ov71
+):
+    """S40 Pro sends the shared X20 Max rectangle payload at action 2/37."""
+    mock_miot_device_ov71.call_action.reset_mock()
+    mock_miot_device_ov71.set_property.reset_mock()
+    entity_id = hass.states.async_entity_ids("vacuum")[0]
+    await hass.services.async_call(
+        DOMAIN,
+        "clean_zone",
+        {"entity_id": entity_id, "zones": [[890, 750, 260, 250]], "repeats": 1},
+        blocking=True,
+    )
+    mock_miot_device_ov71.set_property.assert_called_once()
+    address, payload = mock_miot_device_ov71.call_action.call_args.args
+    assert address == ActionAddress(siid=2, aiid=37)
+    assert json.loads(payload[0]["value"]) == [
+        {"blocks_region": [260, 750, 260, 250, 890, 250, 890, 750], "blocks_attr": 0}
+    ]
+
+
 async def test_clean_zone_service_unsupported_model(
     hass, setup_integration_b108, mock_miot_device_b108
 ):
