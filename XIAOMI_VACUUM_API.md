@@ -337,10 +337,10 @@ is identical on the S40 Pro. Differences worth knowing:
 | Services | no `18 Detergent Management`, no `19 Dust Bag`; adds `16 imu` (calibration action) |
 | Extra properties on SIID 2 | `41 hot-water-mop-wash`, `56 sweep-ai-object`, `63/64 cut-hair-config`, `85-90` cleaning statistics and drying progress, `96 sweep-mop-status`, `97/98` sewage / water tank status, `99 sill`, `100/101` base-station / host water tank status — not read by the integration |
 | Extra actions on SIID 2 | `10 get-zone-configs`, `22 start-call-clean`, `44 stop-cut-hair`, `49-59` station cleaning, skip / final / temporary room and zone cleaning, tank emptying, spot cleaning, `62-64` object clean and station self-cleaning |
-| Zone cleaning | enabled in the feature branch using the X20 Max block-list encoding; hardware confirmation is pending — see below |
+| Zone cleaning | enabled using the X20 Max block-list encoding; a physical S40 Pro cleaned 20 rectangles in user testing on 2026-11-10 — see below |
 | Faults | publishes `100027` ("Sewage tank is full or not installed") in `Fault Ids` permanently — a station check the dockless retail unit can never satisfy; listed in the spec's `ignored_fault_codes`. Publishes `210005` (dust bin out) and `210020` (water tank out) while the user services it, cleared once the part is back; listed in `notice_fault_codes` |
 
-### Zone (rectangle) cleaning: earlier failed attempts and new block-list implementation
+### Zone (rectangle) cleaning: working block-list implementation and earlier failed attempts
 
 Captured from a physical S40 Pro on firmware `4.5.8_0053` while the Mi Home app
 cleaned a rectangle the user drew:
@@ -405,10 +405,12 @@ None of these payloads wrapped the polygon in the
 `[{"blocks_region": […], "blocks_attr": 0}]` block list that the X20 Max
 plugin sends and that works on the X20 Max (see its actions above), so the
 experiment above does not rule that encoding out on the S40 Pro. The feature branch now enables this block-list encoding through the existing
-`xiaomi_vacuum.clean_zone` service. A mocked regression test checks the outbound
-action and payload; this does **not** establish that a physical S40 Pro follows
-the rectangle. Confirm with `sweep-type == 2` and the `zones` key in
-`current-cleaning-config` after starting an actual zone clean. One other lead remains untested: the app's saved "custom cleanup" presets
+`xiaomi_vacuum.clean_zone` service. A mocked regression test checks the outbound action and payload. On 2026-11-10,
+a user reported a successful real-device test: the physical S40 Pro cleaned
+20 selected rectangles on command. This is behavioral confirmation rather than
+just an action acknowledgement; no corresponding property trace was supplied,
+so `sweep-type == 2` and the `zones` key in `current-cleaning-config` remain
+recommended diagnostic checks for future testing. One other lead remains untested: the app's saved "custom cleanup" presets
 store the same flat polygon under `mode_data` in `user-define-sweep-cfg`
 (2/42), and `start-user-define-sweep` (2/42) takes the preset id as a string.
 That would replay a preset the user saved in the app rather than an arbitrary
