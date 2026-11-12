@@ -325,3 +325,21 @@ This integration is built and maintained on personal time, on hardware bought fo
 ## License
 
 [MIT](LICENSE)
+
+
+### Xiaomi fault diagnostics (development)
+
+The `error_code` diagnostic sensor retains its numeric state and exposes
+`active_fault_codes`, `raw_fault_codes`, `ignored_fault_codes` and
+`cloud_fault_history` (on-demand and held in memory only).
+
+To refresh fault history without marking Xiaomi notifications as read:
+
+```yaml
+action: xiaomi_vacuum.refresh_fault_history
+target:
+  entity_id: vacuum.your_xiaomi_vacuum
+```
+
+An active Xiaomi cloud session is required. Xiaomi determines which historical
+fault messages remain available; this is not a permanent event archive.

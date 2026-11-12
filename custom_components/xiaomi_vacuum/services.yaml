@@ -29,3 +29,14 @@ start_custom_cleaning:
         select:
           options: []
           custom_value: true
+
+refresh_fault_history:
+  name: Refresh fault history
+  description: >-
+    Read the most recent Xiaomi cloud Device Fault messages without marking
+    notifications as read. Results appear in the cloud_fault_history attribute
+    of the vacuum's error code sensor. Requires an active Xiaomi cloud session.
+  target:
+    entity:
+      integration: xiaomi_vacuum
+      domain: vacuum

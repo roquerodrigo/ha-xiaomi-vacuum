@@ -45,6 +45,7 @@ class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[VacuumState]):
         # Set after the cloud session resolves (see __init__.py); when present,
         # we enrich a non-zero fault code with its localized text.
         self.cloud: XiaomiCloud | None = None
+        self.fault_history: list[dict[str, str | int]] | None = None
 
     @property
     def spec(self) -> ModelSpec:
