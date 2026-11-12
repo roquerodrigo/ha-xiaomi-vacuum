@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.12.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.11.1...v2.12.0) (2026-11-12)
+
+The S40 Pro gains rectangle zone cleaning, and the integration adds Russian translations.
+
+### New features
+
+- The Xiaomi Robot Vacuum S40 Pro can now clean selected rectangular zones through the xiaomi_vacuum.clean_zone service, confirmed on a physical device. ([#176](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/176))
+- The integration now includes Russian translations for its setup flow, entities, services and status messages. ([#170](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/170))
+
 ## [2.11.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.11.0...v2.11.1) (2026-11-08)
 
 ### Improvements
