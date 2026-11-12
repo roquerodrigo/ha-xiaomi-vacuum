@@ -166,7 +166,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         ``continue_sweep`` send_command directly.
         """
         if self._idle_at_dock():
-                await self._client.async_start()
+            await self._client.async_start()
         else:
             await self._client.async_continue()
         self._patch_state(status=self.spec.status_code_for(VacuumActivity.CLEANING))
