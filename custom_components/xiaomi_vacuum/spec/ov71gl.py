@@ -23,7 +23,7 @@ the S40 Pro too, unless it is removed here:
 - no custom cleanings: the action and its list are only verified on the X20 Max
 - the dockless hardware still runs the station's sewage-tank check and reports
   its permanent failure as fault 100027, which ``_PHANTOM_FAULTS`` drops
-- taking the water tank or dust bin out raises 210020 / 210005, which
+- taking the water tank or dust bin out raises 210020 / 210013, which
   ``_NOTICE_FAULTS`` keeps on the error sensors without forcing ERROR
 """
 
@@ -67,9 +67,9 @@ _PHANTOM_FAULTS = frozenset({100027})
 
 # Maintenance notices the S40 Pro publishes in `Fault Ids` while the user
 # services it, cleared on their own once the part is back in place: 210020 when
-# the water tank is taken out to be refilled, 210005 when the dust bin is taken
+# the water tank is taken out to be refilled, 210013 when the dust bin is taken
 # out to be emptied. Observed on a physical unit.
-_NOTICE_FAULTS = frozenset({210005, 210020})
+_NOTICE_FAULTS = frozenset({210013, 210020})
 
 OV71GL = replace(
     D109GL,
@@ -84,4 +84,6 @@ OV71GL = replace(
     },
     ignored_fault_codes=_PHANTOM_FAULTS,
     notice_fault_codes=_NOTICE_FAULTS,
+    # Confirmed missing containers must block new jobs, but not abort running ones.
+    cleaning_blocking_fault_codes=frozenset({210013, 210020}),
 )

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import TYPE_CHECKING
@@ -81,6 +82,9 @@ class ModelSpec:
     # Error / Error code sensors but do not force VacuumActivity.ERROR, the way
     # other vacuum integrations treat dismissable warnings.
     notice_fault_codes: frozenset[int] = frozenset()
+    # Confirmed model-specific faults that prohibit NEW cleaning jobs.
+    # Independent of whether they are classified as maintenance notices.
+    cleaning_blocking_fault_codes: frozenset[int] = frozenset()
     room_cleaning: RoomCleaning | None = None
     map_format: MapFormat = _XIAOMI_MAP_FORMAT
 
@@ -197,6 +201,36 @@ class ModelSpec:
         """Return the live fault code of a polled state, phantom faults dropped."""
         return self.fault_reading.live_code(
             data, self.ignored_fault_codes, self.notice_fault_codes
+        )
+
+    def active_cleaning_blockers(self, data: VacuumState | None) -> frozenset[int]:
+        """
+        Find every configured blocking code in the live fault payload.
+
+        Unlike the display fault, this checks all codes, not just the first.
+        Invalid or unavailable payloads never manufacture a fault code.
+        """
+        if not data or not self.cleaning_blocking_fault_codes:
+            return frozenset()
+        if Property.FAULT_IDS in self.property_mapping:
+            raw = data.get("fault_ids")
+            if not isinstance(raw, str):
+                return frozenset()
+            try:
+                parsed = json.loads(raw)
+            except ValueError, TypeError:
+                return frozenset()
+            if not isinstance(parsed, dict) or not isinstance(
+                parsed.get("fault"), list
+            ):
+                return frozenset()
+            codes = parsed["fault"]
+        else:
+            codes = [data.get("fault")]
+        return frozenset(
+            code
+            for code in codes
+            if type(code) is int and code in self.cleaning_blocking_fault_codes
         )
 
     @property
