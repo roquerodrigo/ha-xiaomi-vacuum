@@ -136,6 +136,14 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         }
         return {DOMAIN: attrs}
 
+    def _assert_cleaning_start_allowed(self) -> None:
+        """Refuse a new cleaning job when the model reports an active blocker."""
+        blocked = self.spec.active_cleaning_blockers(self.coordinator.data)
+        if blocked:
+            codes = ", ".join(map(str, sorted(blocked)))
+            msg = f"Cleaning blocked by active device fault(s): {codes}"
+            raise ServiceValidationError(msg)
+
     async def async_start(self) -> None:
         """
         Begin a fresh clean when parked/idle; otherwise resume the current job.
@@ -146,6 +154,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         ``continue_sweep`` send_command directly.
         """
         if self._idle_at_dock():
+            self._assert_cleaning_start_allowed()
             await self._client.async_start()
         else:
             await self._client.async_continue()
@@ -205,6 +214,8 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
                 translation_key="send_command_params_unsupported",
                 translation_placeholders={"command": command},
             )
+        if command in {"start_only_sweep", "start_mop", "start_sweep_mop"}:
+            self._assert_cleaning_start_allowed()
         await self._client.async_call_action(action["siid"], action["aiid"])
         self._schedule_refresh()
 
@@ -251,6 +262,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         **kwargs: object,  # noqa: ARG002
     ) -> None:
         """Clean specific segments by ID."""
+        self._assert_cleaning_start_allowed()
         await self._client.async_clean_segments(
             segment_ids,
             room_information=self.coordinator.data.get("room_information"),
@@ -284,6 +296,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
                 translation_domain=DOMAIN,
                 translation_key="zone_empty",
             )
+        self._assert_cleaning_start_allowed()
         await self._client.async_clean_zones(cleaning_zones, repeats)
         self._patch_state(status=self.spec.status_code_for(VacuumActivity.CLEANING))
         self._schedule_refresh()
@@ -296,6 +309,7 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
                 translation_key="custom_cleaning_unsupported",
                 translation_placeholders={"model": self.spec.name},
             )
+        self._assert_cleaning_start_allowed()
         cleanings = await self._client.async_get_custom_cleanings()
         async_update_custom_cleaning_options(
             self.hass, self.coordinator.config_entry, cleanings
