@@ -278,6 +278,62 @@ class _XiaomiCloudConnector:
             return None
         return cast("bytes", response.content)
 
+    def get_device_fault_messages(
+        self, country: str, did: str, limit: int = 50
+    ) -> list[dict[str, str | int]]:
+        """
+        Read historical fault notices without changing their read status.
+
+        Only MIoT Device Fault (2.3) notifications are returned. We do not
+        expose the raw cloud response, user IDs, device IDs or session data.
+        """
+        url = self._api_url(country) + "/v2/message/v2/list"
+        params = {
+            "data": json.dumps(
+                {
+                    "did": str(did),
+                    "type": 6,
+                    "timestamp": 0,
+                    "limit": limit,
+                    "force_read": False,
+                }
+            )
+        }
+        response = self._encrypted_call(url, params)
+        result = response.get("result") if isinstance(response, dict) else None
+        messages = result.get("messages") if isinstance(result, dict) else None
+        if not isinstance(messages, list):
+            return []
+        events: list[dict[str, str | int]] = []
+        for message in messages:
+            if not isinstance(message, dict):
+                continue
+            params_obj = message.get("params")
+            body = params_obj.get("body") if isinstance(params_obj, dict) else None
+            if not isinstance(body, dict) or body.get("event") != "2.3":
+                continue
+            value = body.get("value") or body.get("extra")
+            if not isinstance(value, list) or not value:
+                continue
+            try:
+                raw_code = value[0]
+                if not isinstance(raw_code, (str, int, float)):
+                    continue
+                code = int(raw_code)
+            except ValueError, TypeError:
+                continue
+            if code <= 0:
+                continue
+            event: dict[str, str | int] = {"code": code}
+            title = message.get("title")
+            if isinstance(title, str):
+                event["text"] = title
+            timestamp = message.get("ctime") or message.get("time")
+            if type(timestamp) is int and timestamp > 0:
+                event["timestamp"] = timestamp
+            events.append(event)
+        return events
+
     def get_device_fault_texts(
         self, country: str, did: str, limit: int = 50
     ) -> dict[int, str]:

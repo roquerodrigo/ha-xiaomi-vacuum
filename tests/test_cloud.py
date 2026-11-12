@@ -1007,3 +1007,48 @@ async def test_restore_device_adopts_it_without_a_cloud_call(hass):
         cloud.restore_device(device)
     find_device.assert_not_called()
     assert cloud.device is device
+
+
+def test_get_device_fault_messages_returns_only_sanitized_fault_events():
+    """Cloud history must be read-only and omit non-fault messages and secrets."""
+    connector = _XiaomiCloudConnector()
+    response = {
+        "result": {
+            "messages": [
+                {
+                    "title": "Insufficient water. Refill the water tank in time",
+                    "ctime": 1794441000,
+                    "params": {"body": {"event": "2.3", "value": [100025]}},
+                    "did": "private-device-id",
+                },
+                {
+                    "title": "Cleaning completed",
+                    "params": {"body": {"event": "2.2", "value": []}},
+                },
+                {
+                    "title": "Dock unavailable",
+                    "params": {"body": {"event": "2.3", "value": [210009]}},
+                },
+            ]
+        }
+    }
+    with patch.object(connector, "_encrypted_call", return_value=response) as call:
+        events = connector.get_device_fault_messages("de", "device-id", limit=20)
+    assert events == [
+        {
+            "code": 100025,
+            "text": "Insufficient water. Refill the water tank in time",
+            "timestamp": 1794441000,
+        },
+        {"code": 210009, "text": "Dock unavailable"},
+    ]
+    payload = json.loads(call.call_args.args[1]["data"])
+    assert payload["force_read"] is False
+    assert payload["limit"] == 20
+    assert "private-device-id" not in str(events)
+
+
+def test_get_device_fault_messages_handles_malformed_feed():
+    connector = _XiaomiCloudConnector()
+    with patch.object(connector, "_encrypted_call", return_value={"result": {}}):
+        assert connector.get_device_fault_messages("de", "did") == []
