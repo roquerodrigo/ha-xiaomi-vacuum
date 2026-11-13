@@ -3,7 +3,7 @@ Per-model MIoT spec for the supported Xiaomi vacuums.
 
 Each :class:`ModelSpec` bundles everything that differs between the supported
 models (currently the X20 Max ``d109gl``, the S20+ ``b108gl``, the S40 Pro
-``ov71gl`` and the Dreame-built X20+ ``c102gl``): the
+``ov71gl``, the S40C ``e101gb`` and the Dreame-built X20+ ``c102gl``): the
 SIID/PIID property mapping, the SIID/AIID action mapping, the status-code
 table, the enumerations exposed as selects and the room-cleaning, fault and
 map formats. Which entities and ``send_command`` names a model gets is derived
@@ -27,6 +27,7 @@ from .b108gl import B108GL
 from .c102gl import C102GL
 from .cleaning_job_signal import CleaningJobSignal
 from .d109gl import D109GL
+from .e101gb import E101GB
 from .entity_key import EntityKey
 from .fault_reading import FaultIdsReading, FaultReading, PlainFaultReading
 from .map_format import DreameMapFormat, MapFormat, XiaomiMapFormat
@@ -55,6 +56,7 @@ __all__ = [
     "CANONICAL_STATUSES",
     "D109GL",
     "DEFAULT_MODEL",
+    "E101GB",
     "MAPPING_FIELDS",
     "MODELS",
     "OV71GL",
