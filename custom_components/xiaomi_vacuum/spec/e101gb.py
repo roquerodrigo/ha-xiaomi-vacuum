@@ -16,8 +16,8 @@ unless it is removed here:
   actions, plus detergent (SIID 18) and dust-bag (SIID 19) services. That
   hardware is not in the box, so those actions stay unwired, as on the S40 Pro
 - room cleaning stays the direct ``start-vacuum-room-sweep`` (2/16, input
-  piid 15). This unit's room list was read from property 2/16; the start
-  action has not been sent on it
+  piid 15). This unit's room list was read from property 2/16. On 14 November
+  2026 a room clean started from Home Assistant completed on this unit
 - zone cleaning stays the shared ``start-zone-sweep`` (2/37). On 14 November
   2026 a physical S40C on firmware 4.5.6_0111 cleaned a selected rectangle
   through this action

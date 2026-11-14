@@ -42,7 +42,7 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
 | Cleaning mode and mop water level selects | ✅ | ✅ | ✅ | ✅ ³ | ✅ |
 | Clean repetitions select | 1–2 | 1–3 | 1–3 | — | 1–3 |
 | Sweep route and obstacle avoidance selects | — | ✅ | ✅ | — | ✅ |
-| Zone cleaning (`xiaomi_vacuum.clean_zone`) | — | ✅ ⁵ | ✅ ⁷ | — | ✅ |
+| Zone cleaning (`xiaomi_vacuum.clean_zone`) | — | ✅ ⁵ | ✅ ⁶ | — | ✅ |
 | Custom cleanings (`xiaomi_vacuum.start_custom_cleaning`) | — | — | — | — | ✅ |
 | Empty the dust bin into the dock | — | — | — | ✅ | ✅ |
 | Wash and dry the mop in the dock | — | — | — | ✅ ⁴ | ✅ |
@@ -60,11 +60,9 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
 5. The S40 Pro uses the X20 Max rectangle command path. Real-device user
    testing on 10 November 2026 confirmed that the S40 Pro cleaned 20 selected
    rectangles in response to the zone-cleaning command.
-6. The S40C uses the S40 Pro room command. A physical unit on firmware
-   4.5.6_0111 published its room list. A room clean has not been started on
-   an S40C.
-7. The S40C uses the S40 Pro rectangle command. On 14 November 2026 a physical
-   unit on firmware 4.5.6_0111 cleaned a selected rectangle.
+6. The S40C uses the S40 Pro room and rectangle commands. A physical unit on
+   firmware 4.5.6_0111 published its room list. On 14 November 2026 it cleaned
+   a selected rectangle and a selected room.
 
 ## Features
 
