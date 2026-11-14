@@ -115,6 +115,22 @@ _PROPERTIES: dict[tuple[str, str], Property] = {
     ("vacuum-extend", "child-lock"): Property.CHILD_LOCK,
     ("do-not-disturb", "enable"): Property.DO_NOT_DISTURB,
     ("audio", "volume"): Property.VOLUME,
+    ("alarm", "volume"): Property.VOLUME,
+    ("vacuum", "carpet-boost"): Property.CARPET_BOOST,
+    ("vacuum", "sweep-break-switch"): Property.RESUME_AFTER_CHARGE,
+    ("physical-controls-locked", "physical-controls-locked"): Property.CHILD_LOCK,
+    ("no-disturb", "no-disturb"): Property.DO_NOT_DISTURB,
+    ("vacuum", "enable-mop-wash"): Property.MOP_WASH,
+    ("vacuum", "frequency-mop-wash"): Property.MOP_WASH_FREQUENCY,
+    ("vacuum", "frequency-mop-wash-no-tank"): Property.MOP_WASH_AREA_INTERVAL,
+    ("vacuum", "frequency-mop-wash-by-time"): Property.MOP_WASH_TIME_INTERVAL,
+    ("vacuum", "drying-time"): Property.MOP_DRYING_TIME,
+    ("vacuum", "auto-dust-arrest"): Property.AUTO_DUST_COLLECTION,
+    ("vacuum", "auto-mop-dry"): Property.AUTO_MOP_DRYING,
+    ("vacuum", "water-output-for-washing-mop"): Property.MOP_WASH_WATER_MODE,
+    ("vacuum", "wash-mop-water-temperature"): Property.MOP_WASH_TEMPERATURE,
+    ("vacuum", "dust-arrest-frequency"): Property.DUST_COLLECTION_FREQUENCY,
+    ("vacuum", "carpet-cleaning-method"): Property.CARPET_CLEANING_METHOD,
     ("battery", "battery-level"): Property.BATTERY_LEVEL,
     ("battery", "charging-state"): Property.CHARGING_STATE,
     ("mop", "mop-life-level"): Property.MOP_LIFE,
@@ -190,6 +206,13 @@ _VALUE_TABLES: dict[Property, str] = {
     Property.MOP_WATER_LEVEL: "mop_water_levels",
     Property.SWEEP_ROUTE: "sweep_routes",
     Property.OBSTACLE_AVOIDANCE_STRATEGY: "obstacle_avoidances",
+    Property.MOP_WASH_FREQUENCY: "mop_wash_frequencies",
+    Property.MOP_WASH_AREA_INTERVAL: "mop_wash_area_intervals",
+    Property.MOP_DRYING_TIME: "mop_drying_times",
+    Property.MOP_WASH_WATER_MODE: "mop_wash_water_modes",
+    Property.MOP_WASH_TEMPERATURE: "mop_wash_temperatures",
+    Property.DUST_COLLECTION_FREQUENCY: "dust_collection_frequencies",
+    Property.CARPET_CLEANING_METHOD: "carpet_cleaning_methods",
 }
 
 #: Where each value table's slugs are translated in ``translations/en.json``.
@@ -200,6 +223,13 @@ _TABLE_TRANSLATIONS: dict[str, tuple[str, ...]] = {
     "mop_water_levels": ("select", "mop_water_level"),
     "sweep_routes": ("select", "sweep_route"),
     "obstacle_avoidances": ("select", "obstacle_avoidance_strategy"),
+    "mop_wash_frequencies": ("select", "mop_wash_frequency"),
+    "mop_wash_area_intervals": ("select", "mop_wash_area_interval"),
+    "mop_drying_times": ("select", "mop_drying_time"),
+    "mop_wash_water_modes": ("select", "mop_wash_water_mode"),
+    "mop_wash_temperatures": ("select", "mop_wash_temperature"),
+    "dust_collection_frequencies": ("select", "dust_collection_frequency"),
+    "carpet_cleaning_methods": ("select", "carpet_cleaning_method"),
 }
 
 #: Status descriptions other models publish for an existing slug.
@@ -217,6 +247,9 @@ _STATUS_SYNONYMS: dict[str, StatusSlug] = {
 #: Value descriptions other models publish for an existing slug, per table.
 _VALUE_SYNONYMS: dict[str, dict[str, str]] = {
     "mop_water_levels": {"low": "level_1", "medium": "level_2", "high": "level_3"},
+    "mop_wash_temperatures": {"ordinary_temperature": "normal"},
+    "dust_collection_frequencies": {"triple": "three_times"},
+    "carpet_cleaning_methods": {"self_adaption": "adaptive", "span": "cross"},
 }
 
 #: Dock actions a spec template can list for hardware the retail unit lacks.

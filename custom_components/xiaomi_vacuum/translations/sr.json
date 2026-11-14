@@ -259,6 +259,67 @@
                     "less_collisions": "Мање судара",
                     "high_coverage": "Висока покривеност"
                 }
+            },
+            "mop_wash_frequency": {
+                "name": "Учесталост прања мопа",
+                "state": {
+                    "by_room": "После сваке просторије",
+                    "by_area": "По површини",
+                    "by_time": "По времену"
+                }
+            },
+            "mop_wash_area_interval": {
+                "name": "Површина између прања мопа",
+                "state": {
+                    "five_square_meters": "5 m²",
+                    "eight_square_meters": "8 m²",
+                    "ten_square_meters": "10 m²",
+                    "fifteen_square_meters": "15 m²",
+                    "twenty_square_meters": "20 m²",
+                    "twenty_five_square_meters": "25 m²"
+                }
+            },
+            "mop_drying_time": {
+                "name": "Време сушења мопа",
+                "state": {
+                    "2_hours": "2 сата",
+                    "3_hours": "3 сата",
+                    "4_hours": "4 сата"
+                }
+            },
+            "mop_wash_water_mode": {
+                "name": "Вода за прање мопа",
+                "state": {
+                    "deep": "Дубинско",
+                    "daily": "Дневно",
+                    "save_water": "Уштеда воде"
+                }
+            },
+            "mop_wash_temperature": {
+                "name": "Температура воде за прање мопа",
+                "state": {
+                    "normal": "Нормална",
+                    "warm": "Топла",
+                    "hot": "Врућа",
+                    "smart": "Паметна"
+                }
+            },
+            "dust_collection_frequency": {
+                "name": "Учесталост аутоматског пражњења",
+                "state": {
+                    "once": "После сваког чишћења",
+                    "twice": "После 2 чишћења",
+                    "three_times": "После 3 чишћења"
+                }
+            },
+            "carpet_cleaning_method": {
+                "name": "Чишћење тепиха",
+                "state": {
+                    "adaptive": "Прилагодљиво",
+                    "avoid": "Избегавај",
+                    "ignore": "Занемари",
+                    "cross": "Пређи преко"
+                }
             }
         },
         "switch": {
@@ -273,11 +334,23 @@
             },
             "do_not_disturb": {
                 "name": "Не узнемиравај"
+            },
+            "mop_wash": {
+                "name": "Прање мопа"
+            },
+            "auto_dust_collection": {
+                "name": "Аутоматско пражњење посуде"
+            },
+            "auto_mop_drying": {
+                "name": "Аутоматско сушење мопа"
             }
         },
         "number": {
             "volume": {
                 "name": "Јачина звука"
+            },
+            "mop_wash_time_interval": {
+                "name": "Време између прања мопа"
             }
         }
     },

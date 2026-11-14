@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..spec import EntityKey  # noqa: TID252
+from .mop_wash_time_interval import XiaomiVacuumMopWashTimeIntervalNumber
 from .volume import XiaomiVacuumVolumeNumber
 
 if TYPE_CHECKING:
@@ -14,10 +15,14 @@ if TYPE_CHECKING:
     from ..data import XiaomiVacuumConfigEntry  # noqa: TID252
     from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
-__all__ = ["XiaomiVacuumVolumeNumber"]
+__all__ = [
+    "XiaomiVacuumMopWashTimeIntervalNumber",
+    "XiaomiVacuumVolumeNumber",
+]
 
 _NUMBER_CLASSES: dict[EntityKey, type[XiaomiVacuumEntity]] = {
     EntityKey.VOLUME_NUMBER: XiaomiVacuumVolumeNumber,
+    EntityKey.MOP_WASH_TIME_INTERVAL_NUMBER: XiaomiVacuumMopWashTimeIntervalNumber,
 }
 
 

@@ -21,6 +21,10 @@ the S40 Pro too, unless it is removed here:
   (2/37); earlier unsuccessful payload attempts are documented in
   ``XIAOMI_VACUUM_API.md`` §5
 - no custom cleanings: the action and its list are only verified on the X20 Max
+- no dock settings: mop washing and its frequency, wash water and temperature,
+  drying time, auto dust collection and its frequency, and auto mop drying
+  configure station hardware the S40 Pro lacks (its spec does not even publish
+  the mop-wash switch, 2/28, nor the wash water temperature, 2/84)
 - the dockless hardware still runs the station's sewage-tank check and reports
   its permanent failure as fault 100027, which ``_PHANTOM_FAULTS`` drops
 - taking the water tank or dust bin out raises 210020 / 210005, which
@@ -43,6 +47,23 @@ _ACTIONS = replace(
     start_dry=None,
     stop_mop_wash=None,
     stop_dry=None,
+)
+
+# Settings of the auto-wash dock (``d109gl.py``) that the plain charging dock
+# cannot honour.
+_DOCK_SETTINGS = frozenset(
+    {
+        Property.MOP_WASH,
+        Property.MOP_WASH_FREQUENCY,
+        Property.MOP_WASH_AREA_INTERVAL,
+        Property.MOP_WASH_TIME_INTERVAL,
+        Property.MOP_DRYING_TIME,
+        Property.AUTO_DUST_COLLECTION,
+        Property.AUTO_MOP_DRYING,
+        Property.MOP_WASH_WATER_MODE,
+        Property.MOP_WASH_TEMPERATURE,
+        Property.DUST_COLLECTION_FREQUENCY,
+    }
 )
 
 # Codes 22-24 are the station-assisted washing cycle the S40 Pro adds over the
@@ -80,8 +101,14 @@ OV71GL = replace(
     property_mapping={
         name: binding
         for name, binding in D109GL.property_mapping.items()
-        if name is not Property.USER_DEFINE_SWEEP_CONFIG
+        if name is not Property.USER_DEFINE_SWEEP_CONFIG and name not in _DOCK_SETTINGS
     },
+    mop_wash_frequencies={},
+    mop_wash_area_intervals={},
+    mop_drying_times={},
+    mop_wash_water_modes={},
+    mop_wash_temperatures={},
+    dust_collection_frequencies={},
     ignored_fault_codes=_PHANTOM_FAULTS,
     notice_fault_codes=_NOTICE_FAULTS,
 )

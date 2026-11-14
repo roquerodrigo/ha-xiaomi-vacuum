@@ -205,15 +205,82 @@
                     "less_collisions": "Меньше столкновений",
                     "high_coverage": "Более полный охват"
                 }
+            },
+            "mop_wash_frequency": {
+                "name": "Частота мойки швабры",
+                "state": {
+                    "by_room": "После каждой комнаты",
+                    "by_area": "По площади",
+                    "by_time": "По времени"
+                }
+            },
+            "mop_wash_area_interval": {
+                "name": "Площадь между мойками швабры",
+                "state": {
+                    "five_square_meters": "5 м²",
+                    "eight_square_meters": "8 м²",
+                    "ten_square_meters": "10 м²",
+                    "fifteen_square_meters": "15 м²",
+                    "twenty_square_meters": "20 м²",
+                    "twenty_five_square_meters": "25 м²"
+                }
+            },
+            "mop_drying_time": {
+                "name": "Время сушки швабры",
+                "state": {
+                    "2_hours": "2 часа",
+                    "3_hours": "3 часа",
+                    "4_hours": "4 часа"
+                }
+            },
+            "mop_wash_water_mode": {
+                "name": "Вода для мойки швабры",
+                "state": {
+                    "deep": "Глубокая",
+                    "daily": "Ежедневная",
+                    "save_water": "Экономия воды"
+                }
+            },
+            "mop_wash_temperature": {
+                "name": "Температура воды для мойки швабры",
+                "state": {
+                    "normal": "Обычная",
+                    "warm": "Тёплая",
+                    "hot": "Горячая",
+                    "smart": "Умная"
+                }
+            },
+            "dust_collection_frequency": {
+                "name": "Частота автоочистки",
+                "state": {
+                    "once": "После каждой уборки",
+                    "twice": "Каждые 2 уборки",
+                    "three_times": "Каждые 3 уборки"
+                }
+            },
+            "carpet_cleaning_method": {
+                "name": "Уборка ковров",
+                "state": {
+                    "adaptive": "Адаптивная",
+                    "avoid": "Избегать",
+                    "ignore": "Игнорировать",
+                    "cross": "Проезжать"
+                }
             }
         },
         "switch": {
             "child_lock": {"name": "Блокировка от детей"},
             "carpet_boost": {"name": "Усиление мощности на коврах"},
             "resume_after_charge": {"name": "Продолжать уборку после зарядки"},
-            "do_not_disturb": {"name": "Не беспокоить"}
+            "do_not_disturb": {"name": "Не беспокоить"},
+            "mop_wash": {"name": "Мойка швабры"},
+            "auto_dust_collection": {"name": "Автоочистка контейнера"},
+            "auto_mop_drying": {"name": "Автосушка швабры"}
         },
-        "number": {"volume": {"name": "Громкость"}}
+        "number": {
+            "volume": {"name": "Громкость"},
+            "mop_wash_time_interval": {"name": "Время между мойками швабры"}
+        }
     },
     "exceptions": {
         "mop_mode_requires_pad": {
@@ -271,5 +338,3 @@
         "unnamed_room": "Комната {id}"
     }
 }
-
-

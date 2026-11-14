@@ -62,6 +62,27 @@
             },
             "obstacle_avoidance_strategy": {
                 "default": "mdi:shield-car"
+            },
+            "mop_wash_frequency": {
+                "default": "mdi:water-sync"
+            },
+            "mop_wash_area_interval": {
+                "default": "mdi:texture-box"
+            },
+            "mop_drying_time": {
+                "default": "mdi:timer-sand"
+            },
+            "mop_wash_water_mode": {
+                "default": "mdi:water-pump"
+            },
+            "mop_wash_temperature": {
+                "default": "mdi:water-thermometer"
+            },
+            "dust_collection_frequency": {
+                "default": "mdi:delete-clock"
+            },
+            "carpet_cleaning_method": {
+                "default": "mdi:rug"
             }
         },
         "button": {
@@ -105,11 +126,23 @@
             },
             "do_not_disturb": {
                 "default": "mdi:minus-circle"
+            },
+            "mop_wash": {
+                "default": "mdi:water-sync"
+            },
+            "auto_dust_collection": {
+                "default": "mdi:delete-empty"
+            },
+            "auto_mop_drying": {
+                "default": "mdi:heat-wave"
             }
         },
         "number": {
             "volume": {
                 "default": "mdi:volume-high"
+            },
+            "mop_wash_time_interval": {
+                "default": "mdi:timer-sync"
             }
         }
     },

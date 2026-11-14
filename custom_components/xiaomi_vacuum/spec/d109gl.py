@@ -56,6 +56,25 @@ _PROPERTY_MAPPING: dict[Property, MiotPropertyBinding] = {
     # The custom cleanings list grows with every cleaning saved in Mi Home and
     # would push the batched poll reply past the single-datagram limit.
     Property.USER_DEFINE_SWEEP_CONFIG: {"siid": 2, "piid": 42, "polled": False},
+    Property.CARPET_BOOST: {"siid": 2, "piid": 20, "boolean": True},
+    # "Sweep Break Switch": resume an unfinished job after recharging.
+    Property.RESUME_AFTER_CHARGE: {"siid": 2, "piid": 23, "boolean": True},
+    Property.CHILD_LOCK: {"siid": 5, "piid": 1, "boolean": True},
+    Property.DO_NOT_DISTURB: {"siid": 11, "piid": 1, "boolean": True},
+    Property.VOLUME: {"siid": 4, "piid": 2},  # 0-100
+    # Dock settings. The area interval is published as "Frequency Mop Wash No
+    # Tank", yet it is the one the Mi Home app sets on this tank-fed dock.
+    Property.MOP_WASH: {"siid": 2, "piid": 28, "boolean": True},
+    Property.MOP_WASH_FREQUENCY: {"siid": 2, "piid": 29},
+    Property.MOP_WASH_AREA_INTERVAL: {"siid": 2, "piid": 61},
+    Property.MOP_WASH_TIME_INTERVAL: {"siid": 2, "piid": 81},  # minutes
+    Property.MOP_DRYING_TIME: {"siid": 2, "piid": 31},
+    Property.AUTO_DUST_COLLECTION: {"siid": 2, "piid": 32, "boolean": True},
+    Property.AUTO_MOP_DRYING: {"siid": 2, "piid": 34, "boolean": True},
+    Property.MOP_WASH_WATER_MODE: {"siid": 2, "piid": 30},
+    Property.MOP_WASH_TEMPERATURE: {"siid": 2, "piid": 84},
+    Property.DUST_COLLECTION_FREQUENCY: {"siid": 2, "piid": 33},
+    Property.CARPET_CLEANING_METHOD: {"siid": 2, "piid": 73},
 }
 
 _ACTIONS = ModelActions(
@@ -132,4 +151,45 @@ D109GL = ModelSpec(
     room_cleaning=DirectRoomSweep({"siid": 2, "aiid": 16, "in_piid": 15}),
     sweep_routes=dict(SWEEP_ROUTES),
     obstacle_avoidances=dict(OBSTACLE_AVOIDANCES),
+    mop_wash_frequencies={
+        "by_room": 0,
+        "by_area": 1,
+        "by_time": 2,
+    },
+    # The device numbers the intervals out of order (8 m² is 2); listed by area.
+    mop_wash_area_intervals={
+        "five_square_meters": 0,
+        "eight_square_meters": 2,
+        "ten_square_meters": 1,
+        "fifteen_square_meters": 3,
+        "twenty_square_meters": 4,
+        "twenty_five_square_meters": 5,
+    },
+    mop_drying_times={
+        "2_hours": 1,
+        "3_hours": 2,
+        "4_hours": 3,
+    },
+    mop_wash_water_modes={
+        "deep": 0,
+        "daily": 1,
+        "save_water": 2,
+    },
+    mop_wash_temperatures={
+        "normal": 0,
+        "warm": 1,
+        "hot": 2,
+        "smart": 3,
+    },
+    dust_collection_frequencies={
+        "once": 1,
+        "twice": 2,
+        "three_times": 3,
+    },
+    carpet_cleaning_methods={
+        "adaptive": 0,
+        "avoid": 1,
+        "ignore": 2,
+        "cross": 3,
+    },
 )
