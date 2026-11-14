@@ -43,8 +43,8 @@ async def test_d109_picks_the_right_spec(hass, setup_integration):
     assert EntityKey.STOP_DRY_BUTTON in spec.entities
 
 
-async def test_d109_creates_all_eight_selects(hass, setup_integration):
-    """X20 Max gets route, obstacle and dock selects on top of the base 3."""
+async def test_d109_creates_all_twelve_selects(hass, setup_integration):
+    """X20 Max gets route, obstacle, carpet and dock selects on top of the base 3."""
     entity_ids = {s.entity_id for s in hass.states.async_all("select")}
     assert entity_ids == {
         "select.vacuum_mode",
@@ -55,6 +55,10 @@ async def test_d109_creates_all_eight_selects(hass, setup_integration):
         "select.vacuum_mop_washing_frequency",
         "select.vacuum_mop_washing_area_interval",
         "select.vacuum_mop_drying_time",
+        "select.vacuum_mop_washing_water",
+        "select.vacuum_mop_washing_water_temperature",
+        "select.vacuum_auto_empty_frequency",
+        "select.vacuum_carpet_cleaning",
     }
 
 
@@ -254,6 +258,10 @@ async def test_d109_creates_the_setting_switches_and_numbers(hass, setup_integra
         ("select.vacuum_mop_washing_frequency", "by_area"),
         ("select.vacuum_mop_washing_area_interval", "fifteen_square_meters"),
         ("select.vacuum_mop_drying_time", "3_hours"),
+        ("select.vacuum_mop_washing_water", "daily"),
+        ("select.vacuum_mop_washing_water_temperature", "hot"),
+        ("select.vacuum_auto_empty_frequency", "once"),
+        ("select.vacuum_carpet_cleaning", "avoid"),
         ("number.vacuum_volume", "70"),
         ("number.vacuum_mop_washing_time_interval", "20"),
     ],
@@ -303,10 +311,14 @@ async def test_d109_switches_write_a_bool(
             ((2, 61), 2),
         ),
         ("select.vacuum_mop_drying_time", "4_hours", ((2, 31), 3)),
+        ("select.vacuum_mop_washing_water", "save_water", ((2, 30), 2)),
+        ("select.vacuum_mop_washing_water_temperature", "smart", ((2, 84), 3)),
+        ("select.vacuum_auto_empty_frequency", "three_times", ((2, 33), 3)),
+        ("select.vacuum_carpet_cleaning", "cross", ((2, 73), 3)),
     ],
 )
 @pytest.mark.usefixtures("setup_integration")
-async def test_d109_dock_selects_write_the_device_value(
+async def test_d109_setting_selects_write_the_device_value(
     hass, mock_miot_device, entity_id, option, write
 ):
     from xiaomi_vacuum_sdk import PropertyAddress

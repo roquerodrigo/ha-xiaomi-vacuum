@@ -50,4 +50,8 @@ class Property(StrEnum):
     MOP_DRYING_TIME = "mop_drying_time"
     AUTO_DUST_COLLECTION = "auto_dust_collection"
     AUTO_MOP_DRYING = "auto_mop_drying"
+    MOP_WASH_WATER_MODE = "mop_wash_water_mode"
+    MOP_WASH_TEMPERATURE = "mop_wash_temperature"
+    DUST_COLLECTION_FREQUENCY = "dust_collection_frequency"
+    CARPET_CLEANING_METHOD = "carpet_cleaning_method"
     USER_DEFINE_SWEEP_CONFIG = "user_define_sweep_config"

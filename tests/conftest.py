@@ -76,6 +76,10 @@ SAMPLE_STATE: dict[str, Any] = {
     "mop_drying_time": 2,
     "auto_dust_collection": True,
     "auto_mop_drying": True,
+    "mop_wash_water_mode": 1,
+    "mop_wash_temperature": 2,
+    "dust_collection_frequency": 1,
+    "carpet_cleaning_method": 1,
     # No map yet: the cloud fixtures publish one when a test needs it.
     "map_obj_name": None,
 }

@@ -78,6 +78,10 @@ class VacuumState(TypedDict):
     mop_drying_time: NotRequired[int | None]
     auto_dust_collection: NotRequired[bool | None]
     auto_mop_drying: NotRequired[bool | None]
+    mop_wash_water_mode: NotRequired[int | None]
+    mop_wash_temperature: NotRequired[int | None]
+    dust_collection_frequency: NotRequired[int | None]
+    carpet_cleaning_method: NotRequired[int | None]
     # Live fault payload: a JSON fault-ids list (X20 Max) or a plain code (S20+).
     fault_ids: NotRequired[str | None]
     fault: NotRequired[int | None]

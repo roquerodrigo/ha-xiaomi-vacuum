@@ -286,6 +286,40 @@
                     "3_hours": "3 сата",
                     "4_hours": "4 сата"
                 }
+            },
+            "mop_wash_water_mode": {
+                "name": "Вода за прање мопа",
+                "state": {
+                    "deep": "Дубинско",
+                    "daily": "Дневно",
+                    "save_water": "Уштеда воде"
+                }
+            },
+            "mop_wash_temperature": {
+                "name": "Температура воде за прање мопа",
+                "state": {
+                    "normal": "Нормална",
+                    "warm": "Топла",
+                    "hot": "Врућа",
+                    "smart": "Паметна"
+                }
+            },
+            "dust_collection_frequency": {
+                "name": "Учесталост аутоматског пражњења",
+                "state": {
+                    "once": "После сваког чишћења",
+                    "twice": "После 2 чишћења",
+                    "three_times": "После 3 чишћења"
+                }
+            },
+            "carpet_cleaning_method": {
+                "name": "Чишћење тепиха",
+                "state": {
+                    "adaptive": "Прилагодљиво",
+                    "avoid": "Избегавај",
+                    "ignore": "Занемари",
+                    "cross": "Пређи преко"
+                }
             }
         },
         "switch": {

@@ -286,6 +286,40 @@
                     "3_hours": "3 horas",
                     "4_hours": "4 horas"
                 }
+            },
+            "mop_wash_water_mode": {
+                "name": "Água de lavagem do mop",
+                "state": {
+                    "deep": "Profunda",
+                    "daily": "Diária",
+                    "save_water": "Economia de água"
+                }
+            },
+            "mop_wash_temperature": {
+                "name": "Temperatura da água de lavagem do mop",
+                "state": {
+                    "normal": "Normal",
+                    "warm": "Morna",
+                    "hot": "Quente",
+                    "smart": "Inteligente"
+                }
+            },
+            "dust_collection_frequency": {
+                "name": "Frequência do esvaziamento automático",
+                "state": {
+                    "once": "A cada limpeza",
+                    "twice": "A cada 2 limpezas",
+                    "three_times": "A cada 3 limpezas"
+                }
+            },
+            "carpet_cleaning_method": {
+                "name": "Limpeza de tapetes",
+                "state": {
+                    "adaptive": "Adaptativa",
+                    "avoid": "Evitar",
+                    "ignore": "Ignorar",
+                    "cross": "Atravessar"
+                }
             }
         },
         "switch": {

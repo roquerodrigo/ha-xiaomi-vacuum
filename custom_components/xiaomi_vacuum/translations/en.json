@@ -286,6 +286,40 @@
                     "3_hours": "3 hours",
                     "4_hours": "4 hours"
                 }
+            },
+            "mop_wash_water_mode": {
+                "name": "Mop washing water",
+                "state": {
+                    "deep": "Deep",
+                    "daily": "Daily",
+                    "save_water": "Save water"
+                }
+            },
+            "mop_wash_temperature": {
+                "name": "Mop washing water temperature",
+                "state": {
+                    "normal": "Normal",
+                    "warm": "Warm",
+                    "hot": "Hot",
+                    "smart": "Smart"
+                }
+            },
+            "dust_collection_frequency": {
+                "name": "Auto-empty frequency",
+                "state": {
+                    "once": "Every job",
+                    "twice": "Every 2 jobs",
+                    "three_times": "Every 3 jobs"
+                }
+            },
+            "carpet_cleaning_method": {
+                "name": "Carpet cleaning",
+                "state": {
+                    "adaptive": "Adaptive",
+                    "avoid": "Avoid",
+                    "ignore": "Ignore",
+                    "cross": "Cross"
+                }
             }
         },
         "switch": {
