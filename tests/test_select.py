@@ -4,9 +4,9 @@ import pytest
 from homeassistant.const import EntityCategory
 
 
-async def test_setup_creates_5_select_entities(hass, setup_integration):
+async def test_setup_creates_8_select_entities(hass, setup_integration):
     states = hass.states.async_all("select")
-    assert len(states) == 5
+    assert len(states) == 8
 
 
 async def test_select_clean_times_current_option(hass, setup_integration):
@@ -186,6 +186,9 @@ def test_every_select_has_an_authored_icon():
         "mop_water_level",
         "sweep_route",
         "obstacle_avoidance_strategy",
+        "mop_wash_frequency",
+        "mop_wash_area_interval",
+        "mop_drying_time",
     }
     assert set(select_icons) == expected_keys
     assert all(entry["default"].startswith("mdi:") for entry in select_icons.values())

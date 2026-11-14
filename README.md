@@ -47,8 +47,9 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
 | Wash and dry the mop in the dock | — | — | ✅ ⁴ | ✅ |
 | Consumable hours left and reset buttons | — | ✅ | ✅ | ✅ |
 | Mop drying time left and lifetime cleaning statistics | — | — | ✅ | — |
-| Child lock, carpet boost, resume after charging, do not disturb | — | — | ✅ | — |
-| Voice volume | — | — | ✅ | — |
+| Child lock, carpet boost, resume after charging, do not disturb | — | ✅ ⁶ | ✅ | ✅ |
+| Voice volume | — | ✅ ⁶ | ✅ | ✅ |
+| Dock settings: mop washing and its frequency, mop drying time, auto-empty, auto-dry | — | — | — | ✅ |
 
 1. The X20+ room list is read from the cloud map. Rooms left unnamed in Mi
    Home are listed as "Room N", as in the app.
@@ -59,6 +60,8 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
 5. The S40 Pro uses the X20 Max rectangle command path. Real-device user
    testing on 10 November 2026 confirmed that the S40 Pro cleaned 20 selected
    rectangles in response to the zone-cleaning command.
+6. Published by the S40 Pro spec at the X20 Max addresses, not yet confirmed
+   on an S40 Pro unit.
 
 ## Features
 
@@ -165,8 +168,14 @@ the English names are shown below.
 | `button.<name>_wash_mop`, `_dry_mop`, `_stop_drying_mop` | X20+, X20 Max | Washes or dries the mop in the dock |
 | `button.<name>_stop_washing_mop` | X20 Max | Stops washing the mop |
 | `button.<name>_reset_main_brush`, `_reset_side_brush`, `_reset_filter`, `_reset_mop` | S40 Pro, X20+, X20 Max | Resets a consumable after replacing it |
-| `switch.<name>_child_lock`, `_carpet_boost`, `_resume_after_charging`, `_do_not_disturb` | X20+ | Device settings |
-| `number.<name>_volume` | X20+ | Voice volume, 0–100 % |
+| `switch.<name>_child_lock`, `_carpet_boost`, `_resume_after_charging`, `_do_not_disturb` | S40 Pro, X20+, X20 Max | Device settings |
+| `number.<name>_volume` | S40 Pro, X20+, X20 Max | Voice volume, 0–100 % |
+| `switch.<name>_mop_washing` | X20 Max | Washes the mop at the dock during a mopping job |
+| `select.<name>_mop_washing_frequency` | X20 Max | Every room, By area, By time |
+| `select.<name>_mop_washing_area_interval` | X20 Max | 5–25 m² mopped between two washes (*By area*) |
+| `number.<name>_mop_washing_time_interval` | X20 Max | Minutes mopped between two washes (*By time*) |
+| `select.<name>_mop_drying_time` | X20 Max | 2, 3 or 4 hours |
+| `switch.<name>_auto_empty_dust_bin`, `_auto_dry_mop` | X20 Max | Empty the dust bin and dry the mop at the dock after each job |
 
 The vacuum entity also exposes raw MIoT diagnostics as extra state attributes
 under the `xiaomi_vacuum` key.

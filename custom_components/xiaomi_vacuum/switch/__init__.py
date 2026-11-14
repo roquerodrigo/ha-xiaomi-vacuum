@@ -5,9 +5,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..spec import EntityKey  # noqa: TID252
+from .auto_dust_collection import XiaomiVacuumAutoDustCollectionSwitch
+from .auto_mop_drying import XiaomiVacuumAutoMopDryingSwitch
 from .carpet_boost import XiaomiVacuumCarpetBoostSwitch
 from .child_lock import XiaomiVacuumChildLockSwitch
 from .do_not_disturb import XiaomiVacuumDoNotDisturbSwitch
+from .mop_wash import XiaomiVacuumMopWashSwitch
 from .resume_after_charge import XiaomiVacuumResumeAfterChargeSwitch
 
 if TYPE_CHECKING:
@@ -18,9 +21,12 @@ if TYPE_CHECKING:
     from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
 __all__ = [
+    "XiaomiVacuumAutoDustCollectionSwitch",
+    "XiaomiVacuumAutoMopDryingSwitch",
     "XiaomiVacuumCarpetBoostSwitch",
     "XiaomiVacuumChildLockSwitch",
     "XiaomiVacuumDoNotDisturbSwitch",
+    "XiaomiVacuumMopWashSwitch",
     "XiaomiVacuumResumeAfterChargeSwitch",
 ]
 
@@ -29,6 +35,9 @@ _SWITCH_CLASSES: dict[EntityKey, type[XiaomiVacuumEntity]] = {
     EntityKey.CARPET_BOOST_SWITCH: XiaomiVacuumCarpetBoostSwitch,
     EntityKey.RESUME_AFTER_CHARGE_SWITCH: XiaomiVacuumResumeAfterChargeSwitch,
     EntityKey.DO_NOT_DISTURB_SWITCH: XiaomiVacuumDoNotDisturbSwitch,
+    EntityKey.MOP_WASH_SWITCH: XiaomiVacuumMopWashSwitch,
+    EntityKey.AUTO_DUST_COLLECTION_SWITCH: XiaomiVacuumAutoDustCollectionSwitch,
+    EntityKey.AUTO_MOP_DRYING_SWITCH: XiaomiVacuumAutoMopDryingSwitch,
 }
 
 
