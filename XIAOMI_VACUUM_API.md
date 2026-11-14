@@ -445,6 +445,25 @@ release-forward drives the robot off its dock, and the status moves from
 `2 Charging` to `1 Idle`. The integration does not expose this, but it is
 available for anyone who wants a manual-driving control.
 
+## 5.1 Spec of `xiaomi.vacuum.e101gb` (S40C, v1) relative to the S40 Pro
+
+Source: `urn:miot-spec-v2:device:vacuum:0000A006:xiaomi-e101gb:1` (the only
+released revision). A physical unit on firmware `4.5.6_0111`, signed in to the
+Russia cloud, answered every property this integration polls.
+
+Every SIID/PIID/AIID the integration reads or invokes on the S40 Pro is
+identical here, including status codes 1–24. The spec is derived from
+`ov71gl` and only the rows below differ:
+
+| Area | S40C (`e101gb`) |
+|------|-----------------|
+| Dock | retail charging dock E101CDZ, plus a mop tank on the robot. The published spec still lists `start-dust-arrest` (2/18), `start-mop-wash` (2/19), `start-dry` (2/20), `stop-mop-wash` (2/31) and `stop-dry` (2/32). None are wired |
+| Services | the published instance does list `18 Detergent Management` and `19 Dust Bag`. The retail box has neither, so both stay unmapped |
+| Room cleaning | direct `start-vacuum-room-sweep` (2/16, input piid 15), same as the S40 Pro. Property 2/16 on the physical unit returned the named rooms Спальня (3), Кабинет (4), Кухня (5) and Прихожая (9), plus two blank names (7, 8). On 14 November 2026 a room clean started from Home Assistant completed on this unit |
+| Zone cleaning | `start-zone-sweep` (2/37) with the S40 Pro block-list payload. On 14 November 2026 a physical S40C on firmware 4.5.6_0111 cleaned a selected rectangle |
+| Custom cleanings | not wired, same as the S40 Pro |
+| Faults | docked at 95% charge the unit published `Fault Ids` `{"fault":[0]}`. `100027`, `210005` and `210020` were not in that list, so `ignored_fault_codes` and `notice_fault_codes` stay empty |
+
 ## 6. Fault codes and their localized text
 
 The **Device Fault** property (siid 2 / piid 3) reports a **large, device-specific

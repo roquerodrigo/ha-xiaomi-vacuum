@@ -2,7 +2,8 @@
 
 Home Assistant custom integration for the **Xiaomi Robot Vacuum X20 Max**
 (`xiaomi.vacuum.d109gl`), **Xiaomi Robot Vacuum S20+** (`xiaomi.vacuum.b108gl`),
-**Xiaomi Robot Vacuum S40 Pro** (`xiaomi.vacuum.ov71gl`) and the Dreame-built
+**Xiaomi Robot Vacuum S40 Pro** (`xiaomi.vacuum.ov71gl`), **Xiaomi Robot Vacuum
+S40C** (`xiaomi.vacuum.e101gb`) and the Dreame-built
 **Xiaomi Robot Vacuum X20+** (`xiaomi.vacuum.c102gl`), domain
 `xiaomi_vacuum`. Public repo, distributed through the Home Assistant
 Marketplace.

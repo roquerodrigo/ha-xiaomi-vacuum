@@ -75,6 +75,40 @@ _SAMPLE_STATE_D109: dict[str, Any] = SAMPLE_STATE
 #: status 22 is one of the station-assisted washing codes only this model has.
 _SAMPLE_STATE_OV71: dict[str, Any] = {**SAMPLE_STATE, "status": 22}
 
+#: Parsed state a physical S40C published while docked and charging, firmware
+#: 4.5.6_0111. ``map_obj_name`` is omitted: map tests supply their own blob.
+#: The unnamed rooms (ids 7 and 8) are part of that payload.
+_SAMPLE_STATE_E101: dict[str, Any] = {
+    **SAMPLE_STATE,
+    "status": 2,
+    "fault_ids": '{"ts": 1794486090, "fault": [0]}',
+    "sweep_mop_type": 3,
+    "cleaning_area": 0,
+    "cleaning_time": 0,
+    "clean_times": 1,
+    "fan_speed": 4,
+    "mop_water_level": 3,
+    "mop_status": True,
+    "last_clean_time": 1794597704,
+    "sweep_route": 3,
+    "obstacle_avoidance_strategy": 1,
+    "battery_level": 95,
+    "charging_state": 1,
+    "mop_life": 82,
+    "main_brush_life": 95,
+    "side_brush_life": 92,
+    "filter_life": 89,
+    "mop_time_left": 65,
+    "main_brush_time_left": 282,
+    "side_brush_time_left": 182,
+    "filter_time_left": 132,
+    "room_information": (
+        '{"rooms":[{"id":3,"name":"Спальня"},{"id":4,"name":"Кабинет"},'
+        '{"id":5,"name":"Кухня"},{"id":7,"name":""},{"id":8,"name":""},'
+        '{"id":9,"name":"Прихожая"}],"map_uid":3}'
+    ),
+}
+
 #: Parsed-state fixture for the S20+. Uses the plain `fault` property, exposes no
 #: last_clean_time / sweep_route / obstacle_avoidance (the S20+ has none), and the
 #: room-information key maps to the S20+ SIID-6/PIID-10 property.
@@ -155,6 +189,12 @@ MODEL_FIXTURES: dict[str, dict[str, Any]] = {
         "host": "192.168.1.52",
         "name": "S40 Pro",
         "state": _SAMPLE_STATE_OV71,
+    },
+    "xiaomi.vacuum.e101gb": {
+        "mac": "AA:BB:CC:DD:EE:04",
+        "host": "192.168.1.54",
+        "name": "S40C",
+        "state": _SAMPLE_STATE_E101,
     },
     "xiaomi.vacuum.c102gl": {
         "mac": "AA:BB:CC:DD:EE:03",
