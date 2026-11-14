@@ -115,6 +115,18 @@ _PROPERTIES: dict[tuple[str, str], Property] = {
     ("vacuum-extend", "child-lock"): Property.CHILD_LOCK,
     ("do-not-disturb", "enable"): Property.DO_NOT_DISTURB,
     ("audio", "volume"): Property.VOLUME,
+    ("alarm", "volume"): Property.VOLUME,
+    ("vacuum", "carpet-boost"): Property.CARPET_BOOST,
+    ("vacuum", "sweep-break-switch"): Property.RESUME_AFTER_CHARGE,
+    ("physical-controls-locked", "physical-controls-locked"): Property.CHILD_LOCK,
+    ("no-disturb", "no-disturb"): Property.DO_NOT_DISTURB,
+    ("vacuum", "enable-mop-wash"): Property.MOP_WASH,
+    ("vacuum", "frequency-mop-wash"): Property.MOP_WASH_FREQUENCY,
+    ("vacuum", "frequency-mop-wash-no-tank"): Property.MOP_WASH_AREA_INTERVAL,
+    ("vacuum", "frequency-mop-wash-by-time"): Property.MOP_WASH_TIME_INTERVAL,
+    ("vacuum", "drying-time"): Property.MOP_DRYING_TIME,
+    ("vacuum", "auto-dust-arrest"): Property.AUTO_DUST_COLLECTION,
+    ("vacuum", "auto-mop-dry"): Property.AUTO_MOP_DRYING,
     ("battery", "battery-level"): Property.BATTERY_LEVEL,
     ("battery", "charging-state"): Property.CHARGING_STATE,
     ("mop", "mop-life-level"): Property.MOP_LIFE,
@@ -190,6 +202,9 @@ _VALUE_TABLES: dict[Property, str] = {
     Property.MOP_WATER_LEVEL: "mop_water_levels",
     Property.SWEEP_ROUTE: "sweep_routes",
     Property.OBSTACLE_AVOIDANCE_STRATEGY: "obstacle_avoidances",
+    Property.MOP_WASH_FREQUENCY: "mop_wash_frequencies",
+    Property.MOP_WASH_AREA_INTERVAL: "mop_wash_area_intervals",
+    Property.MOP_DRYING_TIME: "mop_drying_times",
 }
 
 #: Where each value table's slugs are translated in ``translations/en.json``.
@@ -200,6 +215,9 @@ _TABLE_TRANSLATIONS: dict[str, tuple[str, ...]] = {
     "mop_water_levels": ("select", "mop_water_level"),
     "sweep_routes": ("select", "sweep_route"),
     "obstacle_avoidances": ("select", "obstacle_avoidance_strategy"),
+    "mop_wash_frequencies": ("select", "mop_wash_frequency"),
+    "mop_wash_area_intervals": ("select", "mop_wash_area_interval"),
+    "mop_drying_times": ("select", "mop_drying_time"),
 }
 
 #: Status descriptions other models publish for an existing slug.

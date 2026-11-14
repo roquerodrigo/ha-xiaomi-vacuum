@@ -254,7 +254,8 @@ Nothing here is declared per model:
 
 **Value tables** (`fan_speeds`, `sweep_mop_types`, `clean_times`,
 `mop_water_levels`, `charging_state_slugs`, `sweep_routes`,
-`obstacle_avoidances`) are per-model fields, filled exactly when the matching
+`obstacle_avoidances`, `mop_wash_frequencies`, `mop_wash_area_intervals`,
+`mop_drying_times`) are per-model fields, filled exactly when the matching
 property is mapped. Shared tables live in `spec/enumerations.py`; copy one
 into the model's own module the moment the new vacuum publishes a different
 one.

@@ -46,6 +46,9 @@ MAPPING_FIELDS: tuple[str, ...] = (
     "charging_state_slugs",
     "sweep_routes",
     "obstacle_avoidances",
+    "mop_wash_frequencies",
+    "mop_wash_area_intervals",
+    "mop_drying_times",
 )
 
 
@@ -68,6 +71,9 @@ class ModelSpec:
     charging_state_slugs: dict[int, str] = field(default_factory=dict)
     sweep_routes: dict[str, int] = field(default_factory=dict)
     obstacle_avoidances: dict[str, int] = field(default_factory=dict)
+    mop_wash_frequencies: dict[str, int] = field(default_factory=dict)
+    mop_wash_area_intervals: dict[str, int] = field(default_factory=dict)
+    mop_drying_times: dict[str, int] = field(default_factory=dict)
     # Fault codes this model publishes permanently for hardware it does not
     # have. The firmware image is shared across a product family, so a unit
     # sold with a reduced dock still runs the station checks and reports their

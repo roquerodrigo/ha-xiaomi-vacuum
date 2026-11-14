@@ -6,6 +6,9 @@ from typing import TYPE_CHECKING
 
 from ..spec import EntityKey  # noqa: TID252
 from .clean_times import XiaomiVacuumCleanTimesSelect
+from .mop_drying_time import XiaomiVacuumMopDryingTimeSelect
+from .mop_wash_area_interval import XiaomiVacuumMopWashAreaIntervalSelect
+from .mop_wash_frequency import XiaomiVacuumMopWashFrequencySelect
 from .mop_water_level import XiaomiVacuumMopWaterLevelSelect
 from .obstacle_avoidance import XiaomiVacuumObstacleAvoidanceSelect
 from .sweep_mop_type import XiaomiVacuumSweepMopTypeSelect
@@ -20,6 +23,9 @@ if TYPE_CHECKING:
 
 __all__ = [
     "XiaomiVacuumCleanTimesSelect",
+    "XiaomiVacuumMopDryingTimeSelect",
+    "XiaomiVacuumMopWashAreaIntervalSelect",
+    "XiaomiVacuumMopWashFrequencySelect",
     "XiaomiVacuumMopWaterLevelSelect",
     "XiaomiVacuumObstacleAvoidanceSelect",
     "XiaomiVacuumSweepMopTypeSelect",
@@ -32,6 +38,9 @@ _SELECT_CLASSES: dict[EntityKey, type[XiaomiVacuumEntity]] = {
     EntityKey.MOP_WATER_LEVEL_SELECT: XiaomiVacuumMopWaterLevelSelect,
     EntityKey.SWEEP_ROUTE_SELECT: XiaomiVacuumSweepRouteSelect,
     EntityKey.OBSTACLE_AVOIDANCE_SELECT: XiaomiVacuumObstacleAvoidanceSelect,
+    EntityKey.MOP_WASH_FREQUENCY_SELECT: XiaomiVacuumMopWashFrequencySelect,
+    EntityKey.MOP_WASH_AREA_INTERVAL_SELECT: XiaomiVacuumMopWashAreaIntervalSelect,
+    EntityKey.MOP_DRYING_TIME_SELECT: XiaomiVacuumMopDryingTimeSelect,
 }
 
 

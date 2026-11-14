@@ -71,6 +71,13 @@ class VacuumState(TypedDict):
     resume_after_charge: NotRequired[int | None]
     do_not_disturb: NotRequired[bool | None]
     volume: NotRequired[int | None]
+    mop_wash: NotRequired[bool | None]
+    mop_wash_frequency: NotRequired[int | None]
+    mop_wash_area_interval: NotRequired[int | None]
+    mop_wash_time_interval: NotRequired[int | None]
+    mop_drying_time: NotRequired[int | None]
+    auto_dust_collection: NotRequired[bool | None]
+    auto_mop_drying: NotRequired[bool | None]
     # Live fault payload: a JSON fault-ids list (X20 Max) or a plain code (S20+).
     fault_ids: NotRequired[str | None]
     fault: NotRequired[int | None]

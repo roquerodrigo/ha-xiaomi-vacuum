@@ -53,6 +53,13 @@ PROPERTY_ENTITIES: Mapping[Property, EntityKey] = MappingProxyType(
         Property.RESUME_AFTER_CHARGE: EntityKey.RESUME_AFTER_CHARGE_SWITCH,
         Property.DO_NOT_DISTURB: EntityKey.DO_NOT_DISTURB_SWITCH,
         Property.VOLUME: EntityKey.VOLUME_NUMBER,
+        Property.MOP_WASH: EntityKey.MOP_WASH_SWITCH,
+        Property.MOP_WASH_FREQUENCY: EntityKey.MOP_WASH_FREQUENCY_SELECT,
+        Property.MOP_WASH_AREA_INTERVAL: EntityKey.MOP_WASH_AREA_INTERVAL_SELECT,
+        Property.MOP_WASH_TIME_INTERVAL: EntityKey.MOP_WASH_TIME_INTERVAL_NUMBER,
+        Property.MOP_DRYING_TIME: EntityKey.MOP_DRYING_TIME_SELECT,
+        Property.AUTO_DUST_COLLECTION: EntityKey.AUTO_DUST_COLLECTION_SWITCH,
+        Property.AUTO_MOP_DRYING: EntityKey.AUTO_MOP_DRYING_SWITCH,
     }
 )
 

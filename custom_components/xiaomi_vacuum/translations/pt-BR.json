@@ -259,6 +259,33 @@
                     "less_collisions": "Menos colisões",
                     "high_coverage": "Maior cobertura"
                 }
+            },
+            "mop_wash_frequency": {
+                "name": "Frequência de lavagem do mop",
+                "state": {
+                    "by_room": "A cada cômodo",
+                    "by_area": "Por área",
+                    "by_time": "Por tempo"
+                }
+            },
+            "mop_wash_area_interval": {
+                "name": "Intervalo de área da lavagem do mop",
+                "state": {
+                    "five_square_meters": "5 m²",
+                    "eight_square_meters": "8 m²",
+                    "ten_square_meters": "10 m²",
+                    "fifteen_square_meters": "15 m²",
+                    "twenty_square_meters": "20 m²",
+                    "twenty_five_square_meters": "25 m²"
+                }
+            },
+            "mop_drying_time": {
+                "name": "Tempo de secagem do mop",
+                "state": {
+                    "2_hours": "2 horas",
+                    "3_hours": "3 horas",
+                    "4_hours": "4 horas"
+                }
             }
         },
         "switch": {
@@ -273,11 +300,23 @@
             },
             "do_not_disturb": {
                 "name": "Não perturbe"
+            },
+            "mop_wash": {
+                "name": "Lavagem do mop"
+            },
+            "auto_dust_collection": {
+                "name": "Esvaziamento automático do coletor"
+            },
+            "auto_mop_drying": {
+                "name": "Secagem automática do mop"
             }
         },
         "number": {
             "volume": {
                 "name": "Volume"
+            },
+            "mop_wash_time_interval": {
+                "name": "Intervalo de tempo da lavagem do mop"
             }
         }
     },

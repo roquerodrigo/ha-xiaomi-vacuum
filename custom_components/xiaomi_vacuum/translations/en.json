@@ -259,6 +259,33 @@
                     "less_collisions": "Less collisions",
                     "high_coverage": "High coverage"
                 }
+            },
+            "mop_wash_frequency": {
+                "name": "Mop washing frequency",
+                "state": {
+                    "by_room": "Every room",
+                    "by_area": "By area",
+                    "by_time": "By time"
+                }
+            },
+            "mop_wash_area_interval": {
+                "name": "Mop washing area interval",
+                "state": {
+                    "five_square_meters": "5 m²",
+                    "eight_square_meters": "8 m²",
+                    "ten_square_meters": "10 m²",
+                    "fifteen_square_meters": "15 m²",
+                    "twenty_square_meters": "20 m²",
+                    "twenty_five_square_meters": "25 m²"
+                }
+            },
+            "mop_drying_time": {
+                "name": "Mop drying time",
+                "state": {
+                    "2_hours": "2 hours",
+                    "3_hours": "3 hours",
+                    "4_hours": "4 hours"
+                }
             }
         },
         "switch": {
@@ -273,11 +300,23 @@
             },
             "do_not_disturb": {
                 "name": "Do not disturb"
+            },
+            "mop_wash": {
+                "name": "Mop washing"
+            },
+            "auto_dust_collection": {
+                "name": "Auto-empty dust bin"
+            },
+            "auto_mop_drying": {
+                "name": "Auto-dry mop"
             }
         },
         "number": {
             "volume": {
                 "name": "Volume"
+            },
+            "mop_wash_time_interval": {
+                "name": "Mop washing time interval"
             }
         }
     },

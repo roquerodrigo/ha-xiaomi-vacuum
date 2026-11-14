@@ -65,6 +65,31 @@ async def test_ov71_creates_all_five_selects(hass, setup_integration_ov71):
     assert "select.s40_pro_obstacle_avoidance" in entity_ids
 
 
+async def test_ov71_has_the_robot_settings_but_no_dock_settings(
+    hass, setup_integration_ov71
+):
+    """Settings its own spec publishes are kept; the plain dock gets none."""
+    switches = {s.entity_id for s in hass.states.async_all("switch")}
+    assert switches == {
+        "switch.s40_pro_carpet_boost",
+        "switch.s40_pro_resume_after_charging",
+        "switch.s40_pro_child_lock",
+        "switch.s40_pro_do_not_disturb",
+    }
+    numbers = {s.entity_id for s in hass.states.async_all("number")}
+    assert numbers == {"number.s40_pro_volume"}
+    for key in (
+        EntityKey.MOP_WASH_SWITCH,
+        EntityKey.MOP_WASH_FREQUENCY_SELECT,
+        EntityKey.MOP_WASH_AREA_INTERVAL_SELECT,
+        EntityKey.MOP_WASH_TIME_INTERVAL_NUMBER,
+        EntityKey.MOP_DRYING_TIME_SELECT,
+        EntityKey.AUTO_DUST_COLLECTION_SWITCH,
+        EntityKey.AUTO_MOP_DRYING_SWITCH,
+    ):
+        assert key not in OV71GL.entities
+
+
 async def test_ov71_has_only_the_consumable_reset_buttons(hass, setup_integration_ov71):
     """Plain charging dock: no dock buttons, only the life resets."""
     entity_ids = {s.entity_id for s in hass.states.async_all("button")}

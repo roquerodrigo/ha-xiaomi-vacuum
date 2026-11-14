@@ -204,6 +204,9 @@ def test_spec_fields_are_immutable():
         "charging_state_slugs": (1, "boom"),
         "sweep_routes": ("quick", 99),
         "obstacle_avoidances": ("less_collisions", 99),
+        "mop_wash_frequencies": ("by_room", 99),
+        "mop_wash_area_intervals": ("five_square_meters", 99),
+        "mop_drying_times": ("2_hours", 99),
     }
     assert set(mutations) == set(MAPPING_FIELDS)
     for field_name, (key, value) in mutations.items():
