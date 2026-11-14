@@ -55,3 +55,7 @@ class EntityKey(StrEnum):
     MOP_DRYING_TIME_SELECT = "mop_drying_time"
     AUTO_DUST_COLLECTION_SWITCH = "auto_dust_collection"
     AUTO_MOP_DRYING_SWITCH = "auto_mop_drying"
+    MOP_WASH_WATER_MODE_SELECT = "mop_wash_water_mode"
+    MOP_WASH_TEMPERATURE_SELECT = "mop_wash_temperature"
+    DUST_COLLECTION_FREQUENCY_SELECT = "dust_collection_frequency"
+    CARPET_CLEANING_METHOD_SELECT = "carpet_cleaning_method"

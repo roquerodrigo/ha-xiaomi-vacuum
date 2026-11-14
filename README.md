@@ -49,7 +49,8 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
 | Mop drying time left and lifetime cleaning statistics | — | — | ✅ | — |
 | Child lock, carpet boost, resume after charging, do not disturb | — | ✅ ⁶ | ✅ | ✅ |
 | Voice volume | — | ✅ ⁶ | ✅ | ✅ |
-| Dock settings: mop washing and its frequency, mop drying time, auto-empty, auto-dry | — | — | — | ✅ |
+| Dock settings: mop washing, its frequency, water and temperature, mop drying time, auto-empty and its frequency, auto-dry | — | — | — | ✅ |
+| Carpet cleaning method select | — | ✅ ⁶ | — | ✅ |
 
 1. The X20+ room list is read from the cloud map. Rooms left unnamed in Mi
    Home are listed as "Room N", as in the app.
@@ -176,6 +177,10 @@ the English names are shown below.
 | `number.<name>_mop_washing_time_interval` | X20 Max | Minutes mopped between two washes (*By time*) |
 | `select.<name>_mop_drying_time` | X20 Max | 2, 3 or 4 hours |
 | `switch.<name>_auto_empty_dust_bin`, `_auto_dry_mop` | X20 Max | Empty the dust bin and dry the mop at the dock after each job |
+| `select.<name>_mop_washing_water` | X20 Max | Deep, Daily, Save water |
+| `select.<name>_mop_washing_water_temperature` | X20 Max | Normal, Warm, Hot, Smart |
+| `select.<name>_auto_empty_frequency` | X20 Max | Every job, Every 2 jobs, Every 3 jobs |
+| `select.<name>_carpet_cleaning` | S40 Pro, X20 Max | Adaptive, Avoid, Ignore, Cross |
 
 The vacuum entity also exposes raw MIoT diagnostics as extra state attributes
 under the `xiaomi_vacuum` key.

@@ -71,6 +71,10 @@ _PROPERTY_MAPPING: dict[Property, MiotPropertyBinding] = {
     Property.MOP_DRYING_TIME: {"siid": 2, "piid": 31},
     Property.AUTO_DUST_COLLECTION: {"siid": 2, "piid": 32, "boolean": True},
     Property.AUTO_MOP_DRYING: {"siid": 2, "piid": 34, "boolean": True},
+    Property.MOP_WASH_WATER_MODE: {"siid": 2, "piid": 30},
+    Property.MOP_WASH_TEMPERATURE: {"siid": 2, "piid": 84},
+    Property.DUST_COLLECTION_FREQUENCY: {"siid": 2, "piid": 33},
+    Property.CARPET_CLEANING_METHOD: {"siid": 2, "piid": 73},
 }
 
 _ACTIONS = ModelActions(
@@ -165,5 +169,27 @@ D109GL = ModelSpec(
         "2_hours": 1,
         "3_hours": 2,
         "4_hours": 3,
+    },
+    mop_wash_water_modes={
+        "deep": 0,
+        "daily": 1,
+        "save_water": 2,
+    },
+    mop_wash_temperatures={
+        "normal": 0,
+        "warm": 1,
+        "hot": 2,
+        "smart": 3,
+    },
+    dust_collection_frequencies={
+        "once": 1,
+        "twice": 2,
+        "three_times": 3,
+    },
+    carpet_cleaning_methods={
+        "adaptive": 0,
+        "avoid": 1,
+        "ignore": 2,
+        "cross": 3,
     },
 )

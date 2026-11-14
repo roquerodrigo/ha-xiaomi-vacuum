@@ -40,7 +40,7 @@ async def test_setup_entry_creates_vacuum_entity(hass, setup_integration):
 
 async def test_setup_entry_creates_select_entities(hass, setup_integration):
     states = hass.states.async_all("select")
-    assert len(states) == 8
+    assert len(states) == 12
 
 
 async def test_unload_entry(hass, setup_integration):

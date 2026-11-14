@@ -207,6 +207,10 @@ def test_spec_fields_are_immutable():
         "mop_wash_frequencies": ("by_room", 99),
         "mop_wash_area_intervals": ("five_square_meters", 99),
         "mop_drying_times": ("2_hours", 99),
+        "mop_wash_water_modes": ("deep", 99),
+        "mop_wash_temperatures": ("normal", 99),
+        "dust_collection_frequencies": ("once", 99),
+        "carpet_cleaning_methods": ("adaptive", 99),
     }
     assert set(mutations) == set(MAPPING_FIELDS)
     for field_name, (key, value) in mutations.items():

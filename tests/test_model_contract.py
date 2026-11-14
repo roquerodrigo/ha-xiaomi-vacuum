@@ -38,6 +38,13 @@ _VALUE_TABLES = {
     Property.MOP_WATER_LEVEL: "mop_water_levels",
     Property.SWEEP_ROUTE: "sweep_routes",
     Property.OBSTACLE_AVOIDANCE_STRATEGY: "obstacle_avoidances",
+    Property.MOP_WASH_FREQUENCY: "mop_wash_frequencies",
+    Property.MOP_WASH_AREA_INTERVAL: "mop_wash_area_intervals",
+    Property.MOP_DRYING_TIME: "mop_drying_times",
+    Property.MOP_WASH_WATER_MODE: "mop_wash_water_modes",
+    Property.MOP_WASH_TEMPERATURE: "mop_wash_temperatures",
+    Property.DUST_COLLECTION_FREQUENCY: "dust_collection_frequencies",
+    Property.CARPET_CLEANING_METHOD: "carpet_cleaning_methods",
     Property.CHARGING_STATE: "charging_state_slugs",
 }
 

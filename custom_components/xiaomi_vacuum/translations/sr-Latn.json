@@ -286,6 +286,40 @@
                     "3_hours": "3 sata",
                     "4_hours": "4 sata"
                 }
+            },
+            "mop_wash_water_mode": {
+                "name": "Voda za pranje mopa",
+                "state": {
+                    "deep": "Dubinsko",
+                    "daily": "Dnevno",
+                    "save_water": "Ušteda vode"
+                }
+            },
+            "mop_wash_temperature": {
+                "name": "Temperatura vode za pranje mopa",
+                "state": {
+                    "normal": "Normalna",
+                    "warm": "Topla",
+                    "hot": "Vruća",
+                    "smart": "Pametna"
+                }
+            },
+            "dust_collection_frequency": {
+                "name": "Učestalost automatskog pražnjenja",
+                "state": {
+                    "once": "Posle svakog čišćenja",
+                    "twice": "Posle 2 čišćenja",
+                    "three_times": "Posle 3 čišćenja"
+                }
+            },
+            "carpet_cleaning_method": {
+                "name": "Čišćenje tepiha",
+                "state": {
+                    "adaptive": "Prilagodljivo",
+                    "avoid": "Izbegavaj",
+                    "ignore": "Zanemari",
+                    "cross": "Pređi preko"
+                }
             }
         },
         "switch": {

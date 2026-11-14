@@ -57,10 +57,11 @@ async def test_ov71_raises_no_unsupported_model_repair(hass, setup_integration_o
     assert registry.async_get_issue(DOMAIN, issue_id) is None
 
 
-async def test_ov71_creates_all_five_selects(hass, setup_integration_ov71):
+async def test_ov71_creates_all_six_selects(hass, setup_integration_ov71):
     states = hass.states.async_all("select")
     entity_ids = {s.entity_id for s in states}
-    assert len(states) == 5
+    assert len(states) == 6
+    assert "select.s40_pro_carpet_cleaning" in entity_ids
     assert "select.s40_pro_sweep_route" in entity_ids
     assert "select.s40_pro_obstacle_avoidance" in entity_ids
 
@@ -86,6 +87,9 @@ async def test_ov71_has_the_robot_settings_but_no_dock_settings(
         EntityKey.MOP_DRYING_TIME_SELECT,
         EntityKey.AUTO_DUST_COLLECTION_SWITCH,
         EntityKey.AUTO_MOP_DRYING_SWITCH,
+        EntityKey.MOP_WASH_WATER_MODE_SELECT,
+        EntityKey.MOP_WASH_TEMPERATURE_SELECT,
+        EntityKey.DUST_COLLECTION_FREQUENCY_SELECT,
     ):
         assert key not in OV71GL.entities
 

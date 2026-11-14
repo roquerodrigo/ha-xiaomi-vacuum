@@ -71,6 +71,18 @@
             },
             "mop_drying_time": {
                 "default": "mdi:timer-sand"
+            },
+            "mop_wash_water_mode": {
+                "default": "mdi:water-pump"
+            },
+            "mop_wash_temperature": {
+                "default": "mdi:water-thermometer"
+            },
+            "dust_collection_frequency": {
+                "default": "mdi:delete-clock"
+            },
+            "carpet_cleaning_method": {
+                "default": "mdi:rug"
             }
         },
         "button": {

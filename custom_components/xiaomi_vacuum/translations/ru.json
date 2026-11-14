@@ -232,6 +232,40 @@
                     "3_hours": "3 часа",
                     "4_hours": "4 часа"
                 }
+            },
+            "mop_wash_water_mode": {
+                "name": "Вода для мойки швабры",
+                "state": {
+                    "deep": "Глубокая",
+                    "daily": "Ежедневная",
+                    "save_water": "Экономия воды"
+                }
+            },
+            "mop_wash_temperature": {
+                "name": "Температура воды для мойки швабры",
+                "state": {
+                    "normal": "Обычная",
+                    "warm": "Тёплая",
+                    "hot": "Горячая",
+                    "smart": "Умная"
+                }
+            },
+            "dust_collection_frequency": {
+                "name": "Частота автоочистки",
+                "state": {
+                    "once": "После каждой уборки",
+                    "twice": "Каждые 2 уборки",
+                    "three_times": "Каждые 3 уборки"
+                }
+            },
+            "carpet_cleaning_method": {
+                "name": "Уборка ковров",
+                "state": {
+                    "adaptive": "Адаптивная",
+                    "avoid": "Избегать",
+                    "ignore": "Игнорировать",
+                    "cross": "Проезжать"
+                }
             }
         },
         "switch": {
