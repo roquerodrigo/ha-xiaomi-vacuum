@@ -134,7 +134,7 @@ async def test_e101_clean_segments_uses_the_direct_room_sweep(hass, setup_model)
 
 
 async def test_e101_clean_zone_uses_the_s40_pro_rectangle_payload(hass, setup_model):
-    """Same 2/37 block list as the S40 Pro. Not yet started on a physical S40C."""
+    """Same 2/37 block list a physical S40C honoured on 14 November 2026."""
     _entry, device = await setup_model(_MODEL)
     device.call_action.reset_mock()
     device.set_property.reset_mock()
