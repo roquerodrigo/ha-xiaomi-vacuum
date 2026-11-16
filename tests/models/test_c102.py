@@ -47,7 +47,7 @@ async def test_c102_picks_the_right_spec(hass, setup_integration_c102):
     assert EntityKey.OBSTACLE_AVOIDANCE_SELECT not in spec.entities
 
 
-MODE_ID = "select.x20_plus_mode"
+MODE_ID = "select.x20_plus_cleanup_mode"
 
 
 async def test_c102_creates_the_mode_and_water_level_selects(
@@ -55,8 +55,8 @@ async def test_c102_creates_the_mode_and_water_level_selects(
 ):
     """There is no clean-times property, so no clean-times select."""
     states = {s.entity_id: s for s in hass.states.async_all("select")}
-    assert set(states) == {MODE_ID, "select.x20_plus_mop_water_level"}
-    water = states["select.x20_plus_mop_water_level"]
+    assert set(states) == {MODE_ID, "select.x20_plus_mopping_water_output"}
+    water = states["select.x20_plus_mopping_water_output"]
     assert water.attributes["options"] == ["level_1", "level_2", "level_3"]
     assert water.state == "level_2"
 
@@ -108,26 +108,26 @@ async def test_c102_creates_the_dock_and_reset_buttons(hass, setup_integration_c
     entity_ids = {b.entity_id for b in hass.states.async_all("button")}
     assert entity_ids == {
         "button.x20_plus_collect_dust",
-        "button.x20_plus_wash_mop",
+        "button.x20_plus_clean_mop",
         "button.x20_plus_dry_mop",
         "button.x20_plus_stop_drying_mop",
         "button.x20_plus_reset_main_brush",
         "button.x20_plus_reset_side_brush",
         "button.x20_plus_reset_filter",
-        "button.x20_plus_reset_mop",
+        "button.x20_plus_reset_mop_pad",
     }
 
 
 @pytest.mark.parametrize(
     ("button", "address"),
     [
-        ("wash_mop", ActionAddress(siid=2, aiid=6)),
+        ("clean_mop", ActionAddress(siid=2, aiid=6)),
         ("dry_mop", ActionAddress(siid=2, aiid=8)),
         ("stop_drying_mop", ActionAddress(siid=2, aiid=9)),
         ("reset_main_brush", ActionAddress(siid=9, aiid=1)),
         ("reset_side_brush", ActionAddress(siid=10, aiid=1)),
         ("reset_filter", ActionAddress(siid=11, aiid=1)),
-        ("reset_mop", ActionAddress(siid=18, aiid=1)),
+        ("reset_mop_pad", ActionAddress(siid=18, aiid=1)),
     ],
 )
 async def test_c102_buttons_fire_their_actions(
@@ -146,7 +146,7 @@ async def test_c102_buttons_fire_their_actions(
         ("sensor.x20_plus_main_brush_time_left", "120"),
         ("sensor.x20_plus_side_brush_time_left", "80"),
         ("sensor.x20_plus_filter_time_left", "300"),
-        ("sensor.x20_plus_mop_time_left", "40"),
+        ("sensor.x20_plus_mop_pad_time_left", "40"),
         ("sensor.x20_plus_drying_time_left", "0"),
         ("sensor.x20_plus_total_cleanings", "878"),
         ("sensor.x20_plus_total_cleaned_area", "16233"),
@@ -173,7 +173,7 @@ async def test_c102_unknown_sensor_value(hass, setup_integration_c102):
     [
         ("switch.x20_plus_child_lock", "off"),
         ("switch.x20_plus_carpet_boost", "on"),
-        ("switch.x20_plus_resume_after_charging", "on"),
+        ("switch.x20_plus_cleanup_resumption", "on"),
         ("switch.x20_plus_do_not_disturb", "on"),
     ],
 )
@@ -188,7 +188,7 @@ async def test_c102_switches_follow_the_device(
     [
         ("switch.x20_plus_child_lock", "turn_on", ((4, 27), 1)),
         ("switch.x20_plus_carpet_boost", "turn_off", ((4, 12), 0)),
-        ("switch.x20_plus_resume_after_charging", "turn_off", ((4, 11), 0)),
+        ("switch.x20_plus_cleanup_resumption", "turn_off", ((4, 11), 0)),
         # The do-not-disturb flag is a real bool on the device.
         ("switch.x20_plus_do_not_disturb", "turn_off", ((5, 1), False)),
     ],

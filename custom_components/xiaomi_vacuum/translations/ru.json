@@ -109,7 +109,7 @@
                     "sweeping": "Уборка",
                     "paused": "Приостановлено",
                     "go_charging": "Возвращается на базу",
-                    "go_wash": "Промывает швабру",
+                    "go_wash": "Очищает швабру",
                     "remote": "Дистанционное управление",
                     "charged": "Заряжен",
                     "building_map": "Создание карты",
@@ -128,9 +128,9 @@
                     "station_assisting_cleaned": "Мойка с помощью станции завершена",
                     "go_charge_in_station_assisting_cleaning": "Возвращается на базу для мойки",
                     "drying": "Сушка швабры",
-                    "dust_collecting": "Опустошение пылесборника",
+                    "dust_collecting": "Сбор пыли",
                     "water_inspecting": "Проверка воды",
-                    "washing_paused": "Мойка швабры приостановлена"
+                    "washing_paused": "Очистка швабры приостановлена"
                 }
             },
             "error": {"name": "Неисправность"},
@@ -150,8 +150,8 @@
         },
         "button": {
             "dust_arrest": {"name": "Собрать пыль"},
-            "start_mop_wash": {"name": "Вымыть швабру"},
-            "stop_mop_wash": {"name": "Остановить мойку швабры"},
+            "start_mop_wash": {"name": "Очистить швабру"},
+            "stop_mop_wash": {"name": "Остановить очистку швабры"},
             "start_dry": {"name": "Высушить швабру"},
             "stop_dry": {"name": "Остановить сушку швабры"},
             "reset_main_brush": {"name": "Сбросить ресурс основной щётки"},
@@ -166,7 +166,7 @@
         "image": {"map": {"name": "Карта"}},
         "select": {
             "sweep_mop_type": {
-                "name": "Режим",
+                "name": "Режим уборки",
                 "state": {
                     "sweep": "Сухая уборка",
                     "mop": "Влажная уборка",
@@ -183,7 +183,7 @@
                 }
             },
             "mop_water_level": {
-                "name": "Уровень подачи воды",
+                "name": "Расход воды для влажной уборки",
                 "state": {
                     "off": "Выключено",
                     "level_1": "Уровень 1",
@@ -192,7 +192,7 @@
                 }
             },
             "sweep_route": {
-                "name": "Тщательность уборки",
+                "name": "Маршрут уборки",
                 "state": {
                     "quick": "Быстрая",
                     "daily": "Стандартная",
@@ -271,7 +271,7 @@
         "switch": {
             "child_lock": {"name": "Блокировка от детей"},
             "carpet_boost": {"name": "Усиление мощности на коврах"},
-            "resume_after_charge": {"name": "Продолжать уборку после зарядки"},
+            "resume_after_charge": {"name": "Возобновление уборки"},
             "do_not_disturb": {"name": "Не беспокоить"},
             "mop_wash": {"name": "Автоочистка швабры"},
             "auto_dust_collection": {"name": "Автоматический сбор пыли"},

@@ -90,10 +90,10 @@
                 "state_attributes": {
                     "fan_speed": {
                         "state": {
-                            "silent": "Mínimo",
-                            "basic": "Baixo",
+                            "silent": "Silencioso",
+                            "basic": "Padrão",
                             "strong": "Forte",
-                            "full_speed": "Máximo"
+                            "full_speed": "Turbo"
                         }
                     }
                 }
@@ -109,7 +109,7 @@
                     "sweeping": "Limpando",
                     "paused": "Pausado",
                     "go_charging": "Voltando à base",
-                    "go_wash": "Lavando o mop",
+                    "go_wash": "Limpando o mop",
                     "remote": "Controle remoto",
                     "charged": "Carregado",
                     "building_map": "Mapeando",
@@ -128,9 +128,9 @@
                     "station_assisting_cleaned": "Lavagem assistida pela base concluída",
                     "go_charge_in_station_assisting_cleaning": "Voltando à base para lavar",
                     "drying": "Secando o mop",
-                    "dust_collecting": "Esvaziando o reservatório de pó",
+                    "dust_collecting": "Coletando pó",
                     "water_inspecting": "Verificando a água",
-                    "washing_paused": "Lavagem do mop pausada"
+                    "washing_paused": "Limpeza do mop pausada"
                 }
             },
             "error": {
@@ -181,10 +181,10 @@
                 "name": "Coletar pó"
             },
             "start_mop_wash": {
-                "name": "Lavar mop"
+                "name": "Limpar mop"
             },
             "stop_mop_wash": {
-                "name": "Parar lavagem do mop"
+                "name": "Parar limpeza do mop"
             },
             "start_dry": {
                 "name": "Secar mop"
@@ -220,7 +220,7 @@
         },
         "select": {
             "sweep_mop_type": {
-                "name": "Modo",
+                "name": "Modo de limpeza",
                 "state": {
                     "sweep": "Aspirar",
                     "mop": "Esfregar",
@@ -237,7 +237,7 @@
                 }
             },
             "mop_water_level": {
-                "name": "Nível de água do mop",
+                "name": "Volume de água para esfregar",
                 "state": {
                     "off": "Desligado",
                     "level_1": "Nível 1",
@@ -246,7 +246,7 @@
                 }
             },
             "sweep_route": {
-                "name": "Rota de limpeza",
+                "name": "Trajeto de limpeza",
                 "state": {
                     "quick": "Rápido",
                     "daily": "Padrão",
@@ -330,7 +330,7 @@
                 "name": "Reforço em tapetes"
             },
             "resume_after_charge": {
-                "name": "Retomar após carregar"
+                "name": "Retomada da limpeza"
             },
             "do_not_disturb": {
                 "name": "Não perturbe"

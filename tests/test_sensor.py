@@ -91,7 +91,7 @@ async def test_error_sensor_unknown_when_fault_missing(hass, setup_integration):
 
 async def test_consumable_life_sensors(hass, setup_integration):
     for eid, expected in (
-        ("sensor.vacuum_mop_life", "85"),
+        ("sensor.vacuum_mop_pad_life", "85"),
         ("sensor.vacuum_main_brush_life", "71"),
         ("sensor.vacuum_side_brush_life", "90"),
         ("sensor.vacuum_filter_life", "70"),

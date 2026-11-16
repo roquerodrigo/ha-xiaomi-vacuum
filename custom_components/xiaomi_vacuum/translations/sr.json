@@ -90,10 +90,10 @@
                 "state_attributes": {
                     "fan_speed": {
                         "state": {
-                            "silent": "Минимум",
-                            "basic": "Ниско",
+                            "silent": "Тихо",
+                            "basic": "Стандардно",
                             "strong": "Јако",
-                            "full_speed": "Максимум"
+                            "full_speed": "Турбо"
                         }
                     }
                 }
@@ -109,7 +109,7 @@
                     "sweeping": "Чишћење",
                     "paused": "Паузирано",
                     "go_charging": "Повратак на базу",
-                    "go_wash": "Прање крпе",
+                    "go_wash": "Чишћење крпе",
                     "remote": "Даљинско управљање",
                     "charged": "Напуњено",
                     "building_map": "Креирање мапе",
@@ -128,9 +128,9 @@
                     "station_assisting_cleaned": "Прање уз помоћ станице завршено",
                     "go_charge_in_station_assisting_cleaning": "Повратак на базу на прање",
                     "drying": "Сушење крпе",
-                    "dust_collecting": "Пражњење посуде за прашину",
+                    "dust_collecting": "Сакупљање прашине",
                     "water_inspecting": "Провера воде",
-                    "washing_paused": "Прање крпе паузирано"
+                    "washing_paused": "Чишћење крпе паузирано"
                 }
             },
             "error": {
@@ -181,10 +181,10 @@
                 "name": "Сакупљање прашине"
             },
             "start_mop_wash": {
-                "name": "Опери крпу"
+                "name": "Очисти крпу"
             },
             "stop_mop_wash": {
-                "name": "Заустави прање крпе"
+                "name": "Заустави чишћење крпе"
             },
             "start_dry": {
                 "name": "Осуши крпу"
@@ -220,7 +220,7 @@
         },
         "select": {
             "sweep_mop_type": {
-                "name": "Режим рада",
+                "name": "Режим чишћења",
                 "state": {
                     "sweep": "Усисавање",
                     "mop": "Брисање",
@@ -237,7 +237,7 @@
                 }
             },
             "mop_water_level": {
-                "name": "Ниво воде за крпу",
+                "name": "Количина воде за брисање",
                 "state": {
                     "off": "Искључено",
                     "level_1": "Ниво 1",
@@ -246,7 +246,7 @@
                 }
             },
             "sweep_route": {
-                "name": "Рута чишћења",
+                "name": "Путања чишћења",
                 "state": {
                     "quick": "Брзо",
                     "daily": "Стандардно",
@@ -330,7 +330,7 @@
                 "name": "Појачање на тепиху"
             },
             "resume_after_charge": {
-                "name": "Настави након пуњења"
+                "name": "Наставак чишћења"
             },
             "do_not_disturb": {
                 "name": "Не узнемиравај"

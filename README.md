@@ -39,16 +39,16 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
 | Mop pad and cleaning-in-progress sensors | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Room cleaning with Home Assistant areas | ✅ | ✅ | ✅ ⁷ | ✅ ¹ | ✅ |
 | Map image | ✅ | ✅ | ✅ | ✅ ² | ✅ |
-| Cleaning mode and mop water level selects | ✅ | ✅ | ✅ | ✅ ³ | ✅ |
+| Cleanup mode and mopping water output selects | ✅ | ✅ | ✅ | ✅ ³ | ✅ |
 | Clean repetitions select | 1–2 | 1–3 | 1–3 | — | 1–3 |
-| Sweep route and obstacle avoidance selects | — | ✅ | ✅ | — | ✅ |
+| Cleanup path and obstacle avoidance selects | — | ✅ | ✅ | — | ✅ |
 | Zone cleaning (`xiaomi_vacuum.clean_zone`) | — | ✅ ⁵ | ✅ ⁷ | — | ✅ |
 | Custom cleanings (`xiaomi_vacuum.start_custom_cleaning`) | — | — | — | — | ✅ |
 | Empty the dust bin into the dock | — | — | — | ✅ | ✅ |
 | Wash and dry the mop in the dock | — | — | — | ✅ ⁴ | ✅ |
 | Consumable hours left and reset buttons | — | ✅ | ✅ | ✅ | ✅ |
 | Mop drying time left and lifetime cleaning statistics | — | — | — | ✅ | — |
-| Child lock, carpet boost, resume after charging, do not disturb | — | ✅ ⁶ | ✅ ⁶ | ✅ | ✅ |
+| Child lock, carpet boost, cleanup resumption, do not disturb | — | ✅ ⁶ | ✅ ⁶ | ✅ | ✅ |
 | Voice volume | — | ✅ ⁶ | ✅ ⁶ | ✅ | ✅ |
 | Dock settings: auto mop cleaning, its frequency, water output and temperature, drying duration, automatic dust collection and its frequency, auto mop drying | — | — | — | — | ✅ |
 | Carpet cleanup preference select | — | ✅ ⁶ | ✅ ⁶ | — | ✅ |
@@ -57,7 +57,7 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
    Home are listed as "Room N", as in the app.
 2. The X20+ map shows the saved floor plan and the dock, without the live robot
    position or path.
-3. The X20+ mop water level has no *Off* option.
+3. The X20+ mopping water output has no *Off* option.
 4. The X20+ dock can start washing the mop but not stop it.
 5. The S40 Pro uses the X20 Max rectangle command path. Real-device user
    testing on 10 November 2026 confirmed that the S40 Pro cleaned 20 selected

@@ -65,7 +65,7 @@ async def test_e101_has_only_the_consumable_reset_buttons(hass, setup_model):
         "button.s40c_reset_main_brush",
         "button.s40c_reset_side_brush",
         "button.s40c_reset_filter",
-        "button.s40c_reset_mop",
+        "button.s40c_reset_mop_pad",
     }
 
 
