@@ -61,7 +61,7 @@ async def test_ov71_creates_all_six_selects(hass, setup_integration_ov71):
     states = hass.states.async_all("select")
     entity_ids = {s.entity_id for s in states}
     assert len(states) == 6
-    assert "select.s40_pro_carpet_cleaning" in entity_ids
+    assert "select.s40_pro_carpet_cleanup_preference" in entity_ids
     assert "select.s40_pro_sweep_route" in entity_ids
     assert "select.s40_pro_obstacle_avoidance" in entity_ids
 

@@ -207,7 +207,7 @@
                 }
             },
             "mop_wash_frequency": {
-                "name": "Частота мойки швабры",
+                "name": "Частота очистки швабры",
                 "state": {
                     "by_room": "После каждой комнаты",
                     "by_area": "По площади",
@@ -215,7 +215,7 @@
                 }
             },
             "mop_wash_area_interval": {
-                "name": "Площадь между мойками швабры",
+                "name": "Площадь между очистками швабры",
                 "state": {
                     "five_square_meters": "5 м²",
                     "eight_square_meters": "8 м²",
@@ -226,7 +226,7 @@
                 }
             },
             "mop_drying_time": {
-                "name": "Время сушки швабры",
+                "name": "Продолжительность сушки",
                 "state": {
                     "2_hours": "2 часа",
                     "3_hours": "3 часа",
@@ -234,7 +234,7 @@
                 }
             },
             "mop_wash_water_mode": {
-                "name": "Вода для мойки швабры",
+                "name": "Расход воды для очистки швабры",
                 "state": {
                     "deep": "Глубокая",
                     "daily": "Ежедневная",
@@ -242,7 +242,7 @@
                 }
             },
             "mop_wash_temperature": {
-                "name": "Температура воды для мойки швабры",
+                "name": "Температура воды для очистки швабры",
                 "state": {
                     "normal": "Обычная",
                     "warm": "Тёплая",
@@ -251,7 +251,7 @@
                 }
             },
             "dust_collection_frequency": {
-                "name": "Частота автоочистки",
+                "name": "Частота сбора пыли",
                 "state": {
                     "once": "После каждой уборки",
                     "twice": "Каждые 2 уборки",
@@ -259,7 +259,7 @@
                 }
             },
             "carpet_cleaning_method": {
-                "name": "Уборка ковров",
+                "name": "Режим уборки ковров",
                 "state": {
                     "adaptive": "Адаптивная",
                     "avoid": "Избегать",
@@ -273,13 +273,13 @@
             "carpet_boost": {"name": "Усиление мощности на коврах"},
             "resume_after_charge": {"name": "Продолжать уборку после зарядки"},
             "do_not_disturb": {"name": "Не беспокоить"},
-            "mop_wash": {"name": "Мойка швабры"},
-            "auto_dust_collection": {"name": "Автоочистка контейнера"},
+            "mop_wash": {"name": "Автоочистка швабры"},
+            "auto_dust_collection": {"name": "Автоматический сбор пыли"},
             "auto_mop_drying": {"name": "Автосушка швабры"}
         },
         "number": {
             "volume": {"name": "Громкость"},
-            "mop_wash_time_interval": {"name": "Время между мойками швабры"}
+            "mop_wash_time_interval": {"name": "Время между очистками швабры"}
         }
     },
     "exceptions": {

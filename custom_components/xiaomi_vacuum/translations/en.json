@@ -261,7 +261,7 @@
                 }
             },
             "mop_wash_frequency": {
-                "name": "Mop washing frequency",
+                "name": "Mop cleaning frequency",
                 "state": {
                     "by_room": "Every room",
                     "by_area": "By area",
@@ -269,7 +269,7 @@
                 }
             },
             "mop_wash_area_interval": {
-                "name": "Mop washing area interval",
+                "name": "Mop cleaning area interval",
                 "state": {
                     "five_square_meters": "5 m²",
                     "eight_square_meters": "8 m²",
@@ -280,7 +280,7 @@
                 }
             },
             "mop_drying_time": {
-                "name": "Mop drying time",
+                "name": "Drying duration",
                 "state": {
                     "2_hours": "2 hours",
                     "3_hours": "3 hours",
@@ -288,7 +288,7 @@
                 }
             },
             "mop_wash_water_mode": {
-                "name": "Mop washing water",
+                "name": "Mop cleaning water output",
                 "state": {
                     "deep": "Deep",
                     "daily": "Daily",
@@ -296,7 +296,7 @@
                 }
             },
             "mop_wash_temperature": {
-                "name": "Mop washing water temperature",
+                "name": "Mop cleaning water temperature",
                 "state": {
                     "normal": "Normal",
                     "warm": "Warm",
@@ -305,7 +305,7 @@
                 }
             },
             "dust_collection_frequency": {
-                "name": "Auto-empty frequency",
+                "name": "Dust collection frequency",
                 "state": {
                     "once": "Every job",
                     "twice": "Every 2 jobs",
@@ -313,7 +313,7 @@
                 }
             },
             "carpet_cleaning_method": {
-                "name": "Carpet cleaning",
+                "name": "Carpet cleanup preference",
                 "state": {
                     "adaptive": "Adaptive",
                     "avoid": "Avoid",
@@ -336,13 +336,13 @@
                 "name": "Do not disturb"
             },
             "mop_wash": {
-                "name": "Mop washing"
+                "name": "Auto mop cleaning"
             },
             "auto_dust_collection": {
-                "name": "Auto-empty dust bin"
+                "name": "Automatic dust collection"
             },
             "auto_mop_drying": {
-                "name": "Auto-dry mop"
+                "name": "Auto mop drying"
             }
         },
         "number": {
@@ -350,7 +350,7 @@
                 "name": "Volume"
             },
             "mop_wash_time_interval": {
-                "name": "Mop washing time interval"
+                "name": "Mop cleaning time interval"
             }
         }
     },
