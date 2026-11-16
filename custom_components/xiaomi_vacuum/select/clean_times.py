@@ -10,6 +10,7 @@ class XiaomiVacuumCleanTimesSelect(_XiaomiVacuumSelect):
     """Select how many times the vacuum repeats a cleaning task."""
 
     _attr_translation_key = "clean_times"
+    _attr_entity_category = None
 
     _property_name = Property.CLEAN_TIMES
 

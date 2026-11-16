@@ -26,6 +26,7 @@ class XiaomiVacuumSweepMopTypeSelect(_XiaomiVacuumSelect):
     """
 
     _attr_translation_key = "sweep_mop_type"
+    _attr_entity_category = None
 
     _property_name = Property.SWEEP_MOP_TYPE
 

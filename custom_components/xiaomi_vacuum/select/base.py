@@ -23,7 +23,7 @@ class _XiaomiVacuumSelect(XiaomiVacuumEntity, SelectEntity):
     device actually supports.
     """
 
-    _attr_entity_category = EntityCategory.CONFIG
+    _attr_entity_category: EntityCategory | None = EntityCategory.CONFIG
 
     _property_name: Property
 

@@ -40,13 +40,24 @@ async def test_select_options_listed(hass, setup_integration):
     assert "two_times" in state.attributes["options"]
 
 
-async def test_select_entity_category_is_config(hass, setup_integration):
+@pytest.mark.parametrize(
+    ("entity_id", "expected_category"),
+    [
+        ("select.vacuum_cleanup_mode", None),
+        ("select.vacuum_mopping_water_output", EntityCategory.CONFIG),
+        ("select.vacuum_cleanup_times", None),
+        ("select.vacuum_cleanup_path", EntityCategory.CONFIG),
+        ("select.vacuum_obstacle_avoidance", EntityCategory.CONFIG),
+    ],
+)
+async def test_select_entity_category(
+    hass, setup_integration, entity_id, expected_category
+):
     from homeassistant.helpers.entity_registry import async_get
 
-    er = async_get(hass)
-    entry = er.async_get("select.vacuum_cleanup_times")
+    entry = async_get(hass).async_get(entity_id)
     assert entry is not None
-    assert entry.entity_category == EntityCategory.CONFIG
+    assert entry.entity_category == expected_category
 
 
 async def test_select_option_calls_set_property(
