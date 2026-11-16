@@ -26,6 +26,7 @@ def test_registry_lists_all_supported_models():
         "xiaomi.vacuum.d109gl",
         "xiaomi.vacuum.b108gl",
         "xiaomi.vacuum.ov71gl",
+        "xiaomi.vacuum.e101gb",
         "xiaomi.vacuum.c102gl",
     }
     assert set(MODELS) == set(SUPPORTED_MODELS)

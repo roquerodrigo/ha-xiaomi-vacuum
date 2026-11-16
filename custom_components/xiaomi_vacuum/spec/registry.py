@@ -8,6 +8,7 @@ from ..const import LOGGER  # noqa: TID252
 from .b108gl import B108GL
 from .c102gl import C102GL
 from .d109gl import D109GL
+from .e101gb import E101GB
 from .ov71gl import OV71GL
 
 if TYPE_CHECKING:
@@ -17,6 +18,7 @@ MODELS: dict[str, ModelSpec] = {
     D109GL.model: D109GL,
     B108GL.model: B108GL,
     OV71GL.model: OV71GL,
+    E101GB.model: E101GB,
     C102GL.model: C102GL,
 }
 
