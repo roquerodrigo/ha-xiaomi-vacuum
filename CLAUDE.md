@@ -126,7 +126,8 @@ and the release job (`roquerodrigo/release-autopilot`, then
   succeeds on a push to `main`. It is decoupled from `ci.yml`, not a job in
   it, so a red CI never cuts a release.
 - `codeql.yml` — weekly (Sunday) plus every push/PR.
-- `auto-assign.yml` — new issues and PRs, plus a daily cron sweep. Uses
+- `auto-assign.yml` — opened/reopened issues and PRs (plus manual dispatch,
+  no schedule) assign the maintainer and request their review. Uses
   `pull_request_target`, so it needs no checkout of fork code.
 
 Required checks are named `<job id> / <workflow job name>` — renaming a job id
