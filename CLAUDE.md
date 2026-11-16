@@ -69,6 +69,66 @@ here.
 - **`translations/`** — one JSON file per locale, `en.json` the source; all
   user-facing strings live here, never hardcoded in Python.
 
+## Generic vs model-specific
+
+Most contributions come from someone who owns one model and fixes or extends
+it for that model. Every change must first decide where it belongs: put it in
+the wrong place and one vacuum's quirk reaches every vacuum, or a shared
+capability gets reimplemented per model. Apply this section when writing a
+change **and** when reviewing a pull request.
+
+**The rule: mechanisms are generic, facts are per model.**
+
+| Generic — every model runs it | Per model — `spec/<model>.py` |
+|---|---|
+| Entity classes, platforms, vacuum services, `send_command` dispatch | SIID/PIID/AIID addresses and their encoding (`mask`, `boolean`, `polled`) |
+| Reading and writing a property, the optimistic-update pattern | Value tables (fan speeds, modes, intervals...) and the status table |
+| The coordinators, the API client, the cloud client and its features | Fault code sets: phantom (`ignored_fault_codes`), notices (`notice_fault_codes`) |
+| The `ModelSpec` fields and the behaviour strategies themselves | Which actions are wired, which strategy the model uses (room cleaning, map format) |
+
+1. **Generic code never knows a model.** No test of the model string, and no
+   model-specific address, status code, fault code or command name outside
+   `spec/<model>.py`. A capability is gated by data: the model maps the
+   property or defines the action (`entity_requirements.py`,
+   `send_commands.py`). A hardcoded set of command names or codes in
+   `vacuum/`, `api/` or a platform is the smell to look for.
+2. **Data differs → a `ModelSpec` field; behaviour differs → a strategy.**
+   A new field names a concept any model could have (`notice_fault_codes`),
+   never a switch for one model's feature. When models need different code
+   paths, add a subclass under `spec/room_cleaning/`, `spec/map_format/` or
+   `spec/fault_reading/`, chosen by the spec.
+3. **Device payloads are decoded once**, by the strategy that owns them.
+   Consumers ask the spec (`live_fault_code`, `cleaning_job_signal`, ...);
+   they never re-parse the `fault_ids` JSON or re-derive what a status
+   means. If a consumer needs more (every active code, not just the first),
+   extend the strategy.
+4. **A generic feature works on every model, or degrades gracefully** (no
+   entity, a translated refusal), and its tests cover every
+   `MODEL_FIXTURES` entry. Shared touchpoints — `vacuum/cleaner.py`,
+   `api/client.py`, the coordinators — serve all models: a change made there
+   for one model must be expressed through the spec, and must leave every
+   other code path untouched.
+5. **Model facts need evidence from that model**: a physical unit (the value
+   observed, the firmware), or the verification rule of `ADDING_A_MODEL.md`
+   §3.1 (the model's own published spec at the same address, plus a sibling's
+   verification). Spec-only claims get a footnote in the README matrix. An
+   observation never spreads to other models: a fault code seen on the S40
+   Pro does not go into the X20 Max.
+6. **Derived specs inherit.** `ov71gl.py` is `replace(D109GL, ...)`, and
+   models derived from the S40 Pro inherit from it in turn. Anything added
+   to a parent reaches every descendant, so review each one and remove what
+   its hardware lacks. A change meant for one model goes in that model's
+   module, not in its parent.
+7. **Mirror the device, don't add policy.** The integration reports what the
+   firmware publishes and forwards commands. It does not duplicate safeguards
+   the firmware already enforces (refusing a start the robot itself refuses)
+   or invent interpretations nobody observed on a device.
+
+Questions for every review: does generic code now know about a specific
+model? Is every model fact backed by evidence from that model? Was a change
+to a parent spec reviewed for its descendants? Can a generic change break or
+silently no-op on a model the author does not own?
+
 ## Environment & tooling
 
 - Python **>= 3.14.2**, dependency management via **`uv`** (`uv.lock`
