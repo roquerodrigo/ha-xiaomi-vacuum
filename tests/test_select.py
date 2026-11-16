@@ -10,20 +10,20 @@ async def test_setup_creates_12_select_entities(hass, setup_integration):
 
 
 async def test_select_clean_times_current_option(hass, setup_integration):
-    state = hass.states.get("select.vacuum_clean_times")
+    state = hass.states.get("select.vacuum_cleanup_times")
     assert state is not None
     # clean_times:1 -> "one_time"
     assert state.state == "one_time"
 
 
 async def test_select_mop_water_level_current_option(hass, setup_integration):
-    state = hass.states.get("select.vacuum_mop_water_level")
+    state = hass.states.get("select.vacuum_mopping_water_output")
     # mop_water_level:1 -> "level_1"
     assert state.state == "level_1"
 
 
 async def test_select_sweep_route(hass, setup_integration):
-    state = hass.states.get("select.vacuum_sweep_route")
+    state = hass.states.get("select.vacuum_cleanup_path")
     # sweep_route:2 -> "daily"
     assert state.state == "daily"
 
@@ -35,7 +35,7 @@ async def test_select_obstacle_avoidance(hass, setup_integration):
 
 
 async def test_select_options_listed(hass, setup_integration):
-    state = hass.states.get("select.vacuum_clean_times")
+    state = hass.states.get("select.vacuum_cleanup_times")
     assert "one_time" in state.attributes["options"]
     assert "two_times" in state.attributes["options"]
 
@@ -44,7 +44,7 @@ async def test_select_entity_category_is_config(hass, setup_integration):
     from homeassistant.helpers.entity_registry import async_get
 
     er = async_get(hass)
-    entry = er.async_get("select.vacuum_clean_times")
+    entry = er.async_get("select.vacuum_cleanup_times")
     assert entry is not None
     assert entry.entity_category == EntityCategory.CONFIG
 
@@ -56,7 +56,7 @@ async def test_select_option_calls_set_property(
     await hass.services.async_call(
         "select",
         "select_option",
-        {"entity_id": "select.vacuum_clean_times", "option": "two_times"},
+        {"entity_id": "select.vacuum_cleanup_times", "option": "two_times"},
         blocking=True,
     )
     assert mock_miot_device.set_property.called
@@ -68,10 +68,10 @@ async def test_select_option_optimistic_update(
     await hass.services.async_call(
         "select",
         "select_option",
-        {"entity_id": "select.vacuum_sweep_route", "option": "careful"},
+        {"entity_id": "select.vacuum_cleanup_path", "option": "careful"},
         blocking=True,
     )
-    state = hass.states.get("select.vacuum_sweep_route")
+    state = hass.states.get("select.vacuum_cleanup_path")
     assert state.state == "careful"
 
 
@@ -86,7 +86,7 @@ async def test_sweep_mop_type_sweep_allowed_without_mop_pad(
     await hass.services.async_call(
         "select",
         "select_option",
-        {"entity_id": "select.vacuum_mode", "option": "sweep"},
+        {"entity_id": "select.vacuum_cleanup_mode", "option": "sweep"},
         blocking=True,
     )
     assert mock_miot_device.set_property.called
@@ -106,7 +106,7 @@ async def test_sweep_mop_type_mop_rejected_without_mop_pad(
         await hass.services.async_call(
             "select",
             "select_option",
-            {"entity_id": "select.vacuum_mode", "option": "sweep_mop"},
+            {"entity_id": "select.vacuum_cleanup_mode", "option": "sweep_mop"},
             blocking=True,
         )
     # The write must not have been sent to the device.
@@ -128,7 +128,7 @@ async def test_sweep_mop_type_mop_rejected_when_pad_reported_as_int(
         await hass.services.async_call(
             "select",
             "select_option",
-            {"entity_id": "select.vacuum_mode", "option": "mop"},
+            {"entity_id": "select.vacuum_cleanup_mode", "option": "mop"},
             blocking=True,
         )
     mock_miot_device.set_property.assert_not_called()
@@ -145,7 +145,7 @@ async def test_sweep_mop_type_mop_allowed_when_pad_state_unknown(
     await hass.services.async_call(
         "select",
         "select_option",
-        {"entity_id": "select.vacuum_mode", "option": "sweep_mop"},
+        {"entity_id": "select.vacuum_cleanup_mode", "option": "sweep_mop"},
         blocking=True,
     )
     assert mock_miot_device.set_property.called
@@ -159,7 +159,7 @@ async def test_sweep_mop_type_mop_allowed_with_mop_pad(
     await hass.services.async_call(
         "select",
         "select_option",
-        {"entity_id": "select.vacuum_mode", "option": "sweep_mop"},
+        {"entity_id": "select.vacuum_cleanup_mode", "option": "sweep_mop"},
         blocking=True,
     )
     assert mock_miot_device.set_property.called

@@ -62,7 +62,7 @@ async def test_ov71_creates_all_six_selects(hass, setup_integration_ov71):
     entity_ids = {s.entity_id for s in states}
     assert len(states) == 6
     assert "select.s40_pro_carpet_cleanup_preference" in entity_ids
-    assert "select.s40_pro_sweep_route" in entity_ids
+    assert "select.s40_pro_cleanup_path" in entity_ids
     assert "select.s40_pro_obstacle_avoidance" in entity_ids
 
 
@@ -73,7 +73,7 @@ async def test_ov71_has_the_robot_settings_but_no_dock_settings(
     switches = {s.entity_id for s in hass.states.async_all("switch")}
     assert switches == {
         "switch.s40_pro_carpet_boost",
-        "switch.s40_pro_resume_after_charging",
+        "switch.s40_pro_cleanup_resumption",
         "switch.s40_pro_child_lock",
         "switch.s40_pro_do_not_disturb",
     }
@@ -101,13 +101,13 @@ async def test_ov71_has_only_the_consumable_reset_buttons(hass, setup_integratio
         "button.s40_pro_reset_main_brush",
         "button.s40_pro_reset_side_brush",
         "button.s40_pro_reset_filter",
-        "button.s40_pro_reset_mop",
+        "button.s40_pro_reset_mop_pad",
     }
 
 
 async def test_ov71_inherits_the_consumable_hours_left(hass, setup_integration_ov71):
     """Its own spec publishes them at the X20 Max's addresses."""
-    for consumable in ("mop", "main_brush", "side_brush", "filter"):
+    for consumable in ("mop_pad", "main_brush", "side_brush", "filter"):
         state = hass.states.get(f"sensor.s40_pro_{consumable}_time_left")
         assert state is not None
         assert state.state not in ("unknown", "unavailable")
@@ -135,7 +135,7 @@ async def test_ov71_send_command_has_no_dock_commands(hass, setup_integration_ov
 
 
 async def test_ov71_clean_times_offers_three_repetitions(hass, setup_integration_ov71):
-    select = hass.states.get("select.s40_pro_clean_times")
+    select = hass.states.get("select.s40_pro_cleanup_times")
     assert select is not None
     assert select.attributes["options"] == ["one_time", "two_times", "three_times"]
 

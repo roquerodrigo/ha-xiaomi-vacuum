@@ -47,7 +47,7 @@ async def test_b108_has_no_dust_arrest_button(hass, setup_integration_b108):
 
 async def test_b108_mop_water_exposes_off_option(hass, setup_integration_b108):
     """S20+ exposes an explicit 'off' (0) mop-water level that the X20 Max lacks."""
-    select = hass.states.get("select.s20_living_room_mop_water_level")
+    select = hass.states.get("select.s20_living_room_mopping_water_output")
     assert select is not None
     assert "off" in select.attributes["options"]
 

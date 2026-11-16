@@ -47,10 +47,10 @@ async def test_d109_creates_all_twelve_selects(hass, setup_integration):
     """X20 Max gets route, obstacle, carpet and dock selects on top of the base 3."""
     entity_ids = {s.entity_id for s in hass.states.async_all("select")}
     assert entity_ids == {
-        "select.vacuum_mode",
-        "select.vacuum_clean_times",
-        "select.vacuum_mop_water_level",
-        "select.vacuum_sweep_route",
+        "select.vacuum_cleanup_mode",
+        "select.vacuum_cleanup_times",
+        "select.vacuum_mopping_water_output",
+        "select.vacuum_cleanup_path",
         "select.vacuum_obstacle_avoidance",
         "select.vacuum_mop_cleaning_frequency",
         "select.vacuum_mop_cleaning_area_interval",
@@ -67,21 +67,21 @@ async def test_d109_creates_the_dock_and_reset_buttons(hass, setup_integration):
     entity_ids = {s.entity_id for s in hass.states.async_all("button")}
     assert entity_ids == {
         "button.vacuum_collect_dust",
-        "button.vacuum_wash_mop",
-        "button.vacuum_stop_washing_mop",
+        "button.vacuum_clean_mop",
+        "button.vacuum_stop_cleaning_mop",
         "button.vacuum_dry_mop",
         "button.vacuum_stop_drying_mop",
         "button.vacuum_reset_main_brush",
         "button.vacuum_reset_side_brush",
         "button.vacuum_reset_filter",
-        "button.vacuum_reset_mop",
+        "button.vacuum_reset_mop_pad",
     }
 
 
 @pytest.mark.parametrize(
     ("button", "address"),
     [
-        ("reset_mop", ActionAddress(siid=9, aiid=1)),
+        ("reset_mop_pad", ActionAddress(siid=9, aiid=1)),
         ("reset_main_brush", ActionAddress(siid=12, aiid=1)),
         ("reset_side_brush", ActionAddress(siid=13, aiid=1)),
         ("reset_filter", ActionAddress(siid=14, aiid=1)),
@@ -100,7 +100,7 @@ async def test_d109_reset_buttons_fire_the_consumable_actions(
 @pytest.mark.parametrize(
     ("entity_id", "expected"),
     [
-        ("sensor.vacuum_mop_time_left", "68"),
+        ("sensor.vacuum_mop_pad_time_left", "68"),
         ("sensor.vacuum_main_brush_time_left", "213"),
         ("sensor.vacuum_side_brush_time_left", "180"),
         ("sensor.vacuum_filter_time_left", "105"),
@@ -132,7 +132,7 @@ def test_d109_reads_the_consumable_hours_left_next_to_the_life_level():
 
 async def test_d109_mop_water_level_includes_off_option(hass, setup_integration):
     """X20 Max publishes 0 = Off for mop-water level (spec v2, siid 2 / piid 10)."""
-    select = hass.states.get("select.vacuum_mop_water_level")
+    select = hass.states.get("select.vacuum_mopping_water_output")
     assert select is not None
     assert "off" in select.attributes["options"]
 
@@ -231,7 +231,7 @@ async def test_d109_creates_the_setting_switches_and_numbers(hass, setup_integra
     switches = {s.entity_id for s in hass.states.async_all("switch")}
     assert switches == {
         "switch.vacuum_carpet_boost",
-        "switch.vacuum_resume_after_charging",
+        "switch.vacuum_cleanup_resumption",
         "switch.vacuum_child_lock",
         "switch.vacuum_do_not_disturb",
         "switch.vacuum_auto_mop_cleaning",
@@ -249,7 +249,7 @@ async def test_d109_creates_the_setting_switches_and_numbers(hass, setup_integra
     ("entity_id", "state"),
     [
         ("switch.vacuum_carpet_boost", "off"),
-        ("switch.vacuum_resume_after_charging", "on"),
+        ("switch.vacuum_cleanup_resumption", "on"),
         ("switch.vacuum_child_lock", "off"),
         ("switch.vacuum_do_not_disturb", "on"),
         ("switch.vacuum_auto_mop_cleaning", "on"),
@@ -276,7 +276,7 @@ async def test_d109_settings_follow_the_device(
     ("entity_id", "service", "write"),
     [
         ("switch.vacuum_carpet_boost", "turn_on", ((2, 20), True)),
-        ("switch.vacuum_resume_after_charging", "turn_off", ((2, 23), False)),
+        ("switch.vacuum_cleanup_resumption", "turn_off", ((2, 23), False)),
         ("switch.vacuum_child_lock", "turn_on", ((5, 1), True)),
         ("switch.vacuum_do_not_disturb", "turn_off", ((11, 1), False)),
         ("switch.vacuum_auto_mop_cleaning", "turn_off", ((2, 28), False)),
