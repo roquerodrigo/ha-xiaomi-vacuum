@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import pytest
 from homeassistant.components.sensor import SensorDeviceClass
-from homeassistant.const import PERCENTAGE
+from homeassistant.const import PERCENTAGE, EntityCategory
+from homeassistant.helpers.entity_registry import async_get
 
 
 async def test_battery_sensor_state(hass, setup_integration):
@@ -137,3 +139,25 @@ async def test_error_code_sensor(hass, setup_integration):
     coordinator.async_set_updated_data({**coordinator.data, "fault": 210009})
     await hass.async_block_till_done()
     assert hass.states.get("sensor.vacuum_error_code").state == "210009"
+
+
+@pytest.mark.parametrize(
+    ("entity_id", "expected_category"),
+    [
+        ("sensor.vacuum_status", None),
+        ("sensor.vacuum_battery", None),
+        ("sensor.vacuum_error", None),
+        ("sensor.vacuum_main_brush_life", None),
+        ("sensor.vacuum_side_brush_life", None),
+        ("sensor.vacuum_filter_life", None),
+        ("sensor.vacuum_mop_pad_life", None),
+        ("sensor.vacuum_error_code", EntityCategory.DIAGNOSTIC),
+        ("sensor.vacuum_main_brush_time_left", EntityCategory.DIAGNOSTIC),
+    ],
+)
+async def test_sensor_entity_category(
+    hass, setup_integration, entity_id, expected_category
+):
+    entry = async_get(hass).async_get(entity_id)
+    assert entry is not None
+    assert entry.entity_category == expected_category

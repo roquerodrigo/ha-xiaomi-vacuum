@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import EntityCategory
 
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
@@ -21,7 +20,6 @@ class XiaomiVacuumErrorSensor(XiaomiVacuumEntity, SensorEntity):
     """
 
     _attr_translation_key = "error"
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def unique_id(self) -> str:

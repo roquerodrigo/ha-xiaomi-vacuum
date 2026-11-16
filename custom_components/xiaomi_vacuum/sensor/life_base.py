@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import ClassVar, cast
 
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
-from homeassistant.const import PERCENTAGE, EntityCategory
+from homeassistant.const import PERCENTAGE
 
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
@@ -15,7 +15,6 @@ class _XiaomiVacuumLifeSensor(XiaomiVacuumEntity, SensorEntity):
 
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     _property_name: ClassVar[str]
 

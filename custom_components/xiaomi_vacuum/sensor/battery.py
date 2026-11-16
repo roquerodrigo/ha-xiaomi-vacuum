@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
-from homeassistant.const import PERCENTAGE, EntityCategory
+from homeassistant.const import PERCENTAGE
 
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
 
@@ -13,7 +13,6 @@ class XiaomiVacuumBatterySensor(XiaomiVacuumEntity, SensorEntity):
 
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_native_unit_of_measurement = PERCENTAGE
-    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     @property
     def unique_id(self) -> str:
