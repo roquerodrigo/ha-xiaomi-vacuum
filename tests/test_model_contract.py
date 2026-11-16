@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 from homeassistant.components.vacuum.const import VacuumActivity
 from homeassistant.helpers import entity_registry as er
+from xiaomi_vacuum_sdk import ActionAddress
 
 from custom_components.xiaomi_vacuum.binary_sensor import _BINARY_SENSOR_CLASSES
 from custom_components.xiaomi_vacuum.button import _BUTTON_CLASSES
@@ -148,3 +149,27 @@ async def test_setup_model_sets_up_the_requested_model(hass, model, setup_model)
     entry, device = await setup_model(model)
     assert entry.runtime_data.spec is MODELS[model]
     assert device.info.return_value.model == model
+
+
+async def test_every_send_command_reaches_the_device(
+    hass, model, setup_integration_of_model, mock_miot_device_of_model
+):
+    registry = er.async_get(hass)
+    vacuum_entity_id = next(
+        entry.entity_id
+        for entry in er.async_entries_for_config_entry(
+            registry, setup_integration_of_model.entry_id
+        )
+        if entry.domain == "vacuum"
+    )
+    for command, action in MODELS[model].send_commands.items():
+        mock_miot_device_of_model.call_action.reset_mock()
+        await hass.services.async_call(
+            "vacuum",
+            "send_command",
+            {"entity_id": vacuum_entity_id, "command": command},
+            blocking=True,
+        )
+        mock_miot_device_of_model.call_action.assert_any_call(
+            ActionAddress(siid=action["siid"], aiid=action["aiid"])
+        )
