@@ -50,8 +50,8 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
 | Mop drying time left and lifetime cleaning statistics | — | — | — | ✅ | — |
 | Child lock, carpet boost, resume after charging, do not disturb | — | ✅ ⁶ | ✅ ⁶ | ✅ | ✅ |
 | Voice volume | — | ✅ ⁶ | ✅ ⁶ | ✅ | ✅ |
-| Dock settings: mop washing, its frequency, water and temperature, mop drying time, auto-empty and its frequency, auto-dry | — | — | — | — | ✅ |
-| Carpet cleaning method select | — | ✅ ⁶ | ✅ ⁶ | — | ✅ |
+| Dock settings: auto mop cleaning, its frequency, water output and temperature, drying duration, automatic dust collection and its frequency, auto mop drying | — | — | — | — | ✅ |
+| Carpet cleanup preference select | — | ✅ ⁶ | ✅ ⁶ | — | ✅ |
 
 1. The X20+ room list is read from the cloud map. Rooms left unnamed in Mi
    Home are listed as "Room N", as in the app.

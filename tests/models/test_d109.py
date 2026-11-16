@@ -52,13 +52,13 @@ async def test_d109_creates_all_twelve_selects(hass, setup_integration):
         "select.vacuum_mop_water_level",
         "select.vacuum_sweep_route",
         "select.vacuum_obstacle_avoidance",
-        "select.vacuum_mop_washing_frequency",
-        "select.vacuum_mop_washing_area_interval",
-        "select.vacuum_mop_drying_time",
-        "select.vacuum_mop_washing_water",
-        "select.vacuum_mop_washing_water_temperature",
-        "select.vacuum_auto_empty_frequency",
-        "select.vacuum_carpet_cleaning",
+        "select.vacuum_mop_cleaning_frequency",
+        "select.vacuum_mop_cleaning_area_interval",
+        "select.vacuum_drying_duration",
+        "select.vacuum_mop_cleaning_water_output",
+        "select.vacuum_mop_cleaning_water_temperature",
+        "select.vacuum_dust_collection_frequency",
+        "select.vacuum_carpet_cleanup_preference",
     }
 
 
@@ -234,14 +234,14 @@ async def test_d109_creates_the_setting_switches_and_numbers(hass, setup_integra
         "switch.vacuum_resume_after_charging",
         "switch.vacuum_child_lock",
         "switch.vacuum_do_not_disturb",
-        "switch.vacuum_mop_washing",
-        "switch.vacuum_auto_empty_dust_bin",
-        "switch.vacuum_auto_dry_mop",
+        "switch.vacuum_auto_mop_cleaning",
+        "switch.vacuum_automatic_dust_collection",
+        "switch.vacuum_auto_mop_drying",
     }
     numbers = {s.entity_id for s in hass.states.async_all("number")}
     assert numbers == {
         "number.vacuum_volume",
-        "number.vacuum_mop_washing_time_interval",
+        "number.vacuum_mop_cleaning_time_interval",
     }
 
 
@@ -252,18 +252,18 @@ async def test_d109_creates_the_setting_switches_and_numbers(hass, setup_integra
         ("switch.vacuum_resume_after_charging", "on"),
         ("switch.vacuum_child_lock", "off"),
         ("switch.vacuum_do_not_disturb", "on"),
-        ("switch.vacuum_mop_washing", "on"),
-        ("switch.vacuum_auto_empty_dust_bin", "on"),
-        ("switch.vacuum_auto_dry_mop", "on"),
-        ("select.vacuum_mop_washing_frequency", "by_area"),
-        ("select.vacuum_mop_washing_area_interval", "fifteen_square_meters"),
-        ("select.vacuum_mop_drying_time", "3_hours"),
-        ("select.vacuum_mop_washing_water", "daily"),
-        ("select.vacuum_mop_washing_water_temperature", "hot"),
-        ("select.vacuum_auto_empty_frequency", "once"),
-        ("select.vacuum_carpet_cleaning", "avoid"),
+        ("switch.vacuum_auto_mop_cleaning", "on"),
+        ("switch.vacuum_automatic_dust_collection", "on"),
+        ("switch.vacuum_auto_mop_drying", "on"),
+        ("select.vacuum_mop_cleaning_frequency", "by_area"),
+        ("select.vacuum_mop_cleaning_area_interval", "fifteen_square_meters"),
+        ("select.vacuum_drying_duration", "3_hours"),
+        ("select.vacuum_mop_cleaning_water_output", "daily"),
+        ("select.vacuum_mop_cleaning_water_temperature", "hot"),
+        ("select.vacuum_dust_collection_frequency", "once"),
+        ("select.vacuum_carpet_cleanup_preference", "avoid"),
         ("number.vacuum_volume", "70"),
-        ("number.vacuum_mop_washing_time_interval", "20"),
+        ("number.vacuum_mop_cleaning_time_interval", "20"),
     ],
 )
 async def test_d109_settings_follow_the_device(
@@ -279,9 +279,9 @@ async def test_d109_settings_follow_the_device(
         ("switch.vacuum_resume_after_charging", "turn_off", ((2, 23), False)),
         ("switch.vacuum_child_lock", "turn_on", ((5, 1), True)),
         ("switch.vacuum_do_not_disturb", "turn_off", ((11, 1), False)),
-        ("switch.vacuum_mop_washing", "turn_off", ((2, 28), False)),
-        ("switch.vacuum_auto_empty_dust_bin", "turn_off", ((2, 32), False)),
-        ("switch.vacuum_auto_dry_mop", "turn_off", ((2, 34), False)),
+        ("switch.vacuum_auto_mop_cleaning", "turn_off", ((2, 28), False)),
+        ("switch.vacuum_automatic_dust_collection", "turn_off", ((2, 32), False)),
+        ("switch.vacuum_auto_mop_drying", "turn_off", ((2, 34), False)),
     ],
 )
 @pytest.mark.usefixtures("setup_integration")
@@ -304,17 +304,17 @@ async def test_d109_switches_write_a_bool(
 @pytest.mark.parametrize(
     ("entity_id", "option", "write"),
     [
-        ("select.vacuum_mop_washing_frequency", "by_time", ((2, 29), 2)),
+        ("select.vacuum_mop_cleaning_frequency", "by_time", ((2, 29), 2)),
         (
-            "select.vacuum_mop_washing_area_interval",
+            "select.vacuum_mop_cleaning_area_interval",
             "eight_square_meters",
             ((2, 61), 2),
         ),
-        ("select.vacuum_mop_drying_time", "4_hours", ((2, 31), 3)),
-        ("select.vacuum_mop_washing_water", "save_water", ((2, 30), 2)),
-        ("select.vacuum_mop_washing_water_temperature", "smart", ((2, 84), 3)),
-        ("select.vacuum_auto_empty_frequency", "three_times", ((2, 33), 3)),
-        ("select.vacuum_carpet_cleaning", "cross", ((2, 73), 3)),
+        ("select.vacuum_drying_duration", "4_hours", ((2, 31), 3)),
+        ("select.vacuum_mop_cleaning_water_output", "save_water", ((2, 30), 2)),
+        ("select.vacuum_mop_cleaning_water_temperature", "smart", ((2, 84), 3)),
+        ("select.vacuum_dust_collection_frequency", "three_times", ((2, 33), 3)),
+        ("select.vacuum_carpet_cleanup_preference", "cross", ((2, 73), 3)),
     ],
 )
 @pytest.mark.usefixtures("setup_integration")
@@ -338,7 +338,7 @@ async def test_d109_setting_selects_write_the_device_value(
 
 
 async def test_d109_area_interval_options_are_ordered_by_area(hass, setup_integration):
-    state = hass.states.get("select.vacuum_mop_washing_area_interval")
+    state = hass.states.get("select.vacuum_mop_cleaning_area_interval")
     assert state.attributes["options"] == [
         "five_square_meters",
         "eight_square_meters",
@@ -354,7 +354,7 @@ async def test_d109_area_interval_options_are_ordered_by_area(hass, setup_integr
     [
         ("number.vacuum_volume", "volume", ((4, 2), 40)),
         (
-            "number.vacuum_mop_washing_time_interval",
+            "number.vacuum_mop_cleaning_time_interval",
             "mop_wash_time_interval",
             ((2, 81), 30),
         ),
