@@ -204,7 +204,7 @@ async def test_ov71_parses_the_room_payload_a_real_device_publishes(
     ]
 
 
-@pytest.mark.parametrize("code", [210005, 210020])
+@pytest.mark.parametrize("code", [210013, 210020])
 async def test_ov71_maintenance_notice_does_not_force_error(
     hass, setup_integration_ov71, code
 ):
