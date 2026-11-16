@@ -234,7 +234,7 @@ emptied, water tank refilled) and clears them once it is back. List them in
 `notice_fault_codes` (a `frozenset[int]`, empty by default). They still reach
 the Error / Error code sensors, but the vacuum entity keeps its status-derived
 activity instead of switching to `VacuumActivity.ERROR`; a real fault published
-alongside one takes precedence. The S40 Pro reports `210005` (dust bin out) and
+alongside one takes precedence. The S40 Pro reports `210013` (dust bin out) and
 `210020` (water tank out).
 
 ### 3.6 Entities, features and commands
