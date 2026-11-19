@@ -1,0 +1,412 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Elige la región de la nube de Xiaomi",
+                "description": "Elige la región en la que está registrada tu cuenta de Xiaomi. Europa y Reino Unido usan el servidor de Alemania (DE). Si eliges una región incorrecta, no se encontrará tu robot aspirador.",
+                "data": {
+                    "cloud_country": "Región"
+                },
+                "data_description": {
+                    "cloud_country": "El servidor en la nube de Mi Home que aloja tu cuenta."
+                }
+            },
+            "qr": {
+                "title": "Escanea el código QR con la cámara del móvil",
+                "description": "![QR]({qr_image})\n\n**No escanees este código con la app Mi Home, porque no lo reconocerá.** Apunta al código con la cámara normal del móvil (o con cualquier app para leer códigos QR) y abre el enlace: te llevará a la página de inicio de sesión de Xiaomi. Si el código se lee mal, amplía la página en el navegador. El cuadro de diálogo avanzará automáticamente cuando termines de iniciar sesión en el móvil."
+            },
+            "qr_failed": {
+                "title": "No se escaneó el QR a tiempo",
+                "description": "El código QR caducó antes de que lo escanearas. Envía el formulario para generar uno nuevo."
+            },
+            "reauth_confirm": {
+                "title": "Volver a conectar con la nube de Xiaomi",
+                "description": "La sesión en la nube de Xiaomi ha caducado, así que el mapa de limpieza ha dejado de actualizarse. Envía el formulario para mostrar un nuevo código QR y volver a iniciar sesión. Mientras tanto, el robot aspirador y el resto de sus entidades siguen funcionando."
+            },
+            "reconfigure": {
+                "title": "Cambiar la región de la nube de Xiaomi",
+                "description": "Elige la región en la que está registrada tu cuenta de Xiaomi. Se reutiliza la sesión actual en la nube, así que no hace falta volver a escanear un QR. Si la región es incorrecta, no se encontrará el robot aspirador.",
+                "data": {
+                    "cloud_country": "Región"
+                },
+                "data_description": {
+                    "cloud_country": "El servidor en la nube de Mi Home que aloja tu cuenta."
+                }
+            },
+            "discover": {
+                "title": "Elige tu robot aspirador",
+                "description": "Se ha encontrado más de un robot aspirador en tu cuenta. Elige el que quieres añadir.",
+                "data": {
+                    "device": "Robot aspirador"
+                }
+            }
+        },
+        "progress": {
+            "waiting_for_scan": "![QR]({qr_image})\n\n**No escanees este código con la app Mi Home, porque no lo reconocerá.** Apunta al código con la cámara normal del móvil (o con cualquier app para leer códigos QR) y abre el enlace: te llevará a la página de inicio de sesión de Xiaomi. Si el código se lee mal, amplía la página en el navegador. El cuadro de diálogo avanzará automáticamente cuando termines de iniciar sesión en el móvil."
+        },
+        "error": {
+            "qr_not_scanned": "No se escaneó el QR a tiempo. Se muestra un código nuevo: inténtalo de nuevo."
+        },
+        "abort": {
+            "already_configured": "Este robot aspirador ya está configurado.",
+            "no_vacuum_found": "No se ha encontrado ningún robot aspirador en esta cuenta de Xiaomi. Asegúrate de que está vinculado en la app Mi Home y vuelve a intentarlo.",
+            "no_vacuum_in_account": "Esta cuenta de Xiaomi tiene dispositivos, pero ninguno es un robot aspirador compatible. La región de la nube de Xiaomi debe coincidir con la que usa tu cuenta de Mi Home: vuelve a configurar la integración y elige la región correcta, o vincula el robot aspirador a esta cuenta en la app Mi Home.",
+            "cloud_list_failed": "No se han podido obtener los dispositivos de tu cuenta de Xiaomi. Inténtalo de nuevo más tarde.",
+            "no_local_ip": "La nube de Xiaomi no ha devuelto ninguna IP local para este robot aspirador. Asegúrate de que está en línea y conectado a la misma red Wi-Fi que Home Assistant.",
+            "local_unreachable": "Se ha encontrado el robot aspirador en la nube, pero Home Assistant no puede acceder a él en la red local. Comprueba que está en la misma red y en línea.",
+            "local_probe_failed": "La comprobación local ha fallado de forma inesperada. Consulta los registros.",
+            "reauth_successful": "Se ha renovado la sesión en la nube de Xiaomi. El mapa de limpieza volverá a actualizarse.",
+            "reauth_failed": "No se ha podido renovar la sesión en la nube de Xiaomi. Inténtalo de nuevo.",
+            "reconfigure_successful": "Región actualizada. El robot aspirador usa ahora el servidor de la nube de Xiaomi seleccionado.",
+            "unique_id_mismatch": "El robot aspirador encontrado en esa región es un dispositivo distinto al de esta entrada. No se ha cambiado la región."
+        }
+    },
+    "selector": {
+        "cloud_country": {
+            "options": {
+                "de": "Europa / Reino Unido",
+                "us": "Estados Unidos",
+                "cn": "China (continental)",
+                "ru": "Rusia",
+                "sg": "Singapur",
+                "i2": "India",
+                "tw": "Taiwán"
+            }
+        }
+    },
+    "issues": {
+        "cannot_connect": {
+            "title": "No se puede acceder a {name}",
+            "description": "Home Assistant no puede conectarse al robot aspirador en {host}. Probablemente el robot esté apagado o desconectado de la red. Sus entidades aparecen como no disponibles y el mapa conserva la última imagen conocida hasta que vuelva a conectarse. Este aviso desaparecerá automáticamente cuando el robot aspirador vuelva a estar en línea."
+        },
+        "unsupported_model": {
+            "title": "{name} es un modelo no compatible",
+            "description": "El robot aspirador indica el modelo `{model}`, que esta integración aún no conoce. Se ha usado una especificación aproximada para que el control local básico siga funcionando, pero algunas entidades (estado, fallo, funciones) pueden ser incorrectas o faltar. Para pedir que se añada, abre una [solicitud de compatibilidad de modelo]({request_url}); el modelo ya viene rellenado."
+        }
+    },
+    "entity": {
+        "vacuum": {
+            "xiaomi_vacuum": {
+                "state_attributes": {
+                    "fan_speed": {
+                        "state": {
+                            "silent": "Silencioso",
+                            "basic": "Estándar",
+                            "strong": "Fuerte",
+                            "full_speed": "Turbo"
+                        }
+                    }
+                }
+            }
+        },
+        "sensor": {
+            "status": {
+                "name": "Estado",
+                "state": {
+                    "idle": "Inactivo",
+                    "charging": "Cargando",
+                    "break_charging": "Cargando para reanudar la limpieza",
+                    "sweeping": "Limpiando",
+                    "paused": "En pausa",
+                    "go_charging": "Volviendo a la base",
+                    "go_wash": "Lavando la mopa",
+                    "remote": "Control remoto",
+                    "charged": "Cargado",
+                    "building_map": "Creando el mapa",
+                    "updating": "Actualizando",
+                    "multi_task_station_working": "Estación en funcionamiento (multitarea)",
+                    "multi_task_recharge": "Volviendo a cargar (multitarea)",
+                    "station_working": "Estación en funcionamiento",
+                    "error": "Error",
+                    "sweeping_and_mopping": "Aspirando y fregando",
+                    "mopping": "Fregando",
+                    "mapping_pause": "Creación del mapa en pausa",
+                    "go_charge_break": "Volviendo a cargar (reanudará)",
+                    "wash_break": "Volviendo a la base a mitad de la limpieza",
+                    "go_charge_building_map": "Volviendo a la base tras crear el mapa",
+                    "station_assisting_cleaning": "Lavado asistido por la estación",
+                    "station_assisting_cleaned": "Lavado asistido por la estación terminado",
+                    "go_charge_in_station_assisting_cleaning": "Volviendo a la base para lavar",
+                    "drying": "Secando la mopa",
+                    "dust_collecting": "Recogiendo el polvo",
+                    "water_inspecting": "Comprobando el agua",
+                    "washing_paused": "Lavado de la mopa en pausa"
+                }
+            },
+            "error": {
+                "name": "Error"
+            },
+            "error_code": {
+                "name": "Código de error"
+            },
+            "mop_life": {
+                "name": "Vida útil de la mopa"
+            },
+            "side_brush_life": {
+                "name": "Vida útil del cepillo lateral"
+            },
+            "filter_life": {
+                "name": "Vida útil del filtro"
+            },
+            "main_brush_life": {
+                "name": "Vida útil del cepillo principal"
+            },
+            "main_brush_time_left": {
+                "name": "Tiempo restante del cepillo principal"
+            },
+            "side_brush_time_left": {
+                "name": "Tiempo restante del cepillo lateral"
+            },
+            "filter_time_left": {
+                "name": "Tiempo restante del filtro"
+            },
+            "mop_time_left": {
+                "name": "Tiempo restante de la mopa"
+            },
+            "drying_time_left": {
+                "name": "Tiempo de secado restante"
+            },
+            "total_clean_time": {
+                "name": "Tiempo total de limpieza"
+            },
+            "total_clean_count": {
+                "name": "Limpiezas totales"
+            },
+            "total_clean_area": {
+                "name": "Superficie total limpiada"
+            }
+        },
+        "button": {
+            "dust_arrest": {
+                "name": "Recoger el polvo"
+            },
+            "start_mop_wash": {
+                "name": "Lavar la mopa"
+            },
+            "stop_mop_wash": {
+                "name": "Detener el lavado de la mopa"
+            },
+            "start_dry": {
+                "name": "Secar la mopa"
+            },
+            "stop_dry": {
+                "name": "Detener el secado de la mopa"
+            },
+            "reset_main_brush": {
+                "name": "Restablecer cepillo principal"
+            },
+            "reset_side_brush": {
+                "name": "Restablecer cepillo lateral"
+            },
+            "reset_filter": {
+                "name": "Restablecer filtro"
+            },
+            "reset_mop": {
+                "name": "Restablecer mopa"
+            }
+        },
+        "binary_sensor": {
+            "cleaning": {
+                "name": "Limpieza en curso"
+            },
+            "mop_pad": {
+                "name": "Mopa"
+            }
+        },
+        "image": {
+            "map": {
+                "name": "Mapa"
+            }
+        },
+        "select": {
+            "sweep_mop_type": {
+                "name": "Modo de limpieza",
+                "state": {
+                    "sweep": "Aspirado",
+                    "mop": "Fregado",
+                    "sweep_mop": "Aspirado y fregado",
+                    "sweep_before_mopping": "Aspirado antes del fregado"
+                }
+            },
+            "clean_times": {
+                "name": "Pasadas de limpieza",
+                "state": {
+                    "one_time": "Una vez",
+                    "two_times": "Dos veces",
+                    "three_times": "Tres veces"
+                }
+            },
+            "mop_water_level": {
+                "name": "Caudal de agua del fregado",
+                "state": {
+                    "off": "Desactivado",
+                    "level_1": "Nivel 1",
+                    "level_2": "Nivel 2",
+                    "level_3": "Nivel 3"
+                }
+            },
+            "sweep_route": {
+                "name": "Ruta de limpieza",
+                "state": {
+                    "quick": "Rápida",
+                    "daily": "Estándar",
+                    "careful": "Profunda"
+                }
+            },
+            "obstacle_avoidance_strategy": {
+                "name": "Evitación de obstáculos",
+                "state": {
+                    "less_collisions": "Menos colisiones",
+                    "high_coverage": "Mayor cobertura"
+                }
+            },
+            "mop_wash_frequency": {
+                "name": "Frecuencia de lavado de la mopa",
+                "state": {
+                    "by_room": "Cada habitación",
+                    "by_area": "Por superficie",
+                    "by_time": "Por tiempo"
+                }
+            },
+            "mop_wash_area_interval": {
+                "name": "Superficie entre lavados de la mopa",
+                "state": {
+                    "five_square_meters": "5 m²",
+                    "eight_square_meters": "8 m²",
+                    "ten_square_meters": "10 m²",
+                    "fifteen_square_meters": "15 m²",
+                    "twenty_square_meters": "20 m²",
+                    "twenty_five_square_meters": "25 m²"
+                }
+            },
+            "mop_drying_time": {
+                "name": "Duración del secado",
+                "state": {
+                    "2_hours": "2 horas",
+                    "3_hours": "3 horas",
+                    "4_hours": "4 horas"
+                }
+            },
+            "mop_wash_water_mode": {
+                "name": "Caudal de agua del lavado de la mopa",
+                "state": {
+                    "deep": "Profundo",
+                    "daily": "Diario",
+                    "save_water": "Ahorro de agua"
+                }
+            },
+            "mop_wash_temperature": {
+                "name": "Temperatura del agua de lavado de la mopa",
+                "state": {
+                    "normal": "Normal",
+                    "warm": "Templada",
+                    "hot": "Caliente",
+                    "smart": "Inteligente"
+                }
+            },
+            "dust_collection_frequency": {
+                "name": "Frecuencia de recogida de polvo",
+                "state": {
+                    "once": "Cada limpieza",
+                    "twice": "Cada 2 limpiezas",
+                    "three_times": "Cada 3 limpiezas"
+                }
+            },
+            "carpet_cleaning_method": {
+                "name": "Preferencia de limpieza de alfombras",
+                "state": {
+                    "adaptive": "Adaptativa",
+                    "avoid": "Evitar",
+                    "ignore": "Ignorar",
+                    "cross": "Cruzar"
+                }
+            }
+        },
+        "switch": {
+            "child_lock": {
+                "name": "Bloqueo infantil"
+            },
+            "carpet_boost": {
+                "name": "Más potencia en alfombras"
+            },
+            "resume_after_charge": {
+                "name": "Reanudar la limpieza"
+            },
+            "do_not_disturb": {
+                "name": "No molestar"
+            },
+            "mop_wash": {
+                "name": "Lavado automático de la mopa"
+            },
+            "auto_dust_collection": {
+                "name": "Recogida automática de polvo"
+            },
+            "auto_mop_drying": {
+                "name": "Secado automático de la mopa"
+            }
+        },
+        "number": {
+            "volume": {
+                "name": "Volumen"
+            },
+            "mop_wash_time_interval": {
+                "name": "Tiempo entre lavados de la mopa"
+            }
+        }
+    },
+    "exceptions": {
+        "mop_mode_requires_pad": {
+            "message": "No se puede seleccionar un modo de fregado: no se ha detectado la mopa. Coloca la mopa en el robot aspirador y vuelve a intentarlo."
+        },
+        "unknown_send_command": {
+            "message": "Comando desconocido: {command}. Comandos válidos: {valid_commands}."
+        },
+        "send_command_params_unsupported": {
+            "message": "El comando {command} no admite parámetros."
+        },
+        "zone_cleaning_unsupported": {
+            "message": "La limpieza por zonas no es compatible con el modelo {model}."
+        },
+        "zone_repeats_unsupported": {
+            "message": "Número de pasadas no admitido: {repeats}. Valores válidos: {valid_repeats}."
+        },
+        "zone_empty": {
+            "message": "Cada zona debe tener una anchura y una altura distintas de cero."
+        },
+        "custom_cleaning_unsupported": {
+            "message": "Las limpiezas personalizadas no son compatibles con el modelo {model}."
+        },
+        "custom_cleaning_not_found": {
+            "message": "No hay ninguna limpieza personalizada llamada {name}. Disponibles: {available}."
+        }
+    },
+    "services": {
+        "clean_zone": {
+            "name": "Limpiar zona",
+            "description": "Limpia uno o varios rectángulos dibujados en las coordenadas del mapa del robot aspirador.",
+            "fields": {
+                "zones": {
+                    "name": "Zonas",
+                    "description": "Lista de rectángulos, cada uno indicado por dos esquinas opuestas [x1, y1, x2, y2] en milímetros del mapa del robot aspirador, según los puntos de calibración de la imagen del mapa."
+                },
+                "repeats": {
+                    "name": "Pasadas",
+                    "description": "Cuántas veces se limpia cada zona. Actualiza el ajuste de pasadas de limpieza; si se omite, se mantiene el ajuste actual."
+                }
+            }
+        },
+        "start_custom_cleaning": {
+            "name": "Iniciar limpieza personalizada",
+            "description": "Inicia una limpieza personalizada guardada en la app Mi Home, con las habitaciones o zonas y los ajustes que tenga guardados.",
+            "fields": {
+                "name": {
+                    "name": "Nombre",
+                    "description": "Nombre de la limpieza personalizada tal como aparece en la app Mi Home. No distingue entre mayúsculas y minúsculas."
+                }
+            }
+        }
+    },
+    "common": {
+        "unnamed_room": "Habitación {id}"
+    }
+}
