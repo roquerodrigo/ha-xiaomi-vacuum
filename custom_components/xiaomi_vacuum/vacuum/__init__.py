@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import voluptuous as vol
+from homeassistant.core import SupportsResponse
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_platform
 
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
 __all__ = ["XiaomiVacuum"]
 
 SERVICE_CLEAN_ZONE = "clean_zone"
+SERVICE_REFRESH_FAULT_HISTORY = "refresh_fault_history"
 
 _ZONE_CORNERS = vol.ExactSequence([vol.Coerce(int)] * 4)
 
@@ -63,5 +65,11 @@ async def async_setup_entry(
         SERVICE_START_CUSTOM_CLEANING,
         START_CUSTOM_CLEANING_SCHEMA,
         "async_start_custom_cleaning",
+    )
+    platform.async_register_entity_service(
+        SERVICE_REFRESH_FAULT_HISTORY,
+        cv.make_entity_service_schema({}),
+        "async_refresh_fault_history",
+        supports_response=SupportsResponse.ONLY,
     )
     await async_refresh_custom_cleaning_options(hass, entry)

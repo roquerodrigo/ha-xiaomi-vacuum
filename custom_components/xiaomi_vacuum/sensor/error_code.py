@@ -24,3 +24,15 @@ class XiaomiVacuumErrorCodeSensor(XiaomiVacuumEntity, SensorEntity):
         """Return the numeric fault code (0 = no error)."""
         fault = self.coordinator.data.get("fault")
         return int(fault) if fault is not None else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, list[int] | str | None]:
+        """Expose live fault codes and their localized primary text."""
+        data = self.coordinator.data
+        spec = self.coordinator.spec
+        return {
+            "raw_fault_codes": spec.raw_fault_codes(data),
+            "active_fault_codes": spec.active_fault_codes(data),
+            "ignored_fault_codes": spec.reported_ignored_fault_codes(data),
+            "fault_text": data.get("fault_text"),
+        }

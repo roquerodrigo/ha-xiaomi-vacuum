@@ -13,14 +13,9 @@ if TYPE_CHECKING:
 class PlainFaultReading(FaultReading):
     """A ``fault`` property holding one code, 0 when healthy (S20+, X20+)."""
 
-    def live_code(
-        self,
-        data: VacuumState,
-        ignored: frozenset[int],
-        notices: frozenset[int],  # noqa: ARG002
-    ) -> int | None:
-        """Return the published code, or 0 when it is a phantom fault."""
+    def raw_codes(self, data: VacuumState) -> list[int] | None:
+        """Return the numeric code before model-specific filtering."""
         value = data.get("fault")
-        if not isinstance(value, int):
+        if type(value) is not int or value < 0:
             return None
-        return 0 if value in ignored else int(value)
+        return [value] if value else []
