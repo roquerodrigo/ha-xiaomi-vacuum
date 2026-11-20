@@ -1206,3 +1206,77 @@ def test_cloud_session_data_keeps_stored_pass_token_when_session_has_none():
         "cloud_pass_token": "P",
         "cloud_device_id": "d",
     }
+
+
+def test_get_device_fault_messages_returns_only_sanitized_fault_events():
+    """Cloud history must be read-only and omit non-fault messages and secrets."""
+    connector = _XiaomiCloudConnector()
+    response = {
+        "result": {
+            "messages": [
+                {
+                    "title": "Insufficient water. Refill the water tank in time",
+                    "ctime": 1794441000,
+                    "params": {"body": {"event": "2.3", "value": [100025]}},
+                    "did": "private-device-id",
+                },
+                {
+                    "title": "Cleaning completed",
+                    "params": {"body": {"event": "2.2", "value": []}},
+                },
+                {
+                    "title": "Dock unavailable",
+                    "params": {"body": {"event": "2.3", "value": [210009]}},
+                },
+            ]
+        }
+    }
+    with patch.object(connector, "_encrypted_call", return_value=response) as call:
+        events = connector.get_device_fault_messages("de", "device-id", limit=20)
+    assert events == [
+        {
+            "code": 100025,
+            "text": "Insufficient water. Refill the water tank in time",
+            "timestamp": 1794441000,
+        },
+        {"code": 210009, "text": "Dock unavailable"},
+    ]
+    payload = json.loads(call.call_args.args[1]["data"])
+    assert payload["force_read"] is False
+    assert payload["limit"] == 20
+    assert "private-device-id" not in str(events)
+
+
+def test_get_device_fault_messages_handles_malformed_feed():
+    connector = _XiaomiCloudConnector()
+    with patch.object(connector, "_encrypted_call", return_value={"result": {}}):
+        assert connector.get_device_fault_messages("de", "did") == []
+
+
+def test_fault_history_limits_results_and_requests_strict_http_status():
+    connector = _XiaomiCloudConnector()
+    message = {"params": {"body": {"event": "2.3", "value": [100025]}}}
+    response = {"result": {"messages": [message] * 60}}
+    with patch.object(connector, "_encrypted_call", return_value=response) as call:
+        assert len(connector.get_device_fault_messages("de", "did", 100)) == 50
+    assert json.loads(call.call_args.args[1]["data"])["limit"] == 50
+    assert call.call_args.kwargs["raise_for_status"] is True
+
+
+def test_fault_history_skips_invalid_messages():
+    connector = _XiaomiCloudConnector()
+    messages = [
+        None,
+        {"params": []},
+        *[
+            {"params": {"body": {"event": "2.3", "value": [code]}}}
+            for code in (False, -1, 0, "invalid", float("inf"), 1.5)
+        ],
+        {"params": {"body": {"event": "2.3", "extra": ["100025"]}}, "time": 123},
+    ]
+    with patch.object(
+        connector, "_encrypted_call", return_value={"result": {"messages": messages}}
+    ):
+        assert connector.get_device_fault_messages("de", "did") == [
+            {"code": 100025, "timestamp": 123}
+        ]

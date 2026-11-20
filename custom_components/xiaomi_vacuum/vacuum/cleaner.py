@@ -17,6 +17,7 @@ from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers.translation import async_get_translations
 
 from ..api import CleaningZone  # noqa: TID252
+from ..cloud import XiaomiCloudAuthError, XiaomiCloudError  # noqa: TID252
 from ..const import DOMAIN, LOGGER  # noqa: TID252
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
 from .start_custom_cleaning import async_update_custom_cleaning_options
@@ -135,6 +136,32 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
             "room_information_raw": data.get("room_information"),
         }
         return {DOMAIN: attrs}
+
+    async def async_refresh_fault_history(
+        self,
+    ) -> dict[str, list[dict[str, str | int]]]:
+        """Read Xiaomi's recent fault events without modifying cloud messages."""
+        cloud = self.coordinator.cloud
+        if cloud is None:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="fault_history_cloud_unavailable",
+            )
+
+        try:
+            events = await cloud.async_fault_history(limit=50)
+        except XiaomiCloudAuthError as exc:
+            self.coordinator.config_entry.async_start_reauth(self.hass)
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="fault_history_session_expired",
+            ) from exc
+        except XiaomiCloudError as exc:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="fault_history_read_failed",
+            ) from exc
+        return {"fault_history": events}
 
     async def async_start(self) -> None:
         """

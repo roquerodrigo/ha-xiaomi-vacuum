@@ -28,7 +28,6 @@ if TYPE_CHECKING:
     from ..data import JsonObject, JsonValue  # noqa: TID252
     from .responses import (
         DevicesResult,
-        FaultResult,
         HomeEntry,
         HomesResult,
         MapUrlResult,
@@ -343,19 +342,10 @@ class _XiaomiCloudConnector:
             return None
         return cast("bytes", response.content)
 
-    def get_device_fault_texts(
-        self, country: str, did: str, limit: int = 50
-    ) -> dict[int, str]:
-        """
-        Map fault codes to their localized text from the device message feed.
-
-        The vacuum reports a fault as a numeric code on its `fault` property
-        (siid 2 / piid 3). Xiaomi's cloud emits a localized push message
-        (type 6) for each fault whose `params.body.value` carries that code and
-        whose `title` is the human-readable text in the account's language.
-        We read that feed and build `{code: title}`. `force_read` is kept false
-        so we never alter the user's unread state.
-        """
+    def _get_fault_messages(
+        self, country: str, did: str, limit: int, *, strict: bool
+    ) -> list[JsonValue]:
+        """Read the shared message feed without changing notification status."""
         url = self._api_url(country) + "/v2/message/v2/list"
         params = {
             "data": json.dumps(
@@ -368,20 +358,81 @@ class _XiaomiCloudConnector:
                 }
             )
         }
-        response = self._encrypted_call(url, params)
+        response = self._encrypted_call(url, params, raise_for_status=strict)
+        result = response.get("result") if isinstance(response, dict) else None
+        messages = result.get("messages") if isinstance(result, dict) else None
+        if isinstance(messages, list):
+            return messages
+        return []
+
+    @staticmethod
+    def _fault_code(value: JsonValue) -> int | None:
+        if not isinstance(value, list) or not value:
+            return None
+        raw_code = value[0]
+        if not isinstance(raw_code, (str, int, float)) or isinstance(raw_code, bool):
+            return None
+        try:
+            code = int(raw_code)
+        except ValueError, TypeError, OverflowError:
+            return None
+        if code <= 0 or (isinstance(raw_code, float) and raw_code != code):
+            return None
+        return code
+
+    @staticmethod
+    def _parse_fault_message(
+        message: JsonValue, *, require_event: bool
+    ) -> dict[str, str | int] | None:
+        """Extract only fault data, allowing legacy text feeds without event IDs."""
+        if not isinstance(message, dict):
+            return None
+        params = message.get("params")
+        body = params.get("body") if isinstance(params, dict) else None
+        if not isinstance(body, dict):
+            return None
+        if require_event and body.get("event") != "2.3":
+            return None
+        code = _XiaomiCloudConnector._fault_code(body.get("value") or body.get("extra"))
+        if code is None:
+            return None
+        event: dict[str, str | int] = {"code": code}
+        title = message.get("title")
+        if isinstance(title, str) and title:
+            event["text"] = title
+        timestamp = message.get("ctime") or message.get("time")
+        if (
+            isinstance(timestamp, int)
+            and not isinstance(timestamp, bool)
+            and timestamp > 0
+        ):
+            event["timestamp"] = timestamp
+        return event
+
+    def get_device_fault_messages(
+        self, country: str, did: str, limit: int = 50
+    ) -> list[dict[str, str | int]]:
+        """Return up to 50 recent Device Fault events without marking them read."""
+        limit = min(50, max(1, limit))
+        messages = self._get_fault_messages(country, did, limit, strict=True)
+        events: list[dict[str, str | int]] = []
+        for message in messages:
+            event = self._parse_fault_message(message, require_event=True)
+            if event is not None:
+                events.append(event)
+                if len(events) == limit:
+                    break
+        return events
+
+    def get_device_fault_texts(
+        self, country: str, did: str, limit: int = 50
+    ) -> dict[int, str]:
+        """Map fault codes to localized text, retaining legacy feed compatibility."""
         texts: dict[int, str] = {}
-        if not response or not (result := response.get("result")):
-            return texts
-        for message in cast("FaultResult", result).get("messages") or []:
-            params_obj = message.get("params")
-            body = params_obj.get("body") if params_obj else None
-            value = (body.get("value") or body.get("extra")) if body else None
-            title = message.get("title")
-            if title and value:
-                try:
-                    texts.setdefault(int(value[0]), title)
-                except ValueError, TypeError, KeyError, IndexError:
-                    continue
+        for message in self._get_fault_messages(country, did, limit, strict=False):
+            event = self._parse_fault_message(message, require_event=False)
+            if event is not None and isinstance(title := event.get("text"), str):
+                texts.setdefault(int(event["code"]), title)
         return texts
 
     @staticmethod
