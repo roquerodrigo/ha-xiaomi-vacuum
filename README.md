@@ -91,6 +91,50 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
 - **Optimistic updates** — actions are reflected right away, and a background
   refresh confirms the vacuum's state about 5 seconds later.
 
+### Fault diagnostics
+
+The existing `error_code` diagnostic sensor retains its numeric state and
+exposes the following additional attributes:
+
+- `raw_fault_codes`: all reported positive fault codes, before model-specific filtering.
+- `active_fault_codes`: reported codes not ignored by the model.
+- `ignored_fault_codes`: reported codes ignored by the model.
+- `fault_text`: localized text for the primary fault, when available.
+
+An empty list indicates that no codes were reported in that category; unknown
+or invalid fault data is represented by null. The primary fault keeps its
+existing priority: regular faults take precedence over routine notices.
+
+The `xiaomi_vacuum.refresh_fault_history` action manually reads up to 50 recent
+Device Fault events from the Xiaomi cloud without marking notifications as read.
+An active cloud connection is required. The action returns response data only;
+it does not add history to entity state attributes or request a coordinator
+refresh.
+
+For example, in a Home Assistant script or automation:
+
+```yaml
+- action: xiaomi_vacuum.refresh_fault_history
+  target:
+    entity_id: vacuum.your_xiaomi_vacuum
+  response_variable: xiaomi_fault_history
+```
+
+Home Assistant groups the response by vacuum entity ID. Each event includes
+its numeric code and, when available, localized text and a Unix timestamp:
+
+```yaml
+vacuum.your_xiaomi_vacuum:
+  fault_history:
+    - code: 100025
+      text: "Insufficient water"
+      timestamp: 1794441000
+```
+
+The same action can target multiple vacuum entities. Xiaomi determines which
+messages remain available; this is not a permanent fault archive. History is
+not retrieved automatically or stored in the integration's entity state.
+
 ## Requirements
 
 - Home Assistant **2026.4.4** or newer.

@@ -252,6 +252,18 @@ class XiaomiCloud:
             params,
         )
 
+    async def async_fault_history(self, limit: int = 50) -> list[dict[str, str | int]]:
+        """Return redacted historical fault events; read-only and on demand."""
+        if not self._logged_in or self._device is None:
+            msg = "No active device cloud connection"
+            raise XiaomiCloudConnectionError(msg)
+        return await self._run(
+            self._connector.get_device_fault_messages,
+            self._device.country,
+            self._device.device_id,
+            limit,
+        )
+
     async def async_fault_text(self, code: int) -> str | None:
         """
         Return the localized text for a fault `code`, or None if unknown.

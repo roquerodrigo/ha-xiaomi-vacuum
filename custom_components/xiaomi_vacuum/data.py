@@ -93,6 +93,7 @@ class VacuumState(TypedDict):
     # Live fault payload: a JSON fault-ids list (X20 Max) or a plain code (S20+).
     fault_ids: NotRequired[str | None]
     fault: NotRequired[int | None]
+    raw_fault_codes: NotRequired[list[int] | None]
     fault_text: NotRequired[str]
 
 

@@ -65,6 +65,7 @@ class XiaomiVacuumDataUpdateCoordinator(DataUpdateCoordinator[VacuumState]):
             # the user at their network.
             raise UpdateFailed(exception) from exception
         async_clear_cannot_connect(self.hass, self.config_entry)
+        data["raw_fault_codes"] = self.spec.raw_fault_codes(data)
         data["fault"] = self.spec.live_fault_code(data)
         await self._enrich_fault_text(data)
         return data
