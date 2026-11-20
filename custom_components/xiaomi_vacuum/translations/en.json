@@ -378,6 +378,15 @@
         },
         "custom_cleaning_not_found": {
             "message": "No custom cleaning named {name}. Available: {available}."
+        },
+        "fault_history_cloud_unavailable": {
+            "message": "The Xiaomi cloud is not connected. Connect to the cloud before reading fault history."
+        },
+        "fault_history_session_expired": {
+            "message": "The Xiaomi cloud session has expired. Reconnect before reading fault history."
+        },
+        "fault_history_read_failed": {
+            "message": "Could not read fault history from the Xiaomi cloud."
         }
     },
     "services": {
@@ -404,6 +413,10 @@
                     "description": "Name of the custom cleaning as shown in the Mi Home app. Case is ignored."
                 }
             }
+        },
+        "refresh_fault_history": {
+            "name": "Refresh fault history",
+            "description": "Reads up to 50 recent device fault events from the Xiaomi cloud without marking notifications as read. Returns the events in the action response. Requires an active cloud connection."
         }
     },
     "common": {

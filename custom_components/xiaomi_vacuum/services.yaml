@@ -29,3 +29,9 @@ start_custom_cleaning:
         select:
           options: []
           custom_value: true
+
+refresh_fault_history:
+  target:
+    entity:
+      integration: xiaomi_vacuum
+      domain: vacuum

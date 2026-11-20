@@ -378,6 +378,15 @@
         },
         "custom_cleaning_not_found": {
             "message": "Ne postoji prilagođeno čišćenje pod nazivom {name}. Dostupna: {available}."
+        },
+        "fault_history_cloud_unavailable": {
+            "message": "Veza sa Xiaomi oblakom nije uspostavljena. Povežite se sa oblakom pre čitanja istorije grešaka."
+        },
+        "fault_history_session_expired": {
+            "message": "Sesija Xiaomi oblaka je istekla. Ponovo se povežite pre čitanja istorije grešaka."
+        },
+        "fault_history_read_failed": {
+            "message": "Nije moguće pročitati istoriju grešaka iz Xiaomi oblaka."
         }
     },
     "services": {
@@ -404,6 +413,10 @@
                     "description": "Naziv prilagođenog čišćenja kako je prikazan u aplikaciji Mi Home. Velika i mala slova se ne razlikuju."
                 }
             }
+        },
+        "refresh_fault_history": {
+            "name": "Osveži istoriju grešaka",
+            "description": "Čita do 50 najnovijih događaja o greškama uređaja iz Xiaomi oblaka bez označavanja obaveštenja kao pročitanih. Vraća događaje u odgovoru akcije. Zahteva aktivnu vezu sa oblakom."
         }
     },
     "common": {

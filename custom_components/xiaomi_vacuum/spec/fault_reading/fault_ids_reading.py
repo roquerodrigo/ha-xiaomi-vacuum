@@ -20,20 +20,20 @@ class FaultIdsReading(FaultReading):
     property next to it is not used: it latches the last code and never resets.
     """
 
-    def live_code(
-        self,
-        data: VacuumState,
-        ignored: frozenset[int],
-        notices: frozenset[int],
-    ) -> int | None:
-        """Return the first active code of the list, real faults first."""
-        fault_ids_raw = data.get("fault_ids")
-        if not fault_ids_raw:
+    def raw_codes(self, data: VacuumState) -> list[int] | None:
+        """Decode the reported list, preserving device order."""
+        raw = data.get("fault_ids")
+        if not raw:
             return None
         try:
-            ids = json.loads(fault_ids_raw).get("fault") or []
-        except ValueError, TypeError, AttributeError:
+            payload = json.loads(raw)
+        except ValueError, TypeError:
             return None
-        active = [code for code in ids if code and code not in ignored]
-        active.sort(key=lambda code: code in notices)
-        return active[0] if active else 0
+        if not isinstance(payload, dict):
+            return None
+        ids = payload.get("fault")
+        if not isinstance(ids, list):
+            return None
+        if any(type(code) is not int or code < 0 for code in ids):
+            return None
+        return [code for code in ids if code > 0]

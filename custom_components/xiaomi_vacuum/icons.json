@@ -149,6 +149,9 @@
     "services": {
         "clean_zone": {
             "service": "mdi:selection-drag"
+        },
+        "refresh_fault_history": {
+            "service": "mdi:clipboard-text-clock-outline"
         }
     }
 }
