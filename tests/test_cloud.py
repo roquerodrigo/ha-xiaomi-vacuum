@@ -232,6 +232,8 @@ async def test_session_tokens_returns_current_state(hass):
         "ssecurity": "ssec",
         "service_token": "tok",
         "user_id": "uid",
+        "pass_token": None,
+        "device_id": cloud._connector.device_id,
     }
 
 
@@ -250,9 +252,13 @@ async def test_async_qr_start(hass):
 
 async def test_async_poll_qr_login_success(hass):
     cloud = XiaomiCloud(hass, "us")
-    body = '&&&START&&&{"ssecurity":"S","userId":42,"location":"https://loc"}'
+    body = (
+        '&&&START&&&{"ssecurity":"S","userId":42,"location":"https://loc",'
+        '"passToken":"PASS"}'
+    )
     with _patch_aiohttp(_aio_resp(text=body), _aio_resp(token_cookie="TOK")):
         assert await cloud._async_poll_qr_login("https://lp", 1) is True
+    assert cloud._connector.pass_token == "PASS"
     assert cloud._connector._ssecurity == "S"
     assert cloud._connector._user_id == "42"
     assert cloud._connector._service_token == "TOK"
@@ -1007,3 +1013,196 @@ async def test_restore_device_adopts_it_without_a_cloud_call(hass):
         cloud.restore_device(device)
     find_device.assert_not_called()
     assert cloud.device is device
+
+
+# --- silent session refresh (passToken) ---------------------------------
+
+
+def _refreshable_connector(sess):
+    c = _connector_with_session(sess)
+    c.restore_session("old-ssec", "42", "old-tok", pass_token="PASS", device_id="dev01")
+    return c
+
+
+def test_restore_session_adopts_device_id():
+    c = _XiaomiCloudConnector()
+    c.restore_session("s", "42", "t", pass_token="PASS", device_id="dev01")
+    assert c.device_id == "dev01"
+    assert c._session.cookies.get("deviceId", domain="xiaomi.com") == "dev01"
+
+
+def test_refresh_session_trades_pass_token_for_new_session():
+    sess = MagicMock()
+    login = '&&&START&&&{"code":0,"ssecurity":"new-ssec","location":"https://loc"}'
+    sess.get.side_effect = [
+        _resp(text=login),
+        _resp(cookies={"serviceToken": "new-tok"}),
+    ]
+    c = _refreshable_connector(sess)
+
+    assert c.refresh_session() is True
+
+    assert (c.ssecurity, c.service_token, c.pass_token) == (
+        "new-ssec",
+        "new-tok",
+        "PASS",
+    )
+    _, kwargs = sess.get.call_args_list[0]
+    assert kwargs["cookies"] == {"userId": "42", "passToken": "PASS"}
+    assert kwargs["params"] == {"sid": "xiaomiio", "_json": "true"}
+
+
+def test_refresh_session_adopts_a_rotated_pass_token():
+    sess = MagicMock()
+    login = '{"ssecurity":"new-ssec","location":"https://loc","passToken":"PASS2"}'
+    sess.get.side_effect = [_resp(text=login), _resp(cookies={"serviceToken": "t"})]
+    c = _refreshable_connector(sess)
+    assert c.refresh_session() is True
+    assert c.pass_token == "PASS2"
+
+
+@pytest.mark.parametrize(
+    "login",
+    [
+        # Expired passToken: Xiaomi answers with the password-login challenge.
+        '&&&START&&&{"code":70016,"_sign":"x","location":"","ssecurity":""}',
+        '{"code":70016}',
+        "[]",
+    ],
+    ids=["challenge", "no-fields", "not-an-object"],
+)
+def test_refresh_session_declined_keeps_old_session(login):
+    sess = MagicMock()
+    sess.get.return_value = _resp(text=login)
+    c = _refreshable_connector(sess)
+    assert c.refresh_session() is False
+    assert (c.ssecurity, c.service_token) == ("old-ssec", "old-tok")
+    assert sess.get.call_count == 1
+
+
+def test_refresh_session_keeps_old_session_when_token_fetch_fails():
+    sess = MagicMock()
+    login = '{"ssecurity":"new-ssec","location":"https://loc"}'
+    sess.get.side_effect = [_resp(text=login), _resp(status=403)]
+    c = _refreshable_connector(sess)
+    assert c.refresh_session() is False
+    assert (c.ssecurity, c.service_token) == ("old-ssec", "old-tok")
+
+
+def test_refresh_session_without_pass_token_makes_no_request():
+    sess = MagicMock()
+    c = _connector_with_session(sess)
+    c.restore_session("s", "42", "t")
+    assert c.refresh_session() is False
+    sess.get.assert_not_called()
+
+
+def test_refresh_session_http_error_is_a_connection_error():
+    sess = MagicMock()
+    sess.get.return_value = _resp(status=503)
+    c = _refreshable_connector(sess)
+    with pytest.raises(XiaomiCloudConnectionError, match="HTTP 503"):
+        c.refresh_session()
+
+
+def _expiring_call(cloud, result="ok"):
+    """A connector call the cloud rejects until the session has been refreshed."""
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
+
+    def call():
+        if cloud._connector.service_token == "old-tok":
+            msg = "expired"
+            raise XiaomiCloudAuthError(msg)
+        return result
+
+    return MagicMock(side_effect=call)
+
+
+def _fake_refresh(cloud, *, ok=True):
+    def refresh():
+        if ok:
+            cloud._connector._service_token = "new-tok"
+            cloud._connector._ssecurity = "new-ssec"
+        return ok
+
+    return patch.object(cloud._connector, "refresh_session", side_effect=refresh)
+
+
+async def test_run_refreshes_expired_session_and_retries(hass):
+    cloud = XiaomiCloud.from_session(
+        hass, "de", "old-ssec", "old-tok", "42", pass_token="PASS", device_id="dev01"
+    )
+    stored = MagicMock()
+    cloud.on_session_refreshed = stored
+    call = _expiring_call(cloud)
+
+    with _fake_refresh(cloud) as refresh:
+        assert await cloud._run(call) == "ok"
+
+    assert call.call_count == 2
+    refresh.assert_called_once()
+    stored.assert_called_once_with(
+        {
+            "ssecurity": "new-ssec",
+            "service_token": "new-tok",
+            "user_id": "42",
+            "pass_token": "PASS",
+            "device_id": "dev01",
+        }
+    )
+
+
+async def test_run_concurrent_calls_refresh_only_once(hass):
+    import asyncio
+
+    cloud = XiaomiCloud.from_session(hass, "de", "s", "old-tok", "42", pass_token="P")
+    call = _expiring_call(cloud)
+    with _fake_refresh(cloud) as refresh:
+        results = await asyncio.gather(*(cloud._run(call) for _ in range(4)))
+    assert results == ["ok"] * 4
+    refresh.assert_called_once()
+
+
+async def test_run_raises_auth_error_when_refresh_is_declined_and_stops_asking(hass):
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
+
+    cloud = XiaomiCloud.from_session(hass, "de", "s", "old-tok", "42", pass_token="P")
+    stored = MagicMock()
+    cloud.on_session_refreshed = stored
+    call = _expiring_call(cloud)
+    with _fake_refresh(cloud, ok=False) as refresh:
+        for _ in range(3):
+            with pytest.raises(XiaomiCloudAuthError):
+                await cloud._run(call)
+    refresh.assert_called_once()
+    stored.assert_not_called()
+
+
+async def test_run_without_pass_token_raises_auth_error_untouched(hass):
+    from custom_components.xiaomi_vacuum.cloud import XiaomiCloudAuthError
+
+    cloud = XiaomiCloud.from_session(hass, "de", "s", "old-tok", "42")
+    with (
+        patch.object(cloud._connector, "refresh_session") as refresh,
+        pytest.raises(XiaomiCloudAuthError),
+    ):
+        await cloud._run(_expiring_call(cloud))
+    refresh.assert_not_called()
+
+
+def test_cloud_session_data_keeps_stored_pass_token_when_session_has_none():
+    from custom_components.xiaomi_vacuum.data import cloud_session_data
+
+    base = {"ssecurity": "S", "service_token": "T", "user_id": "U"}
+    assert cloud_session_data(base) == {
+        "cloud_ssecurity": "S",
+        "cloud_service_token": "T",
+        "cloud_user_id": "U",
+    }
+    assert cloud_session_data({**base, "pass_token": "P", "device_id": "d"}) == {
+        "cloud_ssecurity": "S",
+        "cloud_service_token": "T",
+        "cloud_user_id": "U",
+        "cloud_pass_token": "P",
+        "cloud_device_id": "d",
+    }

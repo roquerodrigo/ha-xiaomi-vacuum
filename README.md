@@ -316,9 +316,12 @@ automation:
 ## Limitations
 
 - The **map**, the **localized error text** and the **X20+ room list** depend
-  on the Xiaomi cloud session from setup. When that session expires, Home
-  Assistant asks you to **re-authenticate**: scan a fresh QR code and
-  everything resumes. Local control keeps working in the meantime.
+  on the Xiaomi cloud session from setup. That session expires after a few
+  weeks; the integration then renews it on its own with the long-lived login
+  the QR scan also issued. Only when Xiaomi no longer accepts that login does
+  Home Assistant ask you to **re-authenticate**: scan a fresh QR code and
+  everything resumes. Local control keeps working in the meantime. Entries
+  set up before this renewal existed need one last QR scan to get it.
 
 ## Development
 

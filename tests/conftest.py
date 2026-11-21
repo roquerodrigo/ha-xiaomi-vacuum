@@ -541,6 +541,8 @@ async def setup_integration_with_cloud(
                 CONF_CLOUD_SSECURITY: "ssecurity_value",
                 CONF_CLOUD_SERVICE_TOKEN: "service_token_value",
                 CONF_CLOUD_USER_ID: "user_id_value",
+                "cloud_pass_token": "pass_token_value",
+                "cloud_device_id": "device_id_value",
             },
             unique_id="AA:BB:CC:DD:EE:FF",
         )
