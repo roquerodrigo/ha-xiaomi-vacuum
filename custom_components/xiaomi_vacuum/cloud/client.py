@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from functools import partial
 from typing import TYPE_CHECKING
@@ -40,15 +41,23 @@ class XiaomiCloud:
         self._logged_in = False
         self._fault_texts: dict[int, str] = {}
         self._fault_codes_seen: set[int] = set()
+        self._refresh_lock = asyncio.Lock()
+        self._refresh_rejected = False
+        # Called with the new tokens after a silent session refresh so the
+        # integration can persist them.
+        self.on_session_refreshed: Callable[[CloudSessionTokens], None] | None = None
 
     @classmethod
-    def from_session(
+    def from_session(  # noqa: PLR0913
         cls,
         hass: HomeAssistant,
         country: str,
         ssecurity: str,
         service_token: str,
         user_id: str,
+        *,
+        pass_token: str | None = None,
+        device_id: str | None = None,
     ) -> XiaomiCloud:
         """Build a logged-in client from previously saved session tokens."""
         instance = cls(hass, country)
@@ -56,6 +65,8 @@ class XiaomiCloud:
             ssecurity=ssecurity,
             user_id=user_id,
             service_token=service_token,
+            pass_token=pass_token,
+            device_id=device_id,
         )
         instance._logged_in = True
         return instance
@@ -71,6 +82,8 @@ class XiaomiCloud:
             "ssecurity": self._connector.ssecurity,
             "service_token": self._connector.service_token,
             "user_id": self._connector.user_id,
+            "pass_token": self._connector.pass_token,
+            "device_id": self._connector.device_id,
         }
 
     async def async_qr_start(self) -> tuple[bytes, str, int]:
@@ -168,6 +181,7 @@ class XiaomiCloud:
             ssecurity=body["ssecurity"],
             user_id=str(user_id),
             service_token=token_cookie.value,
+            pass_token=body.get("passToken"),
         )
         return True
 
@@ -268,6 +282,37 @@ class XiaomiCloud:
         return self._fault_texts.get(int(code))
 
     async def _run[T, **P](
+        self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs
+    ) -> T:
+        """Run a connector call; on a rejected session, refresh it once and retry."""
+        stale_token = self._connector.service_token
+        try:
+            return await self._run_once(func, *args, **kwargs)
+        except XiaomiCloudAuthError:
+            if not await self._async_refresh_session(stale_token):
+                raise
+        return await self._run_once(func, *args, **kwargs)
+
+    async def _async_refresh_session(self, stale_token: str | None) -> bool:
+        """Renew an expired session with the stored passToken; True when renewed."""
+        async with self._refresh_lock:
+            if self._connector.service_token != stale_token:
+                return True  # a concurrent call already refreshed it
+            if self._refresh_rejected or not self._connector.pass_token:
+                return False
+            if not await self._run_once(self._connector.refresh_session):
+                # Do not ask the account server again on every poll.
+                self._refresh_rejected = True
+                LOGGER.warning(
+                    "Xiaomi no longer accepts the stored login; a QR reauth is needed"
+                )
+                return False
+        LOGGER.info("Xiaomi cloud session expired; refreshed it without reauth")
+        if self.on_session_refreshed is not None:
+            self.on_session_refreshed(self.session_tokens())
+        return True
+
+    async def _run_once[T, **P](
         self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs
     ) -> T:
         try:

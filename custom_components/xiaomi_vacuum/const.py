@@ -23,6 +23,8 @@ CONF_CLOUD_COUNTRY = "cloud_country"
 CONF_CLOUD_SSECURITY = "cloud_ssecurity"
 CONF_CLOUD_SERVICE_TOKEN = "cloud_service_token"  # noqa: S105
 CONF_CLOUD_USER_ID = "cloud_user_id"
+CONF_CLOUD_PASS_TOKEN = "cloud_pass_token"  # noqa: S105
+CONF_CLOUD_DEVICE_ID = "cloud_device_id"
 CONF_DEVICE_INFO = "device_info"
 CONF_CLOUD_DEVICE = "cloud_device"
 

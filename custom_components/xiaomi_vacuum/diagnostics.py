@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING, TypedDict, cast
 from homeassistant.components.diagnostics import async_redact_data
 
 from .const import (
+    CONF_CLOUD_DEVICE_ID,
+    CONF_CLOUD_PASS_TOKEN,
     CONF_CLOUD_SERVICE_TOKEN,
     CONF_CLOUD_SSECURITY,
     CONF_CLOUD_USER_ID,
@@ -25,6 +27,8 @@ TO_REDACT: frozenset[str] = frozenset(
         CONF_CLOUD_SSECURITY,
         CONF_CLOUD_SERVICE_TOKEN,
         CONF_CLOUD_USER_ID,
+        CONF_CLOUD_PASS_TOKEN,
+        CONF_CLOUD_DEVICE_ID,
     },
 )
 

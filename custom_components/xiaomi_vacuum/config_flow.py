@@ -36,6 +36,8 @@ if TYPE_CHECKING:
 from .const import (
     CLOUD_REGIONS,
     CONF_CLOUD_COUNTRY,
+    CONF_CLOUD_DEVICE_ID,
+    CONF_CLOUD_PASS_TOKEN,
     CONF_CLOUD_SERVICE_TOKEN,
     CONF_CLOUD_SSECURITY,
     CONF_CLOUD_USER_ID,
@@ -47,6 +49,7 @@ from .const import (
     LOGGER,
     VACUUM_MODEL_PREFIX,
 )
+from .data import cloud_session_data
 from .spec import get_spec
 
 _DEVICE_PICK = "device"
@@ -121,6 +124,8 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             ssecurity=entry.data[CONF_CLOUD_SSECURITY],
             service_token=entry.data[CONF_CLOUD_SERVICE_TOKEN],
             user_id=entry.data[CONF_CLOUD_USER_ID],
+            pass_token=entry.data.get(CONF_CLOUD_PASS_TOKEN),
+            device_id=entry.data.get(CONF_CLOUD_DEVICE_ID),
         )
         return await self.async_step_discover()
 
@@ -159,12 +164,7 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="reauth_failed")
         return self.async_update_reload_and_abort(
             entry,
-            data={
-                **entry.data,
-                CONF_CLOUD_SSECURITY: tokens["ssecurity"],
-                CONF_CLOUD_SERVICE_TOKEN: tokens["service_token"],
-                CONF_CLOUD_USER_ID: tokens["user_id"],
-            },
+            data={**entry.data, **cloud_session_data(tokens)},
         )
 
     async def async_step_qr(
@@ -384,9 +384,7 @@ class XiaomiVacuumFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         tokens = self._cloud.session_tokens()
         if not self._has_full_session(tokens):
             return
-        self._user_input[CONF_CLOUD_SSECURITY] = tokens["ssecurity"]
-        self._user_input[CONF_CLOUD_SERVICE_TOKEN] = tokens["service_token"]
-        self._user_input[CONF_CLOUD_USER_ID] = tokens["user_id"]
+        self._user_input.update(cloud_session_data(tokens))
 
     @staticmethod
     def _has_full_session(tokens: CloudSessionTokens) -> bool:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import partial
 from typing import TYPE_CHECKING, cast
 
 from homeassistant.const import Platform
@@ -15,6 +16,8 @@ from .cloud import XiaomiCloud, XiaomiCloudConnectionError, XiaomiCloudError
 from .const import (
     CONF_CLOUD_COUNTRY,
     CONF_CLOUD_DEVICE,
+    CONF_CLOUD_DEVICE_ID,
+    CONF_CLOUD_PASS_TOKEN,
     CONF_CLOUD_SERVICE_TOKEN,
     CONF_CLOUD_SSECURITY,
     CONF_CLOUD_USER_ID,
@@ -25,7 +28,7 @@ from .const import (
     LOGGER,
 )
 from .coordinator import XiaomiVacuumDataUpdateCoordinator
-from .data import XiaomiVacuumData
+from .data import XiaomiVacuumData, cloud_session_data
 from .map_coordinator import XiaomiVacuumMapCoordinator
 from .repairs import (
     async_clear_cannot_connect,
@@ -39,7 +42,12 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
     from .cloud import XiaomiDeviceInfo
-    from .data import DeviceInfoLike, JsonObject, XiaomiVacuumConfigEntry
+    from .data import (
+        CloudSessionTokens,
+        DeviceInfoLike,
+        JsonObject,
+        XiaomiVacuumConfigEntry,
+    )
 
 PLATFORMS: list[Platform] = [
     Platform.VACUUM,
@@ -84,7 +92,10 @@ async def _setup_cloud(
         ssecurity=ssecurity,
         service_token=service_token,
         user_id=cloud_user_id,
+        pass_token=entry.data.get(CONF_CLOUD_PASS_TOKEN),
+        device_id=entry.data.get(CONF_CLOUD_DEVICE_ID),
     )
+    cloud.on_session_refreshed = partial(_async_store_cloud_session, hass, entry)
     token: str = entry.data[CONF_TOKEN]
     cached_device = CachedCloudDevice.from_stored(
         entry.data.get(CONF_CLOUD_DEVICE), token, cloud_country
@@ -139,6 +150,17 @@ async def _async_revalidate_cloud_device(
         entry.async_start_reauth(hass)
         return
     _async_store_cloud_device(hass, entry, device)
+
+
+def _async_store_cloud_session(
+    hass: HomeAssistant,
+    entry: XiaomiVacuumConfigEntry,
+    tokens: CloudSessionTokens,
+) -> None:
+    """Persist a silently refreshed cloud session so it survives a restart."""
+    hass.config_entries.async_update_entry(
+        entry, data={**entry.data, **cloud_session_data(tokens)}
+    )
 
 
 def _async_store_cloud_device(

@@ -538,3 +538,29 @@ async def test_map_download_does_not_block_setup(
     await hass.async_block_till_done(wait_background_tasks=True)
     assert map_coordinator.data["png"].startswith(b"\x89PNG")
     assert hass.states.get(image).state != "unavailable"
+
+
+async def test_refreshed_cloud_session_is_persisted_on_the_entry(hass):
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
+    from custom_components.xiaomi_vacuum import _async_store_cloud_session
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={CONF_HOST: "192.168.1.50", CONF_CLOUD_SERVICE_TOKEN: "old"},
+    )
+    entry.add_to_hass(hass)
+    _async_store_cloud_session(
+        hass,
+        entry,
+        {
+            "ssecurity": "S",
+            "service_token": "new",
+            "user_id": "U",
+            "pass_token": "P",
+            "device_id": "d",
+        },
+    )
+    assert entry.data[CONF_CLOUD_SERVICE_TOKEN] == "new"
+    assert entry.data["cloud_pass_token"] == "P"
+    assert entry.data[CONF_HOST] == "192.168.1.50"
