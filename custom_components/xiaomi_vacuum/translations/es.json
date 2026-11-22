@@ -378,6 +378,15 @@
         },
         "custom_cleaning_not_found": {
             "message": "No hay ninguna limpieza personalizada llamada {name}. Disponibles: {available}."
+        },
+        "fault_history_cloud_unavailable": {
+            "message": "La nube de Xiaomi no está conectada. Conéctate a la nube antes de leer el historial de errores."
+        },
+        "fault_history_session_expired": {
+            "message": "La sesión en la nube de Xiaomi ha caducado. Vuelve a conectarte antes de leer el historial de errores."
+        },
+        "fault_history_read_failed": {
+            "message": "No se ha podido leer el historial de errores de la nube de Xiaomi."
         }
     },
     "services": {
@@ -404,6 +413,10 @@
                     "description": "Nombre de la limpieza personalizada tal como aparece en la app Mi Home. No distingue entre mayúsculas y minúsculas."
                 }
             }
+        },
+        "refresh_fault_history": {
+            "name": "Actualizar el historial de errores",
+            "description": "Lee hasta 50 eventos de error recientes del dispositivo desde la nube de Xiaomi sin marcar las notificaciones como leídas. Devuelve los eventos en la respuesta de la acción. Requiere una conexión activa con la nube."
         }
     },
     "common": {

@@ -133,48 +133,20 @@
                     "washing_paused": "Очистка швабры приостановлена"
                 }
             },
-            "error": {
-                "name": "Неисправность"
-            },
-            "error_code": {
-                "name": "Код ошибки"
-            },
-            "mop_life": {
-                "name": "Оставшийся ресурс швабры"
-            },
-            "side_brush_life": {
-                "name": "Оставшийся ресурс боковой щётки"
-            },
-            "filter_life": {
-                "name": "Оставшийся ресурс фильтра"
-            },
-            "main_brush_life": {
-                "name": "Оставшийся ресурс основной щётки"
-            },
-            "main_brush_time_left": {
-                "name": "Оставшийся срок службы основной щётки"
-            },
-            "side_brush_time_left": {
-                "name": "Оставшийся срок службы боковой щётки"
-            },
-            "filter_time_left": {
-                "name": "Оставшийся срок службы фильтра"
-            },
-            "mop_time_left": {
-                "name": "Оставшийся срок службы швабры"
-            },
-            "drying_time_left": {
-                "name": "Остаток времени сушки"
-            },
-            "total_clean_time": {
-                "name": "Общее время уборки"
-            },
-            "total_clean_count": {
-                "name": "Всего уборок"
-            },
-            "total_clean_area": {
-                "name": "Общая площадь уборки"
-            }
+            "error": {"name": "Неисправность"},
+            "error_code": {"name": "Код ошибки"},
+            "mop_life": {"name": "Оставшийся ресурс швабры"},
+            "side_brush_life": {"name": "Оставшийся ресурс боковой щётки"},
+            "filter_life": {"name": "Оставшийся ресурс фильтра"},
+            "main_brush_life": {"name": "Оставшийся ресурс основной щётки"},
+            "main_brush_time_left": {"name": "Оставшийся срок службы основной щётки"},
+            "side_brush_time_left": {"name": "Оставшийся срок службы боковой щётки"},
+            "filter_time_left": {"name": "Оставшийся срок службы фильтра"},
+            "mop_time_left": {"name": "Оставшийся срок службы швабры"},
+            "drying_time_left": {"name": "Остаток времени сушки"},
+            "total_clean_time": {"name": "Общее время уборки"},
+            "total_clean_count": {"name": "Всего уборок"},
+            "total_clean_area": {"name": "Общая площадь уборки"}
         },
         "button": {
             "dust_arrest": {"name": "Собрать пыль"},
@@ -188,18 +160,10 @@
             "reset_mop": {"name": "Сбросить ресурс швабры"}
         },
         "binary_sensor": {
-            "cleaning": {
-                "name": "Идёт уборка"
-            },
-            "mop_pad": {
-                "name": "Насадка для влажной уборки"
-            }
+            "cleaning": {"name": "Идёт уборка"},
+            "mop_pad": {"name": "Насадка для влажной уборки"}
         },
-        "image": {
-            "map": {
-                "name": "Карта"
-            }
-        },
+        "image": {"map": {"name": "Карта"}},
         "select": {
             "sweep_mop_type": {
                 "name": "Режим уборки",
