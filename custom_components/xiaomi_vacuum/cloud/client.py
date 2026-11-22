@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
     from ..data import CloudSessionTokens, JsonValue  # noqa: TID252
+    from ..spec.addresses import MiotEventAddress  # noqa: TID252
     from .device_info import XiaomiDeviceInfo
 
 
@@ -252,7 +253,9 @@ class XiaomiCloud:
             params,
         )
 
-    async def async_fault_history(self, limit: int = 50) -> list[dict[str, str | int]]:
+    async def async_fault_history(
+        self, fault_event: MiotEventAddress, limit: int = 50
+    ) -> list[dict[str, str | int]]:
         """Return redacted historical fault events; read-only and on demand."""
         if not self._logged_in or self._device is None:
             msg = "No active device cloud connection"
@@ -261,6 +264,7 @@ class XiaomiCloud:
             self._connector.get_device_fault_messages,
             self._device.country,
             self._device.device_id,
+            fault_event,
             limit,
         )
 

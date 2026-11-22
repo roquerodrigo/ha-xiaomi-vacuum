@@ -44,6 +44,7 @@ to add one yourself, see [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md).
 | Cleanup path and obstacle avoidance selects | — | ✅ | ✅ | — | ✅ |
 | Zone cleaning (`xiaomi_vacuum.clean_zone`) | — | ✅ ⁵ | ✅ ⁷ | — | ✅ |
 | Custom cleanings (`xiaomi_vacuum.start_custom_cleaning`) | — | — | — | — | ✅ |
+| Cloud fault history (`xiaomi_vacuum.refresh_fault_history`) | — | ✅ | — | — | ✅ |
 | Empty the dust bin into the dock | — | — | — | ✅ | ✅ |
 | Wash and dry the mop in the dock | — | — | — | ✅ ⁴ | ✅ |
 | Consumable hours left and reset buttons | — | ✅ | ✅ | ✅ | ✅ |
@@ -107,7 +108,9 @@ existing priority: regular faults take precedence over routine notices.
 
 The `xiaomi_vacuum.refresh_fault_history` action manually reads up to 50 recent
 Device Fault events from the Xiaomi cloud without marking notifications as read.
-An active cloud connection is required. The action returns response data only;
+An active cloud connection is required, and the action is available on the
+models listed in [What each model supports](#what-each-model-supports); on the
+others it is refused. The action returns response data only;
 it does not add history to entity state attributes or request a coordinator
 refresh.
 

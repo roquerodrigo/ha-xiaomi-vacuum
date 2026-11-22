@@ -141,15 +141,21 @@ class XiaomiVacuum(XiaomiVacuumEntity, StateVacuumEntity):
         self,
     ) -> dict[str, list[dict[str, str | int]]]:
         """Read Xiaomi's recent fault events without modifying cloud messages."""
+        fault_event = self.spec.fault_event
+        if fault_event is None:
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="fault_history_unsupported",
+                translation_placeholders={"model": self.spec.name},
+            )
         cloud = self.coordinator.cloud
         if cloud is None:
             raise ServiceValidationError(
                 translation_domain=DOMAIN,
                 translation_key="fault_history_cloud_unavailable",
             )
-
         try:
-            events = await cloud.async_fault_history(limit=50)
+            events = await cloud.async_fault_history(fault_event)
         except XiaomiCloudAuthError as exc:
             self.coordinator.config_entry.async_start_reauth(self.hass)
             raise ServiceValidationError(

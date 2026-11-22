@@ -26,6 +26,8 @@ unless it is removed here:
   drops 100027 and treats 210013 / 210020 as notices because that unit
   published them. This unit, docked at 95% charge, published ``{"fault": [0]}``
   and neither code, so they are not copied
+- no fault history: the cloud fault event the S40 Pro inherits from the X20
+  Max was not observed on this unit
 """
 
 from __future__ import annotations
@@ -40,4 +42,5 @@ E101GB = replace(
     name="Xiaomi Robot Vacuum S40C",
     ignored_fault_codes=frozenset[int](),
     notice_fault_codes=frozenset[int](),
+    fault_event=None,
 )

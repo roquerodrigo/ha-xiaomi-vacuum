@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from homeassistant.components.vacuum.const import VacuumActivity
 
     from ..data import VacuumState  # noqa: TID252
-    from .addresses import MiotActionAddress, MiotPropertyBinding
+    from .addresses import MiotActionAddress, MiotEventAddress, MiotPropertyBinding
     from .entity_key import EntityKey
     from .fault_reading import FaultReading
     from .model_actions import ModelActions
@@ -95,6 +95,10 @@ class ModelSpec:
     # Error / Error code sensors but do not force VacuumActivity.ERROR, the way
     # other vacuum integrations treat dismissable warnings.
     notice_fault_codes: frozenset[int] = frozenset()
+    # The event the Xiaomi cloud message feed files this model's faults under,
+    # which can differ from the event list of its published spec. None leaves
+    # the fault history action unsupported.
+    fault_event: MiotEventAddress | None = None
     room_cleaning: RoomCleaning | None = None
     map_format: MapFormat = _XIAOMI_MAP_FORMAT
 

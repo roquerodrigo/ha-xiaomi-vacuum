@@ -237,6 +237,14 @@ activity instead of switching to `VacuumActivity.ERROR`; a real fault published
 alongside one takes precedence. The S40 Pro reports `210013` (dust bin out) and
 `210020` (water tank out).
 
+**Fault history.** The `xiaomi_vacuum.refresh_fault_history` action reads the
+model's fault messages from the Xiaomi cloud message feed, which files them
+under one event. Set `fault_event` (a `{siid, eiid}` address, `None` by
+default) to the event observed in that feed on a physical unit: it does not
+necessarily match the event list of the published spec (the X20 Max files its
+faults under 2.3, which its spec calls "Dust Arrest Complete"). Without it, the
+action is refused with a translated error.
+
 ### 3.6 Entities, features and commands
 
 Nothing here is declared per model:

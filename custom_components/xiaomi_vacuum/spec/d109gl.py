@@ -148,6 +148,9 @@ D109GL = ModelSpec(
         "level_3": 3,
     },
     charging_state_slugs=dict(CHARGING_STATE_SLUGS),
+    # Observed in the cloud message feed of a physical unit: faults arrive as
+    # event 2.3 with the code in `value`, finished cleanings as 2.2.
+    fault_event={"siid": 2, "eiid": 3},
     room_cleaning=DirectRoomSweep({"siid": 2, "aiid": 16, "in_piid": 15}),
     sweep_routes=dict(SWEEP_ROUTES),
     obstacle_avoidances=dict(OBSTACLE_AVOIDANCES),

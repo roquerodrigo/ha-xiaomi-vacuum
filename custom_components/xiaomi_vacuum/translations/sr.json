@@ -387,6 +387,9 @@
         },
         "fault_history_read_failed": {
             "message": "Није могуће прочитати историју грешака из Xiaomi облака."
+        },
+        "fault_history_unsupported": {
+            "message": "Историја грешака није подржана на моделу {model}."
         }
     },
     "services": {

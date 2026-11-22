@@ -387,6 +387,9 @@
         },
         "fault_history_read_failed": {
             "message": "Could not read fault history from the Xiaomi cloud."
+        },
+        "fault_history_unsupported": {
+            "message": "Fault history is not supported on the {model}."
         }
     },
     "services": {
