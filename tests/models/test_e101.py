@@ -152,7 +152,7 @@ async def test_e101_clean_zone_uses_the_s40_pro_rectangle_payload(hass, setup_mo
     ]
 
 
-@pytest.mark.parametrize("code", [100027, 210005, 210020])
+@pytest.mark.parametrize("code", [100027, 210013, 210020])
 async def test_e101_does_not_inherit_the_s40_pro_fault_exceptions(
     hass, setup_model, code
 ):

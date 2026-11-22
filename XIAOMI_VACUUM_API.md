@@ -340,7 +340,7 @@ is identical on the S40 Pro. Differences worth knowing:
 | Extra properties on SIID 2 | `41 hot-water-mop-wash`, `56 sweep-ai-object`, `63/64 cut-hair-config`, `85-90` cleaning statistics and drying progress, `96 sweep-mop-status`, `97/98` sewage / water tank status, `99 sill`, `100/101` base-station / host water tank status — not read by the integration |
 | Extra actions on SIID 2 | `10 get-zone-configs`, `22 start-call-clean`, `44 stop-cut-hair`, `49-59` station cleaning, skip / final / temporary room and zone cleaning, tank emptying, spot cleaning, `62-64` object clean and station self-cleaning |
 | Zone cleaning | enabled using the X20 Max block-list encoding; a physical S40 Pro cleaned 20 rectangles in user testing on 2026-11-10 — see below |
-| Faults | publishes `100027` ("Sewage tank is full or not installed") in `Fault Ids` permanently — a station check the dockless retail unit can never satisfy; listed in the spec's `ignored_fault_codes`. Publishes `210005` (dust bin out) and `210020` (water tank out) while the user services it, cleared once the part is back; listed in `notice_fault_codes` |
+| Faults | publishes `100027` ("Sewage tank is full or not installed") in `Fault Ids` permanently — a station check the dockless retail unit can never satisfy; listed in the spec's `ignored_fault_codes`. Publishes `210013` (dust bin out) and `210020` (water tank out) while the user services it, cleared once the part is back; listed in `notice_fault_codes` |
 
 ### Zone (rectangle) cleaning: working block-list implementation and earlier failed attempts
 
@@ -464,7 +464,7 @@ identical here, including status codes 1–24. The spec is derived from
 | Room cleaning | direct `start-vacuum-room-sweep` (2/16, input piid 15), same as the S40 Pro. Property 2/16 on the physical unit returned the named rooms Спальня (3), Кабинет (4), Кухня (5) and Прихожая (9), plus two blank names (7, 8). On 14 November 2026 a room clean started from Home Assistant completed on this unit |
 | Zone cleaning | `start-zone-sweep` (2/37) with the S40 Pro block-list payload. On 14 November 2026 a physical S40C on firmware 4.5.6_0111 cleaned a selected rectangle |
 | Custom cleanings | not wired, same as the S40 Pro |
-| Faults | docked at 95% charge the unit published `Fault Ids` `{"fault":[0]}`. `100027`, `210005` and `210020` were not in that list, so `ignored_fault_codes` and `notice_fault_codes` stay empty |
+| Faults | docked at 95% charge the unit published `Fault Ids` `{"fault":[0]}`. `100027`, `210013` and `210020` were not in that list, so `ignored_fault_codes` and `notice_fault_codes` stay empty |
 
 ## 6. Fault codes and their localized text
 
@@ -494,7 +494,7 @@ Verified real example (account locale pt-BR):
 **Known codes.** Values in the `1000xx` range are the robot/station hardware checks
 (`100027` = sewage tank full or not installed, observed permanently on the dockless
 S40 Pro); `21xxxx` are robot-side conditions — navigation failures (`210009` =
-could not return to the dock) as well as maintenance notices (`210005` = dust bin
+could not return to the dock) as well as maintenance notices (`210013` = dust bin
 out, `210020` = water tank out, both observed on the S40 Pro).
 A model that reports a code for hardware it does not have lists it in its
 `ModelSpec.ignored_fault_codes` so the coordinator drops it; a routine
