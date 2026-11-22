@@ -29,6 +29,13 @@ class MiotPropertyBinding(MiotPropertyAddress, total=False):
     polled: bool
 
 
+class MiotEventAddress(TypedDict):
+    """``{siid, eiid}`` address of a MIoT event."""
+
+    siid: int
+    eiid: int
+
+
 class MiotActionAddress(TypedDict):
     """``{siid, aiid}`` address of a MIoT action."""
 

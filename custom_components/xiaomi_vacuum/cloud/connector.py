@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from cryptography.hazmat.primitives.ciphers import CipherContext
 
     from ..data import JsonObject, JsonValue  # noqa: TID252
+    from ..spec.addresses import MiotEventAddress  # noqa: TID252
     from .responses import (
         DevicesResult,
         HomeEntry,
@@ -382,16 +383,16 @@ class _XiaomiCloudConnector:
 
     @staticmethod
     def _parse_fault_message(
-        message: JsonValue, *, require_event: bool
+        message: JsonValue, *, event_id: str | None
     ) -> dict[str, str | int] | None:
-        """Extract only fault data, allowing legacy text feeds without event IDs."""
+        """Extract the fault data of a message filed under ``event_id``, if given."""
         if not isinstance(message, dict):
             return None
         params = message.get("params")
         body = params.get("body") if isinstance(params, dict) else None
         if not isinstance(body, dict):
             return None
-        if require_event and body.get("event") != "2.3":
+        if event_id is not None and body.get("event") != event_id:
             return None
         code = _XiaomiCloudConnector._fault_code(body.get("value") or body.get("extra"))
         if code is None:
@@ -410,14 +411,15 @@ class _XiaomiCloudConnector:
         return event
 
     def get_device_fault_messages(
-        self, country: str, did: str, limit: int = 50
+        self, country: str, did: str, fault_event: MiotEventAddress, limit: int = 50
     ) -> list[dict[str, str | int]]:
-        """Return up to 50 recent Device Fault events without marking them read."""
+        """Return up to 50 recent ``fault_event`` messages without marking them read."""
         limit = min(50, max(1, limit))
+        event_id = f"{fault_event['siid']}.{fault_event['eiid']}"
         messages = self._get_fault_messages(country, did, limit, strict=True)
         events: list[dict[str, str | int]] = []
         for message in messages:
-            event = self._parse_fault_message(message, require_event=True)
+            event = self._parse_fault_message(message, event_id=event_id)
             if event is not None:
                 events.append(event)
                 if len(events) == limit:
@@ -430,7 +432,7 @@ class _XiaomiCloudConnector:
         """Map fault codes to localized text, retaining legacy feed compatibility."""
         texts: dict[int, str] = {}
         for message in self._get_fault_messages(country, did, limit, strict=False):
-            event = self._parse_fault_message(message, require_event=False)
+            event = self._parse_fault_message(message, event_id=None)
             if event is not None and isinstance(title := event.get("text"), str):
                 texts.setdefault(int(event["code"]), title)
         return texts

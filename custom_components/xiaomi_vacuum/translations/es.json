@@ -387,6 +387,9 @@
         },
         "fault_history_read_failed": {
             "message": "No se ha podido leer el historial de errores de la nube de Xiaomi."
+        },
+        "fault_history_unsupported": {
+            "message": "El historial de errores no es compatible con el modelo {model}."
         }
     },
     "services": {

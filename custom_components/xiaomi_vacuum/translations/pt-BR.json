@@ -387,6 +387,9 @@
         },
         "fault_history_read_failed": {
             "message": "Não foi possível consultar o histórico de falhas na nuvem Xiaomi."
+        },
+        "fault_history_unsupported": {
+            "message": "O histórico de falhas não é suportado no {model}."
         }
     },
     "services": {

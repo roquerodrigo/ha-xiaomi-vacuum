@@ -315,6 +315,9 @@
         },
         "fault_history_read_failed": {
             "message": "Не удалось получить историю ошибок из облака Xiaomi."
+        },
+        "fault_history_unsupported": {
+            "message": "История ошибок не поддерживается моделью {model}."
         }
     },
     "services": {
