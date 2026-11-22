@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.15.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.14.0...v2.15.0) (2026-11-22)
+
+Adds automatic renewal of expired Xiaomi cloud sessions, fault diagnostics with an on-demand cloud fault history action, and a Spanish translation.
+
+### New features
+
+- Added a Spanish translation of the integration. ([#192](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/192))
+- An expired Xiaomi cloud session is now renewed automatically, so the map no longer stops updating and a new QR scan is rarely needed; existing entries need one last QR scan to enable this. ([#193](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/193))
+- The error code sensor now exposes raw, active and ignored fault codes plus the localized fault text, which helps diagnose several simultaneous faults. ([#178](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/178))
+- Added the refresh_fault_history action, which reads up to 50 recent fault events from the Xiaomi cloud on demand, on models where the fault event is known. ([#178](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/178))
+
+### Bug fixes
+
+- The S40 Pro dust bin removal notice is now recognized under its correct fault code (210013), so it no longer forces the vacuum into an error state. ([#177](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/177))
+
 ## [2.14.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.13.0...v2.14.0) (2026-11-16)
 
 Adds support for the Xiaomi Robot Vacuum S40C, aligns entity names with the Xiaomi Home app, and reorganizes entity categories on the device page.
