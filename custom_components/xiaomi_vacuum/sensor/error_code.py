@@ -30,9 +30,10 @@ class XiaomiVacuumErrorCodeSensor(XiaomiVacuumEntity, SensorEntity):
         """Expose live fault codes and their localized primary text."""
         data = self.coordinator.data
         spec = self.coordinator.spec
+        codes = data.get("raw_fault_codes")
         return {
-            "raw_fault_codes": spec.raw_fault_codes(data),
-            "active_fault_codes": spec.active_fault_codes(data),
-            "ignored_fault_codes": spec.reported_ignored_fault_codes(data),
+            "raw_fault_codes": codes,
+            "active_fault_codes": spec.active_fault_codes(codes),
+            "ignored_fault_codes": spec.reported_ignored_fault_codes(codes),
             "fault_text": data.get("fault_text"),
         }
