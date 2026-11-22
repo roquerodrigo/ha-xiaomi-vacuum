@@ -23,7 +23,7 @@ unless it is removed here:
   through this action
 - no custom cleanings, same as the S40 Pro
 - ``ignored_fault_codes`` and ``notice_fault_codes`` stay empty. The S40 Pro
-  drops 100027 and treats 210005 / 210020 as notices because that unit
+  drops 100027 and treats 210013 / 210020 as notices because that unit
   published them. This unit, docked at 95% charge, published ``{"fault": [0]}``
   and neither code, so they are not copied
 """
