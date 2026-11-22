@@ -209,26 +209,26 @@ class ModelSpec:
 
     def live_fault_code(self, data: VacuumState) -> int | None:
         """Return the live fault code of a polled state, phantom faults dropped."""
-        return self.fault_reading.live_code(
-            data, self.ignored_fault_codes, self.notice_fault_codes
-        )
+        return self.primary_fault_code(self.raw_fault_codes(data))
 
     def raw_fault_codes(self, data: VacuumState) -> list[int] | None:
-        """Return all reported positive codes before filtering."""
-        if "raw_fault_codes" in data:
-            return data["raw_fault_codes"]
+        """Decode every positive code the polled state reports, before filtering."""
         return self.fault_reading.raw_codes(data)
 
-    def active_fault_codes(self, data: VacuumState) -> list[int] | None:
-        """Return reported codes not ignored by this model."""
-        codes = self.raw_fault_codes(data)
+    def primary_fault_code(self, codes: list[int] | None) -> int | None:
+        """Return the code the entities report among the decoded ``codes``."""
+        return self.fault_reading.primary_code(
+            codes, self.ignored_fault_codes, self.notice_fault_codes
+        )
+
+    def active_fault_codes(self, codes: list[int] | None) -> list[int] | None:
+        """Return the decoded ``codes`` this model does not ignore."""
         if codes is None:
             return None
         return [code for code in codes if code not in self.ignored_fault_codes]
 
-    def reported_ignored_fault_codes(self, data: VacuumState) -> list[int] | None:
-        """Return reported codes ignored by this model."""
-        codes = self.raw_fault_codes(data)
+    def reported_ignored_fault_codes(self, codes: list[int] | None) -> list[int] | None:
+        """Return the decoded ``codes`` this model ignores."""
         if codes is None:
             return None
         return [code for code in codes if code in self.ignored_fault_codes]
