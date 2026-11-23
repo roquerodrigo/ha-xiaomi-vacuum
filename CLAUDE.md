@@ -25,7 +25,9 @@ here.
 - **Local control, cloud-assisted setup.** Day-to-day polling/control is
   `iot_class: local_polling` over MIoT via `xiaomi-vacuum-sdk`. The Xiaomi cloud
   (`custom_components/xiaomi_vacuum/cloud/`) is used only for the QR-login
-  setup flow, the map image, localized error text, and the X20+ room list
+  setup flow, the map image, localized error text, the on-demand fault
+  history (`xiaomi_vacuum.refresh_fault_history`, gated per model by the
+  spec's `fault_event`), and the X20+ room list
   (decoded from its Dreame cloud map, `DreameMapFormat`, by the
   SDK's `DreameMapDecoder`).
 - **Entity platforms**, each its own subpackage under
@@ -59,9 +61,12 @@ here.
   model's module before touching any SIID/PIID/AIID** — layouts diverge from
   model to model, and each module's docstring says how it differs from its
   closest sibling.
-- **`config_flow.py`** — QR-login config flow plus reauth (fresh QR scan when
-  the stored cloud session expires) and a reconfigure flow for changing the
-  Xiaomi cloud region.
+- **`config_flow.py`** — QR-login config flow plus reauth and a reconfigure
+  flow for changing the Xiaomi cloud region. An expired `serviceToken` is
+  first renewed silently by `cloud/` with the long-lived `passToken` the QR
+  login also issued (stored in the entry with its client `deviceId`, both
+  redacted in diagnostics); reauth (a fresh QR scan) only takes over when
+  Xiaomi declines that `passToken`, or the entry predates it.
 - **`repairs.py`** — per-entry repair issues, each cleared automatically once
   the condition resolves: `cannot_connect` when the vacuum is unreachable
   (setup tolerates this and still serves the map) and `unsupported_model` when
