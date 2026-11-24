@@ -151,8 +151,8 @@ to the device only through the `RoomCleaningDevice` port.
   fixture, a press or write hitting that model's address, and its presence;
   models that do not map it assert its absence.
 - **Docs:** the README "What each model supports" matrix (add a row or tick the
-  model's cell) and the Models column of the entity table under "Features"
-  (and of the `send_command` table for a command); `ADDING_A_MODEL.md` when the
+  model's cell) and the Models column of the entity tables under "Entities"
+  (and of the `send_command` table under "Actions" for a command); `ADDING_A_MODEL.md` when the
   spec gains a field; the mapped marks in `XIAOMI_VACUUM_API.md` when it
   documents that service.
 

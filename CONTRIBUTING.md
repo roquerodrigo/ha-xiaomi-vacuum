@@ -1,64 +1,77 @@
-# Contribution guidelines
+# Contributing
 
-Contributing to this project should be as easy and transparent as possible, whether it's:
+Bug reports, ideas and pull requests are welcome.
 
-- Reporting a bug
-- Discussing the current state of the code
-- Submitting a fix
-- Proposing new features
+## Reporting a bug
 
-## Github is used for everything
+Open an [issue](https://github.com/roquerodrigo/ha-xiaomi-vacuum/issues/new/choose)
+with:
 
-Github is used to host code, to track issues and feature requests, as well as accept pull requests.
+- the Home Assistant version, the integration version and the vacuum model;
+- what you did, what you expected and what happened;
+- the diagnostics downloaded from the integration's menu (the token and the
+  Xiaomi sign-in are redacted) and the relevant log lines.
 
-Pull requests are the best way to propose changes to the codebase.
+To ask for a model that is not supported yet, use the model support request
+form on the same page.
 
-1. Fork the repo and create your branch from `main`.
-2. If you've changed something, update the documentation.
-   Adding a vacuum model or a feature? Follow [`ADDING_A_MODEL.md`](ADDING_A_MODEL.md);
-   Claude Code users get the same steps from the
-   `add-model` and `add-feature` project skills in `.claude/skills/`.
-3. Make sure your code lints (`uv run ruff format .`, `uv run ruff check . --fix`, `uv run mypy custom_components/xiaomi_vacuum`).
-4. Test you contribution.
-5. Issue that pull request!
+## Development setup
 
-## Any contributions you make will be under the MIT Software License
+The project uses [uv](https://docs.astral.sh/uv/) and Python 3.14.2 or newer.
 
-In short, when you submit code changes, your submissions are understood to be under the same [MIT License](http://choosealicense.com/licenses/mit/) that covers the project. Feel free to contact the maintainers if that's a concern.
+```bash
+uv sync --all-groups         # install the dependencies, including ruff and mypy, into .venv
+uv run scripts/develop       # run Home Assistant at http://localhost:8123 with this integration loaded
+```
 
-## Report bugs using Github's [issues](../../issues)
+A plain `uv sync` leaves out the `lint` group, so `ruff` and `mypy` would be
+missing. `scripts/develop` uses the configuration in [`config/`](config/).
 
-GitHub issues are used to track public bugs.
-Report a bug by [opening a new issue](../../issues/new/choose); it's that easy!
+Two more scripts help with cloud and model work:
 
-## Write bug reports with detail, background, and sample code
+- `uv run scripts/qr_test.py [region]` runs the Xiaomi QR sign-in outside
+  Home Assistant.
+- `uv run scripts/draft_model.py <model>` prints a first draft of the spec
+  module for a new model from its published MIoT spec.
 
-**Great Bug Reports** tend to have:
+## Checks
 
-- A quick summary and/or background
-- Steps to reproduce
-  - Be specific!
-  - Give sample code if you can.
-- What you expected would happen
-- What actually happens
-- Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
+Run these before opening a pull request. CI runs the same ones, and
+`pre-commit install` runs the first three on every commit.
 
-People *love* thorough bug reports. I'm not even kidding.
+```bash
+uv run ruff format .                           # format
+uv run ruff check . --fix                      # lint
+uv run mypy custom_components/xiaomi_vacuum    # type-check
+uv run pytest                                  # tests, coverage must stay at 90 % or more
+```
 
-## Use a Consistent Coding Style
+Read [CODE_STYLE.md](CODE_STYLE.md) before adding or restructuring code.
 
-Use [black](https://github.com/ambv/black) to make sure the code follows the style.
+## Adding a model or a feature
 
-## Test your code modification
+- [ADDING_A_MODEL.md](ADDING_A_MODEL.md) walks through supporting a new
+  `xiaomi.vacuum.*` model, from the draft spec to the tests.
+- [XIAOMI_VACUUM_API.md](XIAOMI_VACUUM_API.md) documents the MIoT properties,
+  actions and cloud endpoints the integration uses.
 
-This custom component is based on [integration_blueprint template](https://github.com/ludeeus/integration_blueprint).
+A change for one model goes in that model's spec module, and every model fact
+needs evidence from a real unit of that model. Settings that only the
+published spec shows get a footnote in the README model table.
 
-It comes with development environment in a container, easy to launch
-if you use Visual Studio Code. With this container you will have a stand alone
-Home Assistant instance running and already configured with the included
-[`configuration.yaml`](./config/configuration.yaml)
-file.
+## Pull requests
+
+1. Fork the repository and branch from `main`.
+2. Write commit messages as [Conventional Commits](https://www.conventionalcommits.org/).
+   Releases and their notes are generated from them. Mark breaking changes
+   with `!` or a `BREAKING CHANGE:` footer.
+3. When you change user-facing strings, update every file in
+   `custom_components/xiaomi_vacuum/translations/` (`en.json` is the source).
+   A test fails when their keys differ.
+4. Update the README when behaviour, configuration, entities or supported
+   models change.
+5. Fill in the pull request template.
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under its MIT License.
+Contributions are released under the project's [MIT License](LICENSE).

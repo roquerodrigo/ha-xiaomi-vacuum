@@ -118,7 +118,7 @@ on its own. Do not weaken a contract test to make a model pass — fix the spec.
 
 - `README.md`: the supported-models table, the "What each model supports"
   matrix (with a footnote for anything partial), and the Models column of the
-  entity table under "Features" and of the `send_command` table.
+  entity tables under "Entities" and of the `send_command` table under "Actions".
 - `CLAUDE.md`: the model list in the first paragraph.
 - `XIAOMI_VACUUM_API.md`: a section for the model when it has quirks worth
   recording (captures, ignored actions, dead ends).

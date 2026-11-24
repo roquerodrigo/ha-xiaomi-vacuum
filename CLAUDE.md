@@ -27,9 +27,11 @@ here.
   (`custom_components/xiaomi_vacuum/cloud/`) is used only for the QR-login
   setup flow, the map image, localized error text, the on-demand fault
   history (`xiaomi_vacuum.refresh_fault_history`, gated per model by the
-  spec's `fault_event`), and the X20+ room list
+  spec's `fault_event`), the X20+ room list
   (decoded from its Dreame cloud map, `DreameMapFormat`, by the
-  SDK's `DreameMapDecoder`).
+  SDK's `DreameMapDecoder`), and the S20+ room-clean actions, which
+  `async_call_action_reliably` sends through the cloud when a session exists
+  and falls back to local otherwise.
 - **Entity platforms**, each its own subpackage under
   `custom_components/xiaomi_vacuum/`: `vacuum/`, `image/`, `sensor/`,
   `binary_sensor/`, `select/`, `button/`, `switch/`, `number/`. Every concrete entity is its own
@@ -216,6 +218,6 @@ silently un-requires its check in branch protection.
   branch and lands via PR with green CI; no direct pushes to `main`, and the
   protection is never lowered to land a quick fix. Only *Rebase and merge* is
   enabled.
-- `CONTRIBUTING.md` references a VS Code devcontainer (`.devcontainer.json`)
-  originally derived from the `integration_blueprint` template — still valid
-  for spinning up a sandboxed HA dev instance.
+- `.devcontainer.json` comes from the `integration_blueprint` template. Its
+  `postCreateCommand` runs `scripts/setup`, which does not exist, so run
+  `uv sync --all-groups` by hand inside the container.
