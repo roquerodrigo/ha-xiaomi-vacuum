@@ -160,7 +160,8 @@ explaining the deliberate narrowing.
 - This integration runs **two coordinators**: `coordinator.py` for status
   (vacuum state, battery, etc.) and `map_coordinator.py` for the cleaning-map
   image, rendered via `xiaomi-vacuum-sdk`. Each polls at its own
-  cadence; the map coordinator only refreshes when there is a fresh map id.
+  cadence; the map coordinator downloads the map blob on every poll and
+  re-renders it only when the blob changed.
 - The coordinator is typed as `DataUpdateCoordinator[<TypedDict>]`.
   `_async_update_data` returns the typed payload; client errors map to
   `UpdateFailed`.
