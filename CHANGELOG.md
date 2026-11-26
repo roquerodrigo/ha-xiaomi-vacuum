@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.15.1](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.15.0...v2.15.1) (2026-11-26)
+
+### Bug fixes
+
+- The cleaning-in-progress binary sensor is now added when the integration is set up while the vacuum is offline, instead of missing until the entry is reloaded. ([#202](https://github.com/roquerodrigo/ha-xiaomi-vacuum/pull/202))
+
 ## [2.15.0](https://github.com/roquerodrigo/ha-xiaomi-vacuum/compare/v2.14.0...v2.15.0) (2026-11-22)
 
 Adds automatic renewal of expired Xiaomi cloud sessions, fault diagnostics with an on-demand cloud fault history action, and a Spanish translation.
