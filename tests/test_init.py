@@ -127,6 +127,9 @@ async def test_setup_offline_with_cached_info_loads(
     vacuum = hass.states.async_all("vacuum")
     assert len(vacuum) == 1
     assert vacuum[0].state == "unavailable"
+    cleaning = hass.states.get("binary_sensor.vacuum_cleaning_in_progress")
+    assert cleaning is not None
+    assert cleaning.state == "unavailable"
 
     from homeassistant.helpers import issue_registry as ir
 
