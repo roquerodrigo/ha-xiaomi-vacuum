@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
@@ -11,6 +13,9 @@ from homeassistant.helpers.restore_state import RestoreEntity
 
 from ..entity import XiaomiVacuumEntity  # noqa: TID252
 from ..spec import CleaningJobSignal  # noqa: TID252
+
+if TYPE_CHECKING:
+    from ..data import VacuumState  # noqa: TID252
 
 
 class XiaomiVacuumCleaningBinarySensor(
@@ -56,7 +61,11 @@ class XiaomiVacuumCleaningBinarySensor(
         super()._handle_coordinator_update()
 
     def _follow_status(self) -> None:
-        data = self.coordinator.data
+        # ``data`` stays None until the first successful poll, which an entry
+        # set up while the vacuum is offline has not had yet.
+        data: VacuumState | None = self.coordinator.data
+        if data is None:
+            return
         status = data.get("status")
         signal = self.coordinator.spec.cleaning_job_signal(
             int(status) if status is not None else None, data.get("task_status")
